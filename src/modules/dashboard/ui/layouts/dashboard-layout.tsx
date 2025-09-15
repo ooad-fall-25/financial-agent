@@ -14,7 +14,7 @@ import {
     useSidebar, // Move this import here
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { Link, SidebarIcon, XIcon } from "lucide-react";
+import { SidebarIcon, XIcon } from "lucide-react";
 import { Suspense } from "react";
 import { DashboardSidebar } from "../components/dashboard-sidebar";
 
