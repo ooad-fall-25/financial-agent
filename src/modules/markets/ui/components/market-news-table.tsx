@@ -1,20 +1,9 @@
 "use client"
 
-import { Button } from "@/components/ui/button";
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { Category } from "@/lib/finnhub";
+import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Loader, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { ExternalLink, Loader } from "lucide-react";
 
 interface Props {
     marketCategory: string;

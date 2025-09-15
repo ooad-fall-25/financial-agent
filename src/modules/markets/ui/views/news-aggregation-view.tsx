@@ -1,8 +1,7 @@
 "use client";
 
-import { AppWindowIcon, CodeIcon } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { MarketNewsTable } from "../components/market-news-table"
 import {
     Select,
     SelectContent,
@@ -13,29 +12,16 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
-import { MarketNewsTable } from "../components/market-news-table"
-import { useState } from "react";
 
 interface ItemType {
     type: string; 
     name: string; 
 }
-
 
 const finnhubItems = [
     {
