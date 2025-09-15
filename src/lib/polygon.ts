@@ -2,7 +2,7 @@ import { restClient } from '@polygon.io/client-js';
 
 
 const getRestClient = () => {
-        const rest = restClient(process.env.POLYGON_API_KEY || "", 'https://api.polygon.io');
+        const rest = restClient(process.env.POLYGON_API_KEY || "", process.env.POLYGON_URL);
         return rest;
 }
 
