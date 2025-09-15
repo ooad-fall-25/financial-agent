@@ -77,14 +77,14 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
                                 </div>
                             </div>
                             <div className="col-span-1">
-                                <a
+                                <Link
                                     href={news.url || "#"}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition-colors"
                                 >
                                     <ExternalLink size={16} />
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     ))}
@@ -132,14 +132,14 @@ const PolygonNewsTable = () => {
                             </div>
                         </div>
                         <div className="col-span-1">
-                            <a
+                            <Link
                                 href={news.article_url || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition-colors"
                             >
                                 <ExternalLink size={16} />
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 ))}
