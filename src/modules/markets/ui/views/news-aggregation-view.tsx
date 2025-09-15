@@ -1,6 +1,17 @@
+"use client";
+
 import { AppWindowIcon, CodeIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     Card,
     CardContent,
@@ -18,12 +29,18 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 import { MarketNewsTable } from "../components/market-news-table"
+import { useState } from "react";
+
+interface ItemType {
+    type: string; 
+    name: string; 
+}
 
 
-const categoryMarketItems = [
+const finnhubItems = [
     {
         type: "general",
-        name: "General"
+        name: "Top"
     },
     {
         type: "forex",
@@ -38,23 +55,64 @@ const categoryMarketItems = [
         name: "Merger"
     }
 ]
+
+const polygonItems = [
+    {
+        type: "stock", 
+        name: "Stock"
+    }
+]
 export const NewsAggregationView = () => {
+    const [provider, setProvider] = useState<string | null>(null);
+    const [categoryMarketItems, setCategoryMarketItems] = useState<ItemType[]>(finnhubItems); 
+    const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type); 
+
+    const handleSetProvider = (value: string) => {
+        if (value === "finnhub") {
+            setCategoryMarketItems(finnhubItems);
+            setActiveTab(finnhubItems[0].type);
+        } else if (value === "polygon") {
+            setCategoryMarketItems(polygonItems); 
+            setActiveTab(polygonItems[0].type); 
+        } else {
+            setCategoryMarketItems(finnhubItems);
+            setActiveTab(finnhubItems[0].type);
+        }
+        setProvider(value);
+    }
+
     return (
-        <div className="h-screen max-w-7xl mx-auto flex flex-col">
+        <div className="h-screen max-w-7xl mx-auto flex flex-col w-full">
             {/* Fixed Header with Tabs */}
-            <div className="flex-shrink-0 bg-background border-none px-6 pt-6 pb-4">
-                <Tabs defaultValue={categoryMarketItems[0].type} className="w-full">
-                    <TabsList className="grid w-fit grid-cols-4">
-                        {categoryMarketItems.map((item) => (
-                            <TabsTrigger key={item.type} value={item.type}>{item.name}</TabsTrigger>
-                        ))}
-                    </TabsList>
+            <div className="flex-shrink-0 bg-background border-none  pt-6 pb-4">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <div className="flex justify-between px-6 border-b border-border border-dashed pb-6">
+
+                        <TabsList className="">
+                            {categoryMarketItems.map((item) => (
+                                <TabsTrigger className="max-w-32 w-24" key={item.type} value={item.type}>{item.name}</TabsTrigger>
+                            ))}
+                        </TabsList>
+
+                        <Select onValueChange={(value) => handleSetProvider(value)} defaultValue="finnhub">
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select a provider" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Providers</SelectLabel>
+                                    <SelectItem value="finnhub" className="cursor-pointer" >FinnHub</SelectItem>
+                                    <SelectItem value="polygon" className="cursor-pointer">Polygon</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
                     {/* Scrollable Content Area with fixed height */}
-                    <div className="mt-4" style={{ height: 'calc(100vh - 140px)' }}>
+                    <div className="mt-4 px-6" style={{ height: 'calc(100vh - 140px)' }}>
                         {categoryMarketItems.map((item) => (
                             <TabsContent key={item.type} value={item.type} className="h-full overflow-y-auto">
-                                <div className="bg-background rounded-lg border-none shadow-sm">
+                                <div className="bg-background rounded-lg border-none shadow-none">
                                     {/* Fixed Title Section */}
                                     <div className="sticky top-0 z-10 bg-background border-b border-border">
                                         <div className="p-4">
@@ -66,7 +124,7 @@ export const NewsAggregationView = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    <MarketNewsTable marketCategory={item.type} />
+                                    <MarketNewsTable marketCategory={item.type} provider={provider || ""}/>
                                 </div>
                             </TabsContent>
                         ))}

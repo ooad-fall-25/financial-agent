@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
 import { clerkClient } from "@clerk/nextjs/server";
 import { createClerkClient } from '@clerk/backend'
+import { getStockNews } from "@/lib/polygon";
 
 export const marketsRouter = createTRPCRouter({
     getMarketNews: protectedProcedure
@@ -27,10 +28,20 @@ export const marketsRouter = createTRPCRouter({
     getAllUsers: protectedProcedure
 
     .query(async () => {
-        const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+        const clerkClient = createClerkClient( {secretKey: process.env.CLERK_SECRET_KEY} )
+        if (process.env.CLERK_SECRET_KEY) {
+            console.log("======================")
+        }
         const {data: users} = await clerkClient.users.getUserList();
-        return users; 
-    })
 
+        return users; 
+    }),
+
+    getPolygonStockNews: protectedProcedure
+    .query(async () => {
+        const stockNews = await getStockNews(); 
+        const result = stockNews.results; 
+        return result; 
+    })
 
 });
