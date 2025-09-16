@@ -17,10 +17,12 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button";
+import { StarsIcon } from "lucide-react";
 
 interface ItemType {
-    type: string; 
-    name: string; 
+    type: string;
+    name: string;
 }
 
 const finnhubItems = [
@@ -44,19 +46,19 @@ const finnhubItems = [
 
 const polygonItems = [
     {
-        type: "stock", 
+        type: "stock",
         name: "Stock"
     }
 ]
 export const NewsAggregationView = () => {
     const [provider, setProvider] = useState<string | null>(null);
-    const [categoryMarketItems, setCategoryMarketItems] = useState<ItemType[]>(finnhubItems); 
-    const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type); 
+    const [categoryMarketItems, setCategoryMarketItems] = useState<ItemType[]>(finnhubItems);
+    const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type);
 
     const handleSetProvider = (value: string) => {
         if (value === "polygon") {
-            setCategoryMarketItems(polygonItems); 
-            setActiveTab(polygonItems[0].type); 
+            setCategoryMarketItems(polygonItems);
+            setActiveTab(polygonItems[0].type);
         } else {
             setCategoryMarketItems(finnhubItems);
             setActiveTab(finnhubItems[0].type);
@@ -77,18 +79,30 @@ export const NewsAggregationView = () => {
                             ))}
                         </TabsList>
 
-                        <Select onValueChange={(value) => handleSetProvider(value)} defaultValue="finnhub">
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a provider" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Providers</SelectLabel>
-                                    <SelectItem value="finnhub" className="cursor-pointer" >FinnHub</SelectItem>
-                                    <SelectItem value="polygon" className="cursor-pointer">Polygon</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+
+                        <div className="flex gap-x-4">
+                            <Select onValueChange={(value) => handleSetProvider(value)} defaultValue="finnhub">
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Select a provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Providers</SelectLabel>
+                                        <SelectItem value="finnhub" className="cursor-pointer" >FinnHub</SelectItem>
+                                        <SelectItem value="polygon" className="cursor-pointer">Polygon</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                    variant="outline"
+                                    className="border-none shadow-none transition-all duration-300 group relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 transition-all duration-300"></div>
+                                    <StarsIcon className="h-4 w-4 text-gray-600 group-hover:text-white relative z-10 transition-colors duration-300" />
+                                    Ask AI
+                                </Button>
+                        </div>
                     </div>
 
                     {/* Scrollable Content Area with fixed height */}
@@ -107,7 +121,7 @@ export const NewsAggregationView = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    <MarketNewsTable marketCategory={item.type} provider={provider || ""}/>
+                                    <MarketNewsTable marketCategory={item.type} provider={provider || ""} />
                                 </div>
                             </TabsContent>
                         ))}
