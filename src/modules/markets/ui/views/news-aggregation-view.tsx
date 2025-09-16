@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button";
 import { StarsIcon } from "lucide-react";
+import { AskAINewsSheet } from "../components/ask-ai-news-sheet";
 
 interface ItemType {
     type: string;
@@ -54,6 +55,7 @@ export const NewsAggregationView = () => {
     const [provider, setProvider] = useState<string | null>(null);
     const [categoryMarketItems, setCategoryMarketItems] = useState<ItemType[]>(finnhubItems);
     const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type);
+    const [isSheetOpen, setIsSheetOpen] = useState(false); 
 
     const handleSetProvider = (value: string) => {
         if (value === "polygon") {
@@ -64,10 +66,11 @@ export const NewsAggregationView = () => {
             setActiveTab(finnhubItems[0].type);
         }
         setProvider(value);
-    }
+    }   
 
     return (
         <div className="h-screen max-w-7xl mx-auto flex flex-col w-full">
+            <AskAINewsSheet isOpen={isSheetOpen} setIsOpen={setIsSheetOpen}/>
             {/* Fixed Header with Tabs */}
             <div className="flex-shrink-0 bg-background border-none  pt-6 pb-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -97,6 +100,7 @@ export const NewsAggregationView = () => {
                             <Button
                                     variant="outline"
                                     className="!border-none !shadow-none transition-all duration-300 group relative overflow-hidden"
+                                    onClick={() => setIsSheetOpen(true)}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 transition-all duration-300"></div>
                                     <StarsIcon className="h-4 w-4 text-gray-600 group-hover:text-white relative z-10 transition-colors duration-300" />
