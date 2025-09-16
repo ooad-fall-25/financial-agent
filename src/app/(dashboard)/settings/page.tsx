@@ -1,7 +1,9 @@
+import SettingsPage from '@/modules/markets/ui/views/settings-page-view';
+
 const Page = () => {
     return (
         <div>
-            settings
+            <SettingsPage />
         </div>
     )
 }
