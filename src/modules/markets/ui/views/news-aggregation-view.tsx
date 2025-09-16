@@ -54,10 +54,7 @@ export const NewsAggregationView = () => {
     const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type); 
 
     const handleSetProvider = (value: string) => {
-        if (value === "finnhub") {
-            setCategoryMarketItems(finnhubItems);
-            setActiveTab(finnhubItems[0].type);
-        } else if (value === "polygon") {
+        if (value === "polygon") {
             setCategoryMarketItems(polygonItems); 
             setActiveTab(polygonItems[0].type); 
         } else {

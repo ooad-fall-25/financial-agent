@@ -10,11 +10,7 @@ interface Props {
     provider: string;
 }
 export const MarketNewsTable = ({ marketCategory, provider }: Props) => {
-    if (provider === "finnhub") {
-        return (
-            <FinnhubNewsTable marketCategory={marketCategory}/>
-        )
-    } else if (provider === "polygon") {
+    if (provider === "polygon") {
         return (
             <PolygonNewsTable />
         )
