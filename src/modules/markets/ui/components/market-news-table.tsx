@@ -64,7 +64,6 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
                                 </div>
                             </div>
                             <div className="col-span-1">
-
                                 <Button 
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
@@ -83,14 +82,6 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
                                 </Button>
                             </div>
                             <div className="col-span-1">
-                                {/* <Button
-                                    variant="outline"
-                                    className="border-none shadow-none transition-all duration-300 group relative overflow-hidden"
-                                    size="icon"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 transition-all duration-300"></div>
-                                    <StarsIcon className="h-4 w-4 text-gray-600 group-hover:text-white relative z-10 transition-colors duration-300" />
-                                </Button> */}
                                 <Button
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
@@ -115,11 +106,12 @@ const PolygonNewsTable = () => {
     return (
         <div className="w-full">
             {/* Sticky Header */}
-            <div className="sticky top-0 z-10 grid grid-cols-12 gap-4 p-3 bg-background border-none font-semibold text-sm text-muted-foreground">
+            <div className="sticky top-0 z-10 grid grid-cols-13 gap-4 p-3 bg-background border-none font-semibold text-sm text-muted-foreground">
                 <div className="col-span-4">Headline</div>
                 <div className="col-span-5">Description</div>
                 <div className="col-span-2">Related</div>
                 <div className="col-span-1">Link</div>
+                <div className="col-span-1">Ask</div>
             </div>
 
             {/* Content */}
@@ -128,7 +120,7 @@ const PolygonNewsTable = () => {
             ) : (
                 <div className="divide-y divide-border">
                     {marketNews?.map((news) => (
-                        <div key={news.id} className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/50 transition-colors">
+                        <div key={news.id} className="grid grid-cols-13 gap-4 p-4 hover:bg-muted/50 transition-colors">
                             <div className="col-span-4">
                                 <div className="font-medium text-foreground leading-tight">
                                     <p>{news.title}</p>
@@ -145,14 +137,31 @@ const PolygonNewsTable = () => {
                                 </div>
                             </div>
                             <div className="col-span-1">
-                                <Link
-                                    href={news.article_url || "#"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition-colors"
+                                <Button 
+                                    variant="ghost"
+                                    className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
+                                    size="icon"
                                 >
-                                    <ExternalLink size={16} />
-                                </Link>
+                                    <Link
+                                        href={news.article_url || "#"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <ExternalLink
+                                            size={16}
+                                            className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:drop-shadow-sm transition-all duration-300 ease-out"
+                                        />
+                                    </Link>
+                                </Button>
+                            </div>
+                            <div className="col-span-1">
+                                <Button
+                                    variant="ghost"
+                                    className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
+                                    size="icon"
+                                >
+                                    <StarsIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:drop-shadow-sm transition-all duration-300 ease-out" />
+                                </Button>
                             </div>
                         </div>
                     ))}
