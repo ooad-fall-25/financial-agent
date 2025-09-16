@@ -55,6 +55,7 @@
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "next-themes": "^0.4.6",
+    "node-fetch-commonjs": "^3.3.2",
     "postprocessing": "^6.37.8",
     "react": "19.1.0",
     "react-day-picker": "^9.9.0",
@@ -67,22 +68,40 @@
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "three": "^0.180.0",
+    "tough-cookie": "^6.0.0",
     "vaul": "^1.1.2",
+    "yahoo-finance": "^0.3.8",
+    "yahoo-finance2": "^2.13.3",
     "zod": "^4.1.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.15",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.180.0",
+    "@webgpu/types": "^0.1.65",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "prisma": "^6.16.1",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "tw-animate-css": "^1.3.8",
-    "typescript": "^5"
-  }
+    "typescript": "^5.9.2"
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ooad-fall-25/financial-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ooad-fall-25/financial-agent/issues"
+  },
+  "homepage": "https://github.com/ooad-fall-25/financial-agent#readme"
 }
