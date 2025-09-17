@@ -23,10 +23,11 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader } from "lucide-react";
+import { ExpandIcon, Loader } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { cn } from "@/lib/utils";
+import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
 
 interface Props {
     isOpen: boolean;
@@ -54,6 +55,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [category, setCategory] = useState<string | null>(null);
     const [dayOptions, setDayOptions] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
+    const [isExpand, setIsExpand] = useState(false);
 
     // TODO: consider simplifying: use setIsOpen directly with Sheet, no need to reset the state 
     const handleOpenChange = (open: boolean) => {
@@ -172,11 +174,32 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                 </div>
 
                 {summary &&
-                    <ScrollArea className={cn("h-110 max-h-screen w-full p-2 px-12 m-4 border-none overflow-auto mx-auto text-sm", providerName && "h-82")} >
-                        <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
-                    </ScrollArea>
+                    <div className="flex flex-col">
+                        <ScrollArea className={cn("h-110 max-h-screen w-full p-2 px-12 m-4 border-none overflow-auto mx-auto text-sm", providerName && "h-82")} >
+                            <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
+                        </ScrollArea>
+                        <div className="px-12 flex">
+
+                            <div className="flex items-center text-[4px] w-4 h-4 text-muted-foreground font-mono ">
+                                <Button
+                                    onClick={() => setIsExpand(!isExpand)}
+                                    variant="outline"
+                                    className=" !border-none !bg-transparent !shadow-none">
+                                    <ExpandIcon />
+                                </Button>
+                                <kbd className="ml-auto pointer-events-none inline-flex select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[8px] font-medium text-muted-foreground">
+                                    Expand
+                                </kbd>
+
+                            </div>
+                        </div>
+                    </div>
+
                 }
 
+                {summary &&
+                    <NewsSummaryExpandDialog isOpen={isExpand} setIsOpen={setIsExpand} content={summary?.aiRepsonse.toString() || ""} />
+                }
 
 
                 <SheetFooter>
