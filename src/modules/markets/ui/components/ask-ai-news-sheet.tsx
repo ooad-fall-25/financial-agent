@@ -4,6 +4,7 @@ import {
     Sheet,
     SheetContent,
     SheetDescription,
+    SheetFooter,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
@@ -18,6 +19,11 @@ import {
 } from "@/components/ui/select"
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Loader } from "lucide-react";
 
 interface Props {
     isOpen: boolean;
@@ -38,10 +44,14 @@ const providers = [
     }
 ]
 
+const languages = ["English", "Chinese"]
+
 export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [providerName, setProviderName] = useState<string | null>(null);
     const [category, setCategory] = useState<string | null>(null);
     const [dayOptions, setDayOptions] = useState<string | null>(null);
+    const [language, setLanguage] = useState<string | null>(null);
+    const [summary, setSummary] = useState<string | null>(null);
 
     // TODO: consider simplifying: use setIsOpen directly with Sheet, no need to reset the state 
     const handleOpenChange = (open: boolean) => {
@@ -52,6 +62,25 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
             setDayOptions(null);
         }
     };
+
+    const trpc = useTRPC();
+    const newsMutation = useMutation(trpc.marketssssss.createNewsSummary.mutationOptions({
+        onSuccess: (data) => {
+            // invalidation 
+        },
+        onError: (error) => {
+            toast.info(error.message);
+        }
+    }));
+
+    const handleAskAI = () => {
+        newsMutation.mutate({
+            language: language || "",
+            providerName: providerName?.toLowerCase() || "",
+            category: category?.toLowerCase() || "",
+            days: dayOptions || "",
+        })
+    }
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -75,6 +104,23 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                     <SelectLabel>Providers</SelectLabel>
                                     {providers.map((item) => (
                                         <SelectItem key={item.name} value={item.name.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </div>
+                    </Select>
+
+                    <Select onValueChange={(value) => setLanguage(value)}>
+                        <div className="flex justify-between">
+                            <Label>Language</Label>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select a provider" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Language</SelectLabel>
+                                    {languages.map((item) => (
+                                        <SelectItem key={item} value={item} className="cursor-pointer">{item}</SelectItem>
                                     ))}
                                 </SelectGroup>
                             </SelectContent>
@@ -120,7 +166,23 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     }
                 </div>
 
+                <div className="py-8">
+                    <span>{summary?.toString()}</span>
+                </div>
 
+
+                <SheetFooter>
+                    <Button
+                        disabled={newsMutation.isPending}
+                        onClick={handleAskAI}
+                    >
+                        {newsMutation.isPending ? (
+                            <Loader className="animate-spin"/>
+                        ) : (
+                            <span>Ask</span>
+                        )}
+                    </Button>
+                </SheetFooter>
 
             </SheetContent>
         </Sheet>
