@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
+import { cn } from "@/lib/utils";
 
 interface Props {
     isOpen: boolean;
@@ -171,7 +172,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                 </div>
 
                 {summary &&
-                    <ScrollArea className="h-98 max-h-screen w-72 p-2 m-4 border-none overflow-auto mx-auto ">
+                    <ScrollArea className={cn("h-110 max-h-screen w-full p-2 px-12 m-4 border-none overflow-auto mx-auto text-sm", providerName && "h-82")} >
                         <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
                     </ScrollArea>
                 }
