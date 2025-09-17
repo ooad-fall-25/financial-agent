@@ -20,10 +20,12 @@ import {
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/trpc/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 
 interface Props {
     isOpen: boolean;
@@ -51,7 +53,6 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [category, setCategory] = useState<string | null>(null);
     const [dayOptions, setDayOptions] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
-    const [summary, setSummary] = useState<string | null>(null);
 
     // TODO: consider simplifying: use setIsOpen directly with Sheet, no need to reset the state 
     const handleOpenChange = (open: boolean) => {
@@ -63,15 +64,18 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
         }
     };
 
+    const queryClient = useQueryClient();
     const trpc = useTRPC();
-    const newsMutation = useMutation(trpc.marketssssss.createNewsSummary.mutationOptions({
+    const newsMutation = useMutation(trpc.marketssssss.createAINewsSummary.mutationOptions({
         onSuccess: (data) => {
-            // invalidation 
+            queryClient.invalidateQueries(trpc.marketssssss.getAINewsSummary.queryOptions())
         },
         onError: (error) => {
             toast.info(error.message);
         }
     }));
+
+    const { data: summary } = useQuery(trpc.marketssssss.getAINewsSummary.queryOptions())
 
     const handleAskAI = () => {
         newsMutation.mutate({
@@ -166,9 +170,12 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     }
                 </div>
 
-                <div className="py-8">
-                    <span>{summary?.toString()}</span>
-                </div>
+                {summary &&
+                    <ScrollArea className="h-98 max-h-screen w-72 p-2 m-4 border-none overflow-auto mx-auto ">
+                        <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
+                    </ScrollArea>
+                }
+
 
 
                 <SheetFooter>
@@ -177,7 +184,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         onClick={handleAskAI}
                     >
                         {newsMutation.isPending ? (
-                            <Loader className="animate-spin"/>
+                            <Loader className="animate-spin" />
                         ) : (
                             <span>Ask</span>
                         )}
