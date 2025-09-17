@@ -77,6 +77,7 @@
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "three": "^0.180.0",
+    "ts-key-enum": "^3.0.13",
     "tough-cookie": "^6.0.0",
     "vaul": "^1.1.2",
     "yahoo-finance": "^0.3.8",

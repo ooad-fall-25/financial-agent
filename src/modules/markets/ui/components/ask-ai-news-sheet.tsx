@@ -23,11 +23,12 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ExpandIcon, Loader } from "lucide-react";
+import { ExpandIcon, FileText, Loader } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { cn } from "@/lib/utils";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
+import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
 
 interface Props {
     isOpen: boolean;
@@ -61,9 +62,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
         if (!open) {
-            setProviderName(null);
-            setCategory(null);
-            setDayOptions(null);
+            resetStates();
         }
     };
 
@@ -71,14 +70,15 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const trpc = useTRPC();
     const newsMutation = useMutation(trpc.marketssssss.createAINewsSummary.mutationOptions({
         onSuccess: (data) => {
-            queryClient.invalidateQueries(trpc.marketssssss.getAINewsSummary.queryOptions())
+            queryClient.invalidateQueries(trpc.marketssssss.getAINewsSummary.queryOptions());
+            resetStates();
         },
         onError: (error) => {
             toast.info(error.message);
         }
     }));
 
-    const { data: summary } = useQuery(trpc.marketssssss.getAINewsSummary.queryOptions())
+    const { data: summary, isLoading } = useQuery(trpc.marketssssss.getAINewsSummary.queryOptions())
 
     const handleAskAI = () => {
         newsMutation.mutate({
@@ -88,6 +88,15 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
             days: dayOptions || "",
         })
     }
+
+    const resetStates = () => {
+        setProviderName(null);
+        setCategory(null);
+        setDayOptions(null);
+        setLanguage(null);
+    }
+
+    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !dayOptions || !language; 
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -100,7 +109,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                 </SheetHeader>
 
                 <div className="px-4 gap-y-4 flex flex-col">
-                    <Select onValueChange={(value) => setProviderName(value)}>
+                    <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
                         <div className="flex justify-between">
                             <Label>Provider</Label>
                             <SelectTrigger className="w-[180px]">
@@ -117,7 +126,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </div>
                     </Select>
 
-                    <Select onValueChange={(value) => setLanguage(value)}>
+                    <Select value={language || ""} onValueChange={(value) => setLanguage(value)}>
                         <div className="flex justify-between">
                             <Label>Language</Label>
                             <SelectTrigger className="w-[180px]">
@@ -136,7 +145,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
                     {providerName &&
                         <div className="gap-y-4 flex flex-col">
-                            <Select onValueChange={(value) => setCategory(value)}>
+                            <Select value={category || ""} onValueChange={(value) => setCategory(value)}>
                                 <div className="flex justify-between">
                                     <Label>Category</Label>
                                     <SelectTrigger className="w-[180px]">
@@ -153,7 +162,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 </div>
                             </Select>
 
-                            <Select onValueChange={(value) => setDayOptions(value)}>
+                            <Select value={dayOptions || ""} onValueChange={(value) => setDayOptions(value)}>
                                 <div className="flex justify-between">
                                     <Label>Day</Label>
                                     <SelectTrigger className="w-[180px]">
@@ -173,27 +182,44 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     }
                 </div>
 
-                {summary &&
+                {isLoading && (<Loader className="mx-auto animate-spin" />)}
+
+                {summary ? (
                     <div className="flex flex-col">
-                        <ScrollArea className={cn("h-110 max-h-screen w-full p-2 px-12 m-4 border-none overflow-auto mx-auto text-sm", providerName && "h-82")} >
+                        <div className="flex items-center justify-between px-12">
+                            <Kbd className="w-fit">
+                                <KbdKey>Latest summary</KbdKey>
+                            </Kbd>
+                            <Button
+                                onClick={() => setIsExpand(!isExpand)}
+                                variant="outline"
+                                className=" !border-none !bg-transparent !shadow-none">
+                                <ExpandIcon />
+                            </Button>
+                        </div>
+                        <ScrollArea className={cn("h-110 max-h-screen w-full p-2 px-12 m-4 border-y border-dashed overflow-auto mx-auto text-sm", providerName && "h-82")} >
                             <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
                         </ScrollArea>
                         <div className="px-12 flex">
 
-                            <div className="flex items-center text-[4px] w-4 h-4 text-muted-foreground font-mono ">
-                                <Button
-                                    onClick={() => setIsExpand(!isExpand)}
-                                    variant="outline"
-                                    className=" !border-none !bg-transparent !shadow-none">
-                                    <ExpandIcon />
-                                </Button>
-                                <kbd className="ml-auto pointer-events-none inline-flex select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[8px] font-medium text-muted-foreground">
-                                    Expand
-                                </kbd>
 
-                            </div>
                         </div>
                     </div>
+                ) : (
+                    <div>
+                        {!isLoading &&
+                            (
+                                <div className="flex flex-col items-center my-auto gap-y-2 p-4">
+                                    <FileText className="h-8 w-8 text-muted-foreground" />
+                                    <h3 className="text-lg font-semibold">No Summaries Found</h3>
+                                    <p className="text-xs text-muted-foreground">Get started by generating your first summary.</p>
+                                </div>
+                            )
+                        }
+                    </div>
+
+                )
+
 
                 }
 
@@ -204,13 +230,16 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
                 <SheetFooter>
                     <Button
-                        disabled={newsMutation.isPending}
+                        disabled={isButtonDisabled}
                         onClick={handleAskAI}
                     >
                         {newsMutation.isPending ? (
-                            <Loader className="animate-spin" />
+                            <div className="flex items-center justify-center my-auto gap-x-2 text-muted-foreground">
+                                <Loader className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Please wait, this may take a moment...</span>
+                            </div>
                         ) : (
-                            <span>Ask</span>
+                            <span>Generate Summary</span>
                         )}
                     </Button>
                 </SheetFooter>
