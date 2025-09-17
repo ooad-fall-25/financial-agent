@@ -5,21 +5,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { YahooStockTable } from "../components/yahoo-stock-graph"; // Adjust this path to where your component is located
+import { YahooStockTable } from "../components/yahoo-stock-graph"; // Adjust path
+
+// Define the structure for our range options
+interface RangeOption {
+    label: string;
+    range: string;
+    interval: string;
+}
+
+// Define the available range options
+const rangeOptions: RangeOption[] = [
+    { label: "1D", range: "1d", interval: "1m" },
+    { label: "5D", range: "5d", interval: "15m" },
+    { label: "1M", range: "1mo", interval: "1d" },
+    { label: "6M", range: "6mo", interval: "1d" },
+    { label: "YTD", range: "ytd", interval: "1d" },
+    { label: "1Y", range: "1y", interval: "1d" },
+    { label: "5Y", range: "5y", interval: "1wk" },
+    { label: "All", range: "max", interval: "1mo" },
+];
 
 export const YahooStockView = () => {
-    // State to hold the value of the input field
     const [tickerInput, setTickerInput] = useState("BTC-USD");
-    
-    // State to hold the ticker that has been submitted for fetching
-    // This prevents fetching data on every keystroke
     const [submittedTicker, setSubmittedTicker] = useState("BTC-USD");
+    
+    // --- NEW STATE for the selected range option ---
+    const [selectedRange, setSelectedRange] = useState<RangeOption>(rangeOptions[2]); // Default to 1M
 
-    // This function runs when the form is submitted
     const handleSearch = (event: React.FormEvent) => {
-        // Prevent the page from reloading on form submission
         event.preventDefault();
-        // Set the submitted ticker to trigger a re-fetch in the table component
         setSubmittedTicker(tickerInput);
     };
 
@@ -29,31 +44,50 @@ export const YahooStockView = () => {
                 <CardHeader>
                     <CardTitle>Yahoo Stock Data</CardTitle>
                     <CardDescription>
-                        Enter a stock ticker (e.g., AAPL, GOOGL, TSLA) to view its recent performance.
+                        Enter a stock ticker to view its recent performance.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {/* Form to handle user input and submission */}
-                    <form onSubmit={handleSearch} className="flex items-end gap-4">
-                        <div className="grid w-full max-w-sm items-center gap-1.5">
-                            <Label htmlFor="ticker">Stock Ticker</Label>
-                            <Input
-                                id="ticker"
-                                type="text"
-                                placeholder="e.g., AAPL"
-                                value={tickerInput}
-                                // Update the input state on every change, and convert to uppercase
-                                onChange={(e) => setTickerInput(e.target.value.toUpperCase())}
-                            />
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                        {/* Search Form */}
+                        <form onSubmit={handleSearch} className="flex items-end gap-4">
+                            <div className="grid w-full max-w-sm items-center gap-1.5">
+                                <Label htmlFor="ticker">Stock Ticker</Label>
+                                <Input
+                                    id="ticker"
+                                    type="text"
+                                    placeholder="e.g., AAPL"
+                                    value={tickerInput}
+                                    onChange={(e) => setTickerInput(e.target.value.toUpperCase())}
+                                />
+                            </div>
+                            <Button type="submit">Search</Button>
+                        </form>
+
+                        {/* --- NEW: Range Selector Buttons --- */}
+                        <div className="flex items-center gap-2 p-1 bg-muted rounded-md">
+                            {rangeOptions.map((option) => (
+                                <Button
+                                    key={option.label}
+                                    variant={selectedRange.label === option.label ? "secondary" : "ghost"}
+                                    size="sm"
+                                    onClick={() => setSelectedRange(option)}
+                                >
+                                    {option.label}
+                                </Button>
+                            ))}
                         </div>
-                        <Button type="submit">Search</Button>
-                    </form>
+                    </div>
 
                     {/* --- Display the Table --- */}
-                    {/* This section will only render the table if a ticker has been submitted */}
                     <div className="mt-8">
                         {submittedTicker && (
-                            <YahooStockTable Ticker={submittedTicker} />
+                            <YahooStockTable 
+                                Ticker={submittedTicker} 
+                                // Pass the selected range and interval to the table
+                                Range={selectedRange.range}
+                                Interval={selectedRange.interval}
+                            />
                         )}
                     </div>
                 </CardContent>

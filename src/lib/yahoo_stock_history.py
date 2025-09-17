@@ -8,25 +8,30 @@ app = FastAPI()
 
 # Define the API endpoint
 @app.get("/stock/{ticker}")
-def get_stock_data(ticker: str):
+def get_stock_data(ticker: str, time_range: str = "1d", interval: str = "1m"):
     """
     Fetches the last 10 days of stock data for a given ticker from Yahoo Finance.
     """
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=10)
-
-    period1 = int(start_date.timestamp())
-    period2 = int(end_date.timestamp())
-
-    url = f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}?period1={period1}&period2={period2}&interval=1d"
     
+    valid_ranges = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
+    if time_range not in valid_ranges:
+        raise HTTPException(status_code=400, detail="Invalid range parameter.")
+    
+
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+    
+    params = {
+        "range": time_range,
+        "interval": interval,
+    }
+
     headers = {
         # Using a robust User-Agent is key
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, params=params)
         # Raise an exception for bad status codes (4xx or 5xx)
         response.raise_for_status() 
         data = response.json()
@@ -51,6 +56,8 @@ def get_stock_data(ticker: str):
                 "date": datetime.utcfromtimestamp(timestamps[i]).strftime('%Y %B %d'),
                 "open": indicators['open'][i],
                 "close": indicators['close'][i],
+                "high": indicators['high'][i],
+                "low": indicators['low'][i],
                 "volume": indicators['volume'][i],
             })
             

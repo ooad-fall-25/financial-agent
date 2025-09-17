@@ -5,11 +5,13 @@ export interface StockDataPoint {
   date: string;
   open: number;
   close: number;
+  high: number;
+  low: number;
   volume: number;
   timestamp: number;
 }
 
-export const fetchStockData = async (ticker: string): Promise<StockDataPoint[]> => {
+export const fetchStockData = async (ticker: string, range: string, interval:string): Promise<StockDataPoint[]> => {
   // The URL now points to YOUR Python API server
   const apiUrl = `http://127.0.0.1:8000/stock/${ticker}`;
 
@@ -17,7 +19,12 @@ export const fetchStockData = async (ticker: string): Promise<StockDataPoint[]> 
 
   try {
     // The request is much simpler now. No headers needed here.
-    const response = await axios.get<StockDataPoint[]>(apiUrl);
+    const response = await axios.get<StockDataPoint[]>(apiUrl, {
+      params: {
+        time_range: range,
+        interval: interval
+      }
+    });
     
     // The data is already formatted by Python, so we can just return it!
     return response.data;

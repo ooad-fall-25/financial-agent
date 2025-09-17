@@ -38,10 +38,12 @@ export const YahooFinanceRouter = createTRPCRouter({
     .input(
       z.object({
         ticker: z.string(),
+        range: z.string(),
+        interval: z.string(),
       })
     )
     .query(async ({ input }) => {
-      const YahooStockData = await fetchStockData(input.ticker);
+      const YahooStockData = await fetchStockData(input.ticker, input.range, input.interval);
 
       if (!YahooStockData) {
         throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });

@@ -18,9 +18,12 @@ import {
 
 interface Props {
     Ticker: string;
+    Range: string;
+    Interval: string;
 }
 
-export const YahooStockTable = ({ Ticker }: Props) => {
+
+export const YahooStockTable = ({ Ticker, Range, Interval }: Props) => {
     // 1. Get the tRPC client instance
     const trpc = useTRPC();
 
@@ -29,6 +32,8 @@ export const YahooStockTable = ({ Ticker }: Props) => {
     const { data: stockData, isLoading, isError } = useQuery(trpc.YahooMarket.fetchStockData.queryOptions(
         {
             ticker: Ticker,
+            range: Range,
+            interval: Interval,
         }
     ));;
 
@@ -43,13 +48,14 @@ export const YahooStockTable = ({ Ticker }: Props) => {
 
     return (
         <Table>
-            <TableCaption>Daily stock data for {Ticker} over the last 10 days.</TableCaption>
             <TableHeader>
                 {/* 3. Define the table headers to match your stock data */}
                 <TableRow>
                     <TableHead className="w-[150px]">Date</TableHead>
                     <TableHead>Open</TableHead>
                     <TableHead>Close</TableHead>
+                    <TableHead>High</TableHead>
+                    <TableHead>Low</TableHead>
                     <TableHead className="text-right">Volume</TableHead>
                 </TableRow>
             </TableHeader>
@@ -61,6 +67,8 @@ export const YahooStockTable = ({ Ticker }: Props) => {
                         <TableCell className="font-medium">{stock.date}</TableCell>
                         <TableCell>${stock.open.toFixed(2)}</TableCell>
                         <TableCell>${stock.close.toFixed(2)}</TableCell>
+                        <TableCell>${stock.high.toFixed(2)}</TableCell>
+                        <TableCell>${stock.low.toFixed(2)}</TableCell>
                         <TableCell className="text-right">{stock.volume.toLocaleString()}</TableCell>
                     </TableRow>
                 ))}
