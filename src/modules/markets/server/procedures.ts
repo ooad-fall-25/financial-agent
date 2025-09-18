@@ -3,7 +3,7 @@ import z from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
-import { fetchStockData } from "@/lib/yahoo";
+import { fetchCompanyName, fetchStockData, fetchStockPerformance} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
 
 export const marketsRouter = createTRPCRouter({
@@ -51,4 +51,36 @@ export const YahooFinanceRouter = createTRPCRouter({
       return YahooStockData;
     }),
     
+
+    fetchCompanyName: protectedProcedure
+    .input(
+      z.object({
+        ticker: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const YahooStockSummary = await fetchCompanyName(input.ticker);
+
+      if (!YahooStockSummary) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });
+      }
+      return YahooStockSummary;
+    }),
+
+    fetchStockPerformance: protectedProcedure
+    .input(
+      z.object({
+        ticker: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const YahooStockPerformance = await fetchStockPerformance(input.ticker);
+
+      if (!YahooStockPerformance) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });
+      }
+      return YahooStockPerformance;
+    }),
+
+  
 });
