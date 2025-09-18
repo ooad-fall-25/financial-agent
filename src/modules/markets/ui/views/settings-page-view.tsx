@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -14,15 +14,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, EyeOff } from 'lucide-react'; // Import Eye and EyeOff icons
+import { Eye, EyeOff } from 'lucide-react'; 
+import { useTheme } from 'next-themes';
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState('en');
   const [darkMode, setDarkMode] = useState(false);
   const [fileRetention, setFileRetention] = useState(true);
   const [apiKeys, setApiKeys] = useState(
     [{ id: 1, name: 'Default API', key: 'sk-xxxxxxxxxxxxxxxxxxxx', showKey: false }] // Added showKey state
   );
+
+  useEffect(() => {
+    setDarkMode(theme === 'dark');
+  }, [theme]);
 
   const handleAddApiKey = () => {
     setApiKeys([...apiKeys, { id: apiKeys.length + 1, name: `API Key ${apiKeys.length + 1}`, key: '', showKey: false }]);
@@ -39,6 +45,11 @@ export default function SettingsPage() {
   // Toggle visibility of API key
   const toggleApiKeyVisibility = (id: number) => {
     setApiKeys(apiKeys.map(key => (key.id === id ? { ...key, showKey: !key.showKey } : key)));
+  };
+
+  const handleDarkModeToggle = (checked: boolean) => {
+    setDarkMode(checked);
+    setTheme(checked ? 'dark' : 'light'); // Set the global theme
   };
 
   return (
@@ -69,7 +80,7 @@ export default function SettingsPage() {
               <Switch
                 id="dark-mode"
                 checked={darkMode}
-                onCheckedChange={setDarkMode}
+                onCheckedChange={handleDarkModeToggle}
               />
             </div>
 
