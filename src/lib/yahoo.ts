@@ -27,6 +27,23 @@ export interface CompetitorsData {
   industry: string;
 }
 
+export interface NewsData {
+  uuid: string;
+  title: string;
+  publisher: string;
+  link: string;
+  time_ago: number;
+  thumbnail_url: string;
+}
+
+export interface SymbolSearchResult {
+  ticker: string;
+  companyName: string;
+  assetType: string;
+  exchange: string;
+}
+
+
   export const fetchStockData = async (ticker: string, range: string, interval:string): Promise<StockDataPoint[]> => {
     // The URL now points to YOUR Python API server
     const apiUrl = `http://127.0.0.1:8000/stock/${ticker}`;
@@ -109,5 +126,36 @@ export interface CompetitorsData {
     return null;
   }
   
+  
 };
+
+
+export const fetchCompNews = async (ticker: string): Promise<NewsData[] | null> => {
+  const apiUrl = `http://127.0.0.1:8000/stock-news/${ticker}`;
+
+  try {
+    const response = await axios.get<NewsData[]>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching performance data from Python API for ${ticker}:`, error);
+    return null;
+  }
+  
+  
+};
+
+export const fetchSymbolSearch = async (query: string): Promise<SymbolSearchResult[] | null> => {
+  if (!query) return []; // Don't make a request if the query is empty
+  const apiUrl = `http://127.0.0.1:8000/search-symbols/${query}`;
+
+  try {
+    const response = await axios.get<SymbolSearchResult[]>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching symbol search from Python API for query "${query}":`, error);
+    return null;
+  }
+};
+
+
 

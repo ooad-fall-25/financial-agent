@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import time
 import random
 from typing import List, Dict
+
 # Create an instance of the FastAPI class
 app = FastAPI()
 
@@ -50,7 +51,12 @@ def get_stock_data(ticker: str, time_range: str = "1d", interval: str = "1m"):
         
         formatted_data = []
         for i in range(len(timestamps)):
-
+            
+            if (indicators['open'][i] is None or
+                indicators['close'][i] is None or
+                indicators['close'][i - 1] is None):
+                continue
+        
             if indicators['open'][i] is None:
                 continue # Jumps to the next iteration of the loop
             
@@ -90,8 +96,10 @@ def get_stock_data(ticker: str, time_range: str = "1d", interval: str = "1m"):
 
 
 @app.get("/company_name/{ticker}")
-def get_company_name(ticker: str, industry = False):
-    url = f"https://finance.yahoo.com/quote/{ticker}"
+@app.get("/stock/{ticker}")
+def get_company_name(ticker: str, industry=False):
+
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -99,14 +107,10 @@ def get_company_name(ticker: str, industry = False):
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
+        result = response.json().get('chart', {}).get('result', [None])[0]
 
-        def safe_get_text(tag, default="N/A"):
-            return tag.get_text(strip=True) if tag else default
-
-        # --- Extract company name + ticker (always in <h1>) ---
-        h1_tag = soup.find("h2")
-        company_name = safe_get_text(h1_tag)
+        meta = result['meta']
+        company_name = meta.get('longName', ticker)
         if industry:
             return company_name.split('Overview')[1].strip()
         else:
@@ -210,10 +214,10 @@ def get_stock_performance(ticker: str):
 @app.get("/stock-competitors/{ticker}")
 def get_stock_competitors(ticker: str) -> List[Dict]:
     """
-    Finds a list of similar stocks and fetches their data individually for maximum reliability.
+    Finds a list of similar stocks and fetches their data individually
+    from a reliable API endpoint that does not require a crumb.
     """
     session = requests.Session()
-    # Use robust headers to mimic a real browser
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -223,26 +227,24 @@ def get_stock_competitors(ticker: str) -> List[Dict]:
         recommendations_url = f"https://query1.finance.yahoo.com/v6/finance/recommendationsbysymbol/{ticker}"
         response_recs = session.get(recommendations_url, headers=headers, timeout=10)
         response_recs.raise_for_status()
-        recs_data = response_recs.json()
 
-        competitor_list = recs_data.get('finance', {}).get('result', [{}])[0].get('recommendedSymbols', [])
+        competitor_list = response_recs.json().get('finance', {}).get('result', [{}])[0].get('recommendedSymbols', [])
         if not competitor_list:
-            return []  # Return an empty list if no competitors are found
+            return []
 
-        # Limit to the top 5 for performance and take only the ticker symbols
+        # Limit to the top 5 for performance
         competitor_tickers = [rec['symbol'] for rec in competitor_list[:5]]
 
-        # --- Step 2: Loop through tickers and fetch details one-by-one ---
+        # --- Step 2: Loop through tickers and fetch details one-by-one from the chart API ---
         formatted_competitors = []
         for comp_ticker in competitor_tickers:
             try:
                 # Add a small, random delay to avoid being rate-limited
-                time.sleep(random.uniform(0.2, 0.8))
+                time.sleep(random.uniform(0.2, 0.5))
 
-                # The /chart endpoint is often more reliable for single lookups
                 quote_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{comp_ticker}"
                 quote_response = session.get(quote_url, headers=headers, timeout=10)
-                quote_response.raise_for_status()  # Will trigger the 'except' block on failure
+                quote_response.raise_for_status()
 
                 result = quote_response.json().get('chart', {}).get('result', [None])[0]
                 if not result or 'meta' not in result:
@@ -250,30 +252,127 @@ def get_stock_competitors(ticker: str) -> List[Dict]:
 
                 meta = result['meta']
                 price = meta.get('regularMarketPrice', 0)
-                prev_close = meta.get('chartPreviousClose', price)  # Use chartPreviousClose for more accuracy
-
+                prev_close = meta.get('chartPreviousClose', price)
                 change_percent = ((price - prev_close) / prev_close * 100) if prev_close else 0
-                
+
                 formatted_competitors.append({
                     "ticker": comp_ticker,
-                    "companyName": get_company_name(comp_ticker) or "N/A",
+                    "companyName": meta.get('shortName', comp_ticker),  # Use shortName from meta
                     "price": f"{price:.2f}",
                     "changePercent": f"{change_percent:+.2f}%",
-                    "industry": get_company_name(comp_ticker, True) or "N/A"  # Use instrumentType as a fallback
+                    "industry": meta.get('instrumentType', 'N/A')
                 })
 
             except Exception as e:
                 # If a single ticker fails, print a log and continue with the others
-                print(f"Warning: Could not fetch data for competitor '{comp_ticker}'. Reason: {e}")
+                print(f"Warning: Could not fetch details for '{comp_ticker}'. Reason: {e}")
                 continue
-
-        for comp in formatted_competitors:
-            print(comp)
         return formatted_competitors
 
     except Exception as e:
-        # If the initial recommendation request fails, it's a server error
         raise HTTPException(status_code=500, detail=f"Failed to fetch competitor list: {str(e)}")
+
+
+# Place this helper function in main.py
+def format_time_ago(timestamp: int) -> str:
+    """Converts a Unix timestamp into a 'time ago' string like '6h ago' or '1d ago'."""
+    if not timestamp:
+        return ""
     
+    dt_object = datetime.fromtimestamp(timestamp)
+    now = datetime.now()
+    delta = now - dt_object
+
+    if delta.days > 0:
+        return f"{delta.days}d ago"
+    elif (hours := delta.seconds // 3600) > 0:
+        return f"{hours}h ago"
+    elif (minutes := delta.seconds // 60) > 0:
+        return f"{minutes}m ago"
+    else:
+        return "Just now"
+
+
+@app.get("/stock-news/{ticker}")
+def get_stock_news(ticker: str, count: int = 10):
+    """
+    Fetches recent news for a given stock ticker from the Yahoo Finance search API.
+    """
+    session = requests.Session()
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    
+    # This is the API endpoint Yahoo's frontend uses
+    url = "https://query1.finance.yahoo.com/v1/finance/search"
+    params = {"q": ticker, "newsCount": count}
+
+    try:
+        response = session.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        articles = data.get('news', [])
+        if not articles:
+            return []
+
+        # Format the data into a clean structure for our frontend
+        formatted_news = []
+        for article in articles:
+            # Safely get the thumbnail URL (it's often the highest resolution one)
+            thumbnail_url = None
+            if resolutions := article.get('thumbnail', {}).get('resolutions'):
+                thumbnail_url = resolutions[-1]['url']
+
+            formatted_news.append({
+                "uuid": article.get('uuid'),
+                "title": article.get('title'),
+                "publisher": article.get('publisher'),
+                "link": article.get('link'),
+                "time_ago": format_time_ago(article.get('providerPublishTime')),
+                "thumbnail_url": thumbnail_url
+            })
+
+        return formatted_news
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+
+
+@app.get("/search-symbols/{query}")
+def search_symbols(query: str, limit: int = 6):
+    """
+    Searches for stock symbols and returns a list of matching quotes.
+    """
+    session = requests.Session()
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    
+    # This is the dedicated search API endpoint
+    url = "https://query1.finance.yahoo.com/v1/finance/search"
+    params = {"q": query, "quotesCount": limit, "newsCount": 0} # We don't need news here
+
+    try:
+        response = session.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        quotes = data.get('quotes', [])
+        if not quotes:
+            return []
+
+        # Format the data into a clean structure for our frontend
+        formatted_results = []
+        for quote in quotes:
+            # We only want to show actual stocks, not ETFs, futures, etc.
+            if quote.get('quoteType') == 'EQUITY':
+                formatted_results.append({
+                    "ticker": quote.get('symbol'),
+                    "companyName": quote.get('longname', quote.get('shortname', '--')),
+                    "assetType": quote.get('quoteType', '--'),
+                    "exchange": quote.get('exchange', '--')
+                })
+
+        return formatted_results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
 # To run this server, use the command in your terminal:
 # uvicorn main:app --reload
