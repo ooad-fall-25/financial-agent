@@ -19,6 +19,13 @@ export interface PerformanceData {
   stock_return: number;
   benchmark_return: number;
 }
+export interface CompetitorsData {
+  ticker: string;
+  companyName: string;
+  price: number;
+  changePercent: number;
+  industry: string;
+}
 
   export const fetchStockData = async (ticker: string, range: string, interval:string): Promise<StockDataPoint[]> => {
     // The URL now points to YOUR Python API server
@@ -86,5 +93,21 @@ export interface PerformanceData {
     console.error(`Error fetching performance data from Python API for ${ticker}:`, error);
     return null;
   }
+
+  
+};
+
+
+  export const fetchCompCompetitors = async (ticker: string): Promise<CompetitorsData[] | null> => {
+  const apiUrl = `http://127.0.0.1:8000/stock-competitors/${ticker}`;
+
+  try {
+    const response = await axios.get<CompetitorsData[]>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching performance data from Python API for ${ticker}:`, error);
+    return null;
+  }
+  
 };
 

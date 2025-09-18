@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 // --- IMPORTANT: We only import the components themselves ---
 import { YahooStockHeader } from "../components/yahoo-stock-header";
 import { YahooStockChart } from "../components/yahoo-stock-graph";
-import { YahooPerformanceOverview } from "../components/yahoo_performance_overview"; // Make sure this is imported
-
+import { YahooPerformanceOverview } from "../components/yahoo-performance-overview"; // Make sure this is imported
+import { YahooCompare } from "../components/yahoo-compare"; 
 interface RangeOption {
     label: string;
     range: string;
@@ -99,6 +99,10 @@ export const YahooStockView = () => {
                     {/* Performance Overview section */}
                     <div className="mt-12">
                         {submittedTicker && <YahooPerformanceOverview Ticker={submittedTicker} />}
+                    </div>
+                    
+                    <div className="mt-12">
+                        {submittedTicker && <YahooCompare Ticker={submittedTicker} />}
                     </div>
 
                 </CardContent>

@@ -3,7 +3,9 @@ import requests
 from fastapi import FastAPI, HTTPException
 from datetime import datetime, timedelta, date
 from bs4 import BeautifulSoup
-
+import time
+import random
+from typing import List, Dict
 # Create an instance of the FastAPI class
 app = FastAPI()
 
@@ -88,7 +90,7 @@ def get_stock_data(ticker: str, time_range: str = "1d", interval: str = "1m"):
 
 
 @app.get("/company_name/{ticker}")
-def get_company_name(ticker: str):
+def get_company_name(ticker: str, industry = False):
     url = f"https://finance.yahoo.com/quote/{ticker}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -105,9 +107,11 @@ def get_company_name(ticker: str):
         # --- Extract company name + ticker (always in <h1>) ---
         h1_tag = soup.find("h2")
         company_name = safe_get_text(h1_tag)
-        cleaned_company_name = company_name.split('Overview')[0].strip()
+        if industry:
+            return company_name.split('Overview')[1].strip()
+        else:
+            return company_name.split('Overview')[0].strip()
 
-        return cleaned_company_name
 
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred for ticker {ticker}: {http_err}")
@@ -201,6 +205,75 @@ def get_stock_performance(ticker: str):
         raise HTTPException(status_code=http_err.response.status_code, detail=f"Error from Yahoo Finance for {ticker}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+
+
+@app.get("/stock-competitors/{ticker}")
+def get_stock_competitors(ticker: str) -> List[Dict]:
+    """
+    Finds a list of similar stocks and fetches their data individually for maximum reliability.
+    """
+    session = requests.Session()
+    # Use robust headers to mimic a real browser
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    try:
+        # --- Step 1: Get the list of recommended competitor tickers ---
+        recommendations_url = f"https://query1.finance.yahoo.com/v6/finance/recommendationsbysymbol/{ticker}"
+        response_recs = session.get(recommendations_url, headers=headers, timeout=10)
+        response_recs.raise_for_status()
+        recs_data = response_recs.json()
+
+        competitor_list = recs_data.get('finance', {}).get('result', [{}])[0].get('recommendedSymbols', [])
+        if not competitor_list:
+            return []  # Return an empty list if no competitors are found
+
+        # Limit to the top 5 for performance and take only the ticker symbols
+        competitor_tickers = [rec['symbol'] for rec in competitor_list[:5]]
+
+        # --- Step 2: Loop through tickers and fetch details one-by-one ---
+        formatted_competitors = []
+        for comp_ticker in competitor_tickers:
+            try:
+                # Add a small, random delay to avoid being rate-limited
+                time.sleep(random.uniform(0.2, 0.8))
+
+                # The /chart endpoint is often more reliable for single lookups
+                quote_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{comp_ticker}"
+                quote_response = session.get(quote_url, headers=headers, timeout=10)
+                quote_response.raise_for_status()  # Will trigger the 'except' block on failure
+
+                result = quote_response.json().get('chart', {}).get('result', [None])[0]
+                if not result or 'meta' not in result:
+                    continue  # Skip if the response is malformed
+
+                meta = result['meta']
+                price = meta.get('regularMarketPrice', 0)
+                prev_close = meta.get('chartPreviousClose', price)  # Use chartPreviousClose for more accuracy
+
+                change_percent = ((price - prev_close) / prev_close * 100) if prev_close else 0
+                
+                formatted_competitors.append({
+                    "ticker": comp_ticker,
+                    "companyName": get_company_name(comp_ticker) or "N/A",
+                    "price": f"{price:.2f}",
+                    "changePercent": f"{change_percent:+.2f}%",
+                    "industry": get_company_name(comp_ticker, True) or "N/A"  # Use instrumentType as a fallback
+                })
+
+            except Exception as e:
+                # If a single ticker fails, print a log and continue with the others
+                print(f"Warning: Could not fetch data for competitor '{comp_ticker}'. Reason: {e}")
+                continue
+
+        for comp in formatted_competitors:
+            print(comp)
+        return formatted_competitors
+
+    except Exception as e:
+        # If the initial recommendation request fails, it's a server error
+        raise HTTPException(status_code=500, detail=f"Failed to fetch competitor list: {str(e)}")
     
 # To run this server, use the command in your terminal:
 # uvicorn main:app --reload
