@@ -49,7 +49,7 @@ const providers = [
     }
 ]
 
-const languages = ["English", "Chinese"]
+const languages = ["English", "Chinese", "Khmer", "Indonesian"]
 
 export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [providerName, setProviderName] = useState<string | null>(null);
