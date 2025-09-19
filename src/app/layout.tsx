@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import {
-  Geist, 
+  Geist,
   Geist_Mono,
-  Libre_Baskerville, 
+  Libre_Baskerville,
 } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,12 +45,13 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable}  antialiased font-libre bg-background text-foreground`}
           >
             <ThemeProvider
-              attribute="class" 
+              attribute="class"
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
             >
               {children}
+              <Toaster position="top-center" />
             </ThemeProvider>
           </body>
         </html>

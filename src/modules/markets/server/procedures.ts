@@ -5,6 +5,12 @@ import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
 import { fetchCompanyName, fetchCompCompetitors, fetchStockData, fetchStockPerformance} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
+import { getAINewsSummary } from "@/lib/langchain";
+import {
+  getAllFinnhubNewsSummary,
+  getAllPolygonNewsSummary,
+} from "@/lib/utils";
+import { prisma } from "@/lib/db";
 
 export const marketsRouter = createTRPCRouter({
   getMarketNews: protectedProcedure
@@ -31,6 +37,76 @@ export const marketsRouter = createTRPCRouter({
     const result = stockNews.results;
     return result;
   }),
+
+  createAINewsSummary: protectedProcedure
+    .input(
+      z.object({
+        language: z.string(),
+        providerName: z.string(),
+        category: z.string(),
+        days: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      let accumulatedNews = "";
+      if (input.providerName === "finnhub") {
+        accumulatedNews = await getAllFinnhubNewsSummary(
+          input.category.toLowerCase()
+        );
+      } else if (input.providerName === "polygon") {
+        accumulatedNews = await getAllPolygonNewsSummary();
+      } else {
+        return;
+      }
+
+      if (accumulatedNews.length == 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No news found" });
+      }
+
+      const newsSummary = await getAINewsSummary(
+        accumulatedNews,
+        input.language,
+        input.providerName,
+        input.category,
+        input.days
+      );
+
+      if (!newsSummary) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+      }
+
+      const createdSummary = await prisma.newsSummary.create({
+        data: {
+          userId: ctx.auth.userId,
+          aiRepsonse: newsSummary.content.toString(),
+          provider: input.providerName,
+          category: input.category,
+          language: input.language,
+          days: input.days,
+        },
+      });
+
+      // manually insert id field, easy to query back from db. it was auto assigned by db, type number
+      return {...newsSummary, id: createdSummary.id};
+    }),
+
+  getAINewsSummary: protectedProcedure
+    .query(async ({ ctx }) => {
+      const newsSummary = prisma.newsSummary.findFirst({
+        where: {
+          userId: ctx.auth.userId,
+        }, 
+        orderBy: {
+          createdAt: "desc"
+        }
+      })
+
+      if (!newsSummary) {
+        throw new TRPCError({code:"NOT_FOUND" , message: "Summary not found"})
+      }
+
+      return newsSummary; 
+    }),
 });
 
 export const YahooFinanceRouter = createTRPCRouter({
