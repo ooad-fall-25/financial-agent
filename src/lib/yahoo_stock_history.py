@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import time
 import random
 from typing import List, Dict
-
+from enum import Enum
 # Create an instance of the FastAPI class
 app = FastAPI()
 
@@ -374,5 +374,126 @@ def search_symbols(query: str, limit: int = 6):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+    
+
+
+# Use an Enum to define and validate the allowed screener types
+class ScreenerType(str, Enum):
+    MOST_ACTIVE = "most_actives"
+    TOP_GAINERS = "day_gainers"
+    TOP_LOSERS = "day_losers"
+    # You can add more screeners here as you discover their IDs
+    FIFTY_TWO_WK_GAINERS = "recent_52_week_highs" 
+    FIFTY_TWO_WK_LOSERS = "recent_52_week_lows"
+
+@app.get("/market-discovery/{screener_type}")
+def get_market_screener(screener_type: ScreenerType, count: int = 10) -> List[Dict]:
+    """
+    Fetches a list of stocks from a predefined Yahoo Finance screener.
+    This powers the main discovery table for Most Active, Gainers, Losers, etc.
+    """
+    session = requests.Session()
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+    # The screener API endpoint
+    url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved"
+    params = {
+        "scrIds": screener_type.value,
+        "count": count,
+        "start": 0
+    }
+
+    try:
+        response = session.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        quotes = data.get('finance', {}).get('result', [{}])[0].get('quotes', [])
+        if not quotes:
+            return []
+
+        # Format the data into the structure needed by your frontend table
+        formatted_results = []
+        for quote in quotes:
+            # Helper to safely get nested values
+            def get_val(key, default=None):
+                val = quote.get(key)
+                # Yahoo sometimes returns empty dicts {} instead of numbers
+                return val if isinstance(val, (int, float)) else default
+
+            formatted_results.append({
+                "ticker": quote.get('symbol'),
+                "companyName": quote.get('longName', quote.get('shortName')),
+                "price": get_val('regularMarketPrice'),
+                "change": get_val('regularMarketChange'),
+                "changePercent": get_val('regularMarketChangePercent'),
+                "volume": get_val('regularMarketVolume'),
+                "avgVolume3Month": get_val('averageDailyVolume3Month'),
+                "marketCap": get_val('marketCap'),
+                "peRatio": get_val('trailingPE'),
+                "fiftyTwoWeekChangePercent": get_val('fiftyTwoWeekChangePercent')
+            })
+
+        return formatted_results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+    
+
+
+@app.get("/market-trending")
+def get_trending_tickers(count: int = 6) -> List[Dict]:
+    """
+    Fetches the current "Trending Tickers" from Yahoo Finance.
+    This is perfect for the horizontal scroller at the top of the page.
+    """
+    session = requests.Session()
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+    try:
+        # --- Step 1: Get the list of trending tickers ---
+        trending_url = "https://query1.finance.yahoo.com/v1/finance/trending/US"
+        trending_response = session.get(trending_url, headers=headers, timeout=10)
+        trending_response.raise_for_status()
+
+        quotes = trending_response.json().get('finance', {}).get('result', [{}])[0].get('quotes', [])
+        if not quotes:
+            return []
+
+
+        # Extract just the ticker symbols, limited by the count
+        trending_tickers = [q['symbol'] for q in quotes[:count]]
+
+        # --- Step 2: Batch fetch the quote details for these tickers ---
+        if not trending_tickers:
+            return []
+        formatted_results = []
+        for ticker in trending_tickers:
+            quote_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+            quote_response = session.get(quote_url, headers=headers, timeout=10)
+            quote_response.raise_for_status()
+
+            results = quote_response.json().get('chart', {}).get('result', [None])[0]
+            if not results:
+                return []
+
+            meta = results['meta']
+            price = meta.get('regularMarketPrice', 0)
+            prev_close = meta.get('chartPreviousClose', price)
+            change_percent = ((price - prev_close) / prev_close * 100) if prev_close else 0
+        # --- Step 3: Format the results for the frontend cards ---
+            formatted_results.append({
+                "ticker": ticker,
+                "companyName": meta.get('shortName', ticker),  # Use shortName from meta
+                "price": price,
+                "changePercent": change_percent,
+            })
+
+        return formatted_results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+    
+    
 # To run this server, use the command in your terminal:
 # uvicorn main:app --reload

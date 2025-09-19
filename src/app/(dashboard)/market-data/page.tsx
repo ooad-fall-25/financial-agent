@@ -1,10 +1,14 @@
-import { YahooStockView } from "@/modules/markets/ui/views/yahoo-stock-aggregation-view"; // Adjust the path
-const Page = () => {
-    return (
-        <div>
-            <YahooStockView /> 
-        </div>
-    )
-}
+// This file acts as the entry point for the "/markets" URL.
+// Its only job is to render your main discovery view.
 
-export default Page;
+import YahooDiscoveryView from '@/modules/markets/ui/views/yahoo-discovery-view'; // Adjust path if needed
+
+// This is the main component for the /markets route.
+// By making it the default export, you tell Next.js to render this.
+export default function MarketsPage() {
+  return (
+    // You can add any page-specific layout here if you want,
+    // but simply rendering the view is perfect.
+    <YahooDiscoveryView />
+  );
+}

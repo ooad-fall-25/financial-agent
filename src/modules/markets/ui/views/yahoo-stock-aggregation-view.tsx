@@ -29,9 +29,14 @@ const rangeOptions: RangeOption[] = [
     { label: "All", range: "max", interval: "1mo" },
 ];
 
-export const YahooStockView = () => {
-    const [searchInput, setSearchInput] = useState("AAPL");
-    const [submittedTicker, setSubmittedTicker] = useState("AAPL");
+type YahooStockViewProps = {
+    ticker: string;
+};
+
+
+export const YahooStockView = ({ ticker }: YahooStockViewProps) => {
+    const [searchInput, setSearchInput] = useState(ticker);
+    const [submittedTicker, setSubmittedTicker] = useState(ticker);
     const [selectedRange, setSelectedRange] = useState<RangeOption>(rangeOptions[2]);
 
     const handleSearch = (event: React.FormEvent) => {

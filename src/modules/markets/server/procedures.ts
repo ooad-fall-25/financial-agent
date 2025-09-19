@@ -4,7 +4,9 @@ import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
 import { fetchCompanyName, fetchCompCompetitors, 
-  fetchStockData, fetchStockPerformance, fetchCompNews, fetchSymbolSearch} from "@/lib/yahoo";
+  fetchStockData, fetchStockPerformance, fetchCompNews, fetchSymbolSearch,
+  fetchMarketScreener,
+  fetchTrendingTickers} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
 import { getAINewsSummary } from "@/lib/langchain";
 import {
@@ -207,5 +209,31 @@ export const YahooFinanceRouter = createTRPCRouter({
       return results;
     }),
 
+       fetchMarketScreener: protectedProcedure // Add this new procedure
+    .input(
+      z.object({
+        query: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Return empty array if query is too short to avoid useless API calls
+      if (input.query.length < 2) {
+        return [];
+      }
+      const results = await fetchMarketScreener(input.query);
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
+      }
+      return results;
+    }),
+
+    fetchTrendingTickers  : protectedProcedure 
+    .query(async () => {
+      const results = await fetchTrendingTickers();
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
+      }
+      return results;
+    }),
   
 });

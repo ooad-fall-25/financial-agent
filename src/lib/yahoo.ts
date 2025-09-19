@@ -43,6 +43,26 @@ export interface SymbolSearchResult {
   exchange: string;
 }
 
+export interface MarketScreenerData {
+  ticker: string;
+  companyName: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  avgVolume3Month: number;
+  marketCap: number;
+  peRatio: number;
+  fiftyTwoWeekChangePercent: number;
+}
+
+
+export interface TrendingTickerData {
+  ticker: string;
+  companyName: string;
+  price: number;
+  changePercent: number;
+}
 
   export const fetchStockData = async (ticker: string, range: string, interval:string): Promise<StockDataPoint[]> => {
     // The URL now points to YOUR Python API server
@@ -156,6 +176,40 @@ export const fetchSymbolSearch = async (query: string): Promise<SymbolSearchResu
     return null;
   }
 };
+
+
+export const fetchMarketScreener = async (query: string): Promise<MarketScreenerData[] | null> => {
+  if (!query) return []; // Don't make a request if the query is empty
+  const apiUrl = `http://127.0.0.1:8000/market-discovery/${query}`;
+
+  try {
+    const response = await axios.get<MarketScreenerData[]>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching symbol search from Python API for query "${query}":`, error);
+    return null;
+  }
+};
+
+
+
+export const fetchTrendingTickers = async (count: number = 6): Promise<TrendingTickerData[] | null> => {
+  // The API endpoint is different and doesn't need a query string
+  const apiUrl = `http://127.0.0.1:8000/market-trending?count=${count}`;
+
+  try {
+    const response = await axios.get<TrendingTickerData[]>(apiUrl);
+    return response.data;
+  } catch (error) {
+    // Updated the error message for clarity
+    console.error(`Error fetching trending tickers from Python API:`, error);
+    return null;
+  }
+};
+
+
+
+
 
 
 
