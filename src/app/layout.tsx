@@ -8,6 +8,7 @@ import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +52,10 @@ export default function RootLayout({
             >
               {children}
             </ThemeProvider>
+            className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable}  antialiased font-libre `}
+          >
+            {children}
+            <Toaster position="top-center"/>
           </body>
         </html>
       </TRPCReactProvider>
