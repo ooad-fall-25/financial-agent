@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import {
-  Geist, 
+  Geist,
   Geist_Mono,
-  Libre_Baskerville, 
+  Libre_Baskerville,
 } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
@@ -45,17 +45,14 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable}  antialiased font-libre bg-background text-foreground`}
           >
             <ThemeProvider
-              attribute="class" 
+              attribute="class"
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
             >
               {children}
+              <Toaster position="top-center" />
             </ThemeProvider>
-            className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable}  antialiased font-libre `}
-          >
-            {children}
-            <Toaster position="top-center"/>
           </body>
         </html>
       </TRPCReactProvider>
