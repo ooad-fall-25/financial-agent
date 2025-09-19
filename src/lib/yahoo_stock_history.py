@@ -7,6 +7,7 @@ import time
 import random
 from typing import List, Dict
 from enum import Enum
+from pydantic import BaseModel
 # Create an instance of the FastAPI class
 app = FastAPI()
 
@@ -493,7 +494,70 @@ def get_trending_tickers(count: int = 6) -> List[Dict]:
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+
+  
+
+class TickersRequest(BaseModel):
+    tickers: List[str]
+
+
+
+@app.post("/market-data/batch")
+def get_market_data_batch(request: TickersRequest) -> List[Dict]:
+    """
+    Accepts a list of tickers and returns summary market data for each.
+    This is highly efficient for fetching data for multiple indices, assets, etc.
+    """
+    session = requests.Session()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     
-    
+    formatted_data = []
+    for ticker in request.tickers:
+        try:
+            # Use the chart endpoint as it contains the summary data in 'meta'
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+            response = session.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+
+            result = response.json().get('chart', {}).get('result', [None])[0]
+            if not result or 'meta' not in result:
+                continue
+
+            meta = result['meta']
+            price = meta.get('regularMarketPrice', 0)
+            prev_close = meta.get('chartPreviousClose', price)
+            
+            change = price - prev_close
+            change_percent = ((price - prev_close) / prev_close * 100) if prev_close else 0
+            
+            sparkline_data = []
+            if 'timestamp' in result and result['indicators']['quote'][0]['close']:
+                timestamps = result['timestamp']
+                prices = result['indicators']['quote'][0]['close']
+                for i in range(len(timestamps)):
+                    if prices[i] is not None:
+                        sparkline_data.append({"price": prices[i]})
+
+            formatted_data.append({
+                "ticker": ticker,
+                "companyName": meta.get('shortName', ticker),
+                "price": price,
+                "change": change,
+                "changePercent": change_percent,
+                "sparkline": sparkline_data 
+            })
+            
+            # Small delay to be respectful to the API
+            time.sleep(0.1)
+
+        except Exception as e:
+            print(f"Warning: Could not fetch data for '{ticker}'. Reason: {e}")
+            continue
+            
+    return formatted_data
+
+
 # To run this server, use the command in your terminal:
 # uvicorn main:app --reload

@@ -10,7 +10,7 @@ import { YahooStockChart } from "../components/yahoo-stock-graph";
 import { YahooPerformanceOverview } from "../components/yahoo-performance-overview";
 import { YahooCompare } from "../components/yahoo-compare";
 import { YahooStockNews } from "../components/yahoo-stock-news";
-import { YahooSymbolSearch } from "../components/yahoo-symbol-search"; 
+import { StockSearchBar } from "../components/yahoo-stock-search"; // Import your reusable component
 
 interface RangeOption {
     label: string;
@@ -33,19 +33,13 @@ type YahooStockViewProps = {
     ticker: string;
 };
 
-
 export const YahooStockView = ({ ticker }: YahooStockViewProps) => {
-    const [searchInput, setSearchInput] = useState(ticker);
     const [submittedTicker, setSubmittedTicker] = useState(ticker);
     const [selectedRange, setSelectedRange] = useState<RangeOption>(rangeOptions[2]);
 
-    const handleSearch = (event: React.FormEvent) => {
-        event.preventDefault();
-        if (searchInput) {
-            setSubmittedTicker(searchInput.toUpperCase());
-            // Clear the search results dropdown after searching
-            setSearchInput(""); 
-        }
+    // Handle when a stock is selected/searched from StockSearchBar
+    const handleStockSelect = (newTicker: string) => {
+        setSubmittedTicker(newTicker.toUpperCase());
     };
 
     return (
@@ -57,20 +51,14 @@ export const YahooStockView = ({ ticker }: YahooStockViewProps) => {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                        <form onSubmit={handleSearch} className="flex items-end gap-4">
-                            <div className="grid w-full max-w-lg items-center gap-1.5">
-                                <label htmlFor="ticker-search" className="text-sm font-medium">Stock Ticker</label>
-                                <YahooSymbolSearch
-                                    value={searchInput}
-                                    onChange={setSearchInput}
-                                    onSelect={(ticker) => {
-                                        setSearchInput(ticker);
-                                        setSubmittedTicker(ticker);
-                                    }}
-                                />
-                            </div>
-                            <Button type="submit">Search</Button>
-                        </form>
+                        {/* Replace the form with your reusable StockSearchBar */}
+                        <div className="max-w-lg">
+                            <StockSearchBar 
+                                onSearch={handleStockSelect}
+                                onSelect={handleStockSelect}
+                            />
+                        </div>
+                        
                         <div className="flex items-center gap-2 p-1 bg-muted rounded-md">
                            {rangeOptions.map((option) => (
                                 <Button

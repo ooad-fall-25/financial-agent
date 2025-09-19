@@ -39,7 +39,8 @@ export const YahooSymbolSearch = ({ value, onChange, onSelect }: Props) => {
   };
 
   return (
-    <div className="relative w-full max-w-sm">
+    // Remove max-w-sm and let the parent control the width
+    <div className="relative w-full">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         id="ticker-search"
@@ -65,13 +66,10 @@ export const YahooSymbolSearch = ({ value, onChange, onSelect }: Props) => {
           )}
           {searchResults && searchResults.length > 0 && (
             <div className="max-h-72 overflow-y-auto">
-              
-              {/* --- START OF THE VISUAL UPDATE --- */}
               {searchResults.map((result) => (
                 <button
                   key={result.ticker}
                   onClick={() => handleSelect(result.ticker)}
-                  // Use Flexbox to create the two-column layout
                   className="w-full text-left p-3 hover:bg-muted/50 flex justify-between items-center"
                 >
                   {/* Left Column: Ticker and Company Name */}
@@ -89,8 +87,6 @@ export const YahooSymbolSearch = ({ value, onChange, onSelect }: Props) => {
                   </div>
                 </button>
               ))}
-              {/* --- END OF THE VISUAL UPDATE --- */}
-
             </div>
           )}
         </div>

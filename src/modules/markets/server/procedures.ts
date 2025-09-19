@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
 import { fetchCompanyName, fetchCompCompetitors, 
   fetchStockData, fetchStockPerformance, fetchCompNews, fetchSymbolSearch,
-  fetchMarketScreener,
+  fetchMarketScreener, fetchMarketDataByTickers,
   fetchTrendingTickers} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
 import { getAINewsSummary } from "@/lib/langchain";
@@ -235,5 +235,22 @@ export const YahooFinanceRouter = createTRPCRouter({
       }
       return results;
     }),
+
+      fetchMarketDataByTickers: protectedProcedure
+    .input(
+      z.object({ 
+        tickers: z.array(z.string()) 
+      })
+    )
+    .query(async ({ input }) => {
+      // Call the new, correct fetching function from lib/yahoo.ts
+      const marketData = await fetchMarketDataByTickers(input.tickers);
+
+      if (!marketData) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Failed to fetch market data" });
+      }
+      return marketData;
+    }),
+
   
 });

@@ -64,7 +64,16 @@ export interface TrendingTickerData {
   changePercent: number;
 }
 
-  export const fetchStockData = async (ticker: string, range: string, interval:string): Promise<StockDataPoint[]> => {
+export interface MarketSummaryData {
+  ticker: string;
+  companyName: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  sparkline?: { price: number }[];
+}
+
+  export const fetchStockData = async (ticker: string, range?: string, interval?:string): Promise<StockDataPoint[]> => {
     // The URL now points to YOUR Python API server
     const apiUrl = `http://127.0.0.1:8000/stock/${ticker}`;
 
@@ -207,6 +216,23 @@ export const fetchTrendingTickers = async (count: number = 6): Promise<TrendingT
   }
 };
 
+export const fetchMarketDataByTickers = async (tickers: string[]): Promise<MarketSummaryData[] | null> => {
+  if (!tickers || tickers.length === 0) {
+    return [];
+  }
+  const apiUrl = `http://127.0.0.1:8000/market-data/batch`;
+
+  try {
+    // We use axios.post to send the list of tickers in the request body
+    const response = await axios.post<MarketSummaryData[]>(apiUrl, {
+      tickers: tickers // The body matches the Pydantic model in Python
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching batch market data from Python API:`, error);
+    return null;
+  }
+};
 
 
 
