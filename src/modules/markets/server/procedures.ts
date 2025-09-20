@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
 import { fetchCompanyName, fetchCompCompetitors, 
   fetchStockData, fetchStockPerformance, fetchCompNews, fetchSymbolSearch,
-  fetchMarketScreener, fetchMarketDataByTickers,
+  fetchMarketScreener, fetchMarketDataByTickers,fetchCryptoScreener,
   fetchTrendingTickers} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
 import { getAINewsSummary } from "@/lib/langchain";
@@ -250,6 +250,20 @@ export const YahooFinanceRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Failed to fetch market data" });
       }
       return marketData;
+    }),
+
+      fetchCryptoScreener: protectedProcedure
+    .input(
+      z.object({
+        screener: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const results = await fetchCryptoScreener(input.screener);
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Crypto screener failed" });
+      }
+      return results;
     }),
 
   

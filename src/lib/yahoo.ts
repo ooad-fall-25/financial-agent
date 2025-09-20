@@ -73,6 +73,20 @@ export interface MarketSummaryData {
   sparkline?: { price: number }[];
 }
 
+
+export interface CryptoData {
+  ticker: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  marketCap: number;
+  volume24hr: number;
+  volumeAllCurrencies24hr: number;
+  circulatingSupply: number;
+  sparkline?: { price: number }[];
+}
+
   export const fetchStockData = async (ticker: string, range?: string, interval?:string): Promise<StockDataPoint[]> => {
     // The URL now points to YOUR Python API server
     const apiUrl = `http://127.0.0.1:8000/stock/${ticker}`;
@@ -233,6 +247,20 @@ export const fetchMarketDataByTickers = async (tickers: string[]): Promise<Marke
     return null;
   }
 };
+
+export const fetchCryptoScreener = async (screener: string): Promise<CryptoData[] | null> => {
+  if (!screener) return [];
+  const apiUrl = `http://127.0.0.1:8000/crypto-screener/${screener}`;
+
+  try {
+    const response = await axios.get<CryptoData[]>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching crypto screener from Python API for "${screener}":`, error);
+    return null;
+  }
+};
+
 
 
 

@@ -5,6 +5,8 @@ import React from 'react';
 import { MarketScreener, TrendingSection } from "../components/discovery-page";
 import {StockSearchBar} from '../components/yahoo-stock-search';
 import {WorldIndices} from '../components/world-indices';
+import { AssetsDashboard } from '../components/asset-indices';
+import { CryptoDashboard } from '../components/crypto-indices';
 
 export default function DiscoveryPage() {
   return (
@@ -12,6 +14,7 @@ export default function DiscoveryPage() {
       <div className="container mx-auto">
 
         <WorldIndices />
+        <AssetsDashboard />
          {/* Stack vertically: title above search */}
         <div className="flex flex-col items-start mb-8 gap-4">
           <h1 className="text-4xl font-bold">Stocks</h1>
@@ -24,6 +27,7 @@ export default function DiscoveryPage() {
         
         <TrendingSection />
         <MarketScreener />
+        <CryptoDashboard/>
       </div>
     </main>
   );

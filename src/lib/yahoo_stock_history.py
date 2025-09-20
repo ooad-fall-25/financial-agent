@@ -559,5 +559,65 @@ def get_market_data_batch(request: TickersRequest) -> List[Dict]:
     return formatted_data
 
 
+class CryptoScreenerType(str, Enum):
+    ALL = "all_cryptocurrencies_us"
+    MOST_ACTIVE = "most_actives_cryptocurrencies"
+    TOP_GAINERS = "day_gainers_cryptocurrencies"
+    TOP_LOSERS = "day_losers_cryptocurrencies"
+    # Note: "Trending Now" for crypto is not a standard screener, 
+    # so we'll handle that by fetching a list of top cryptos.
+
+# --- Add this new endpoint to your main.py file ---
+@app.get("/crypto-screener/{screener_type}")
+def get_crypto_screener(screener_type: CryptoScreenerType, count: int = 25) -> List[Dict]:
+    """
+    Fetches a list of cryptocurrencies from a predefined Yahoo Finance screener.
+    """
+    session = requests.Session()
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved"
+    params = {"scrIds": screener_type.value, "count": count, "start": 0}
+
+    try:
+        response = session.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        quotes = data.get('finance', {}).get('result', [{}])[0].get('quotes', [])
+        if not quotes:
+            return []
+
+        formatted_results = []
+        for quote in quotes:
+            # Helper to safely get nested values
+            def get_val(key, default=None):
+                val = quote.get(key)
+                return val if isinstance(val, (int, float)) else default
+
+            # --- Extract the sparkline data ---
+            sparkline_data = []
+            if spark_data := quote.get('spark', {}).get('close', []):
+                for price_point in spark_data:
+                    if price_point is not None:
+                        sparkline_data.append({"price": price_point})
+
+            formatted_results.append({
+                "ticker": quote.get('symbol'),
+                "name": quote.get('longName', quote.get('shortName')),
+                "price": get_val('regularMarketPrice'),
+                "change": get_val('regularMarketChange'),
+                "changePercent": get_val('regularMarketChangePercent'),
+                "marketCap": get_val('marketCap'),
+                "volume24hr": get_val('volume24Hr'),
+                "volumeAllCurrencies24hr": get_val('totalVolume24hr'),
+                "circulatingSupply": get_val('circulatingSupply'),
+                "sparkline": sparkline_data
+            })
+        
+        return formatted_results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+
+
 # To run this server, use the command in your terminal:
 # uvicorn main:app --reload
