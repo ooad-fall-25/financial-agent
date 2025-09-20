@@ -33,13 +33,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export const YahooStockChart = ({ Ticker, Range, Interval }: Props) => {
     const trpc = useTRPC();
 
-    const { data: stockData, isLoading, isError } = useQuery(trpc.YahooMarket.fetchStockData.queryOptions(
-        {
-            ticker: Ticker,
-            range: Range,
-            interval: Interval,
-        }
-    ));
+    const { data: stockData, isLoading, isError } = useQuery({ 
+    ...trpc.YahooMarket.fetchStockData.queryOptions( 
+        { 
+            ticker: Ticker, 
+            range: Range, 
+            interval: Interval, 
+        } 
+    ), 
+    // Add these options: 
+    refetchInterval: 30000, // Refetch every 30 seconds 
+    refetchIntervalInBackground: true, 
+});
 
     // --- NEW LOGIC TO GENERATE UNIQUE YEAR TICKS ---
     // 1. We use `useMemo` so this calculation only runs when the data or range changes.

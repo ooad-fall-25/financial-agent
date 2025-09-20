@@ -3,7 +3,10 @@ import z from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
-import { fetchCompanyName, fetchCompCompetitors, fetchStockData, fetchStockPerformance} from "@/lib/yahoo";
+import { fetchCompanyName, fetchCompCompetitors, 
+  fetchStockData, fetchStockPerformance, fetchCompNews, fetchSymbolSearch,
+  fetchMarketScreener, fetchMarketDataByTickers,fetchCryptoScreener,
+  fetchTrendingTickers} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
 import { getAINewsSummary } from "@/lib/langchain";
 import {
@@ -171,6 +174,96 @@ export const YahooFinanceRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });
       }
       return Competitors;
+    }),
+
+    fetchCompNews: protectedProcedure
+    .input(
+      z.object({
+        ticker: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const News = await fetchCompNews(input.ticker);
+
+      if (!News) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });
+      }
+      return News;
+    }),
+
+    searchSymbols: protectedProcedure // Add this new procedure
+    .input(
+      z.object({
+        query: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Return empty array if query is too short to avoid useless API calls
+      if (input.query.length < 2) {
+        return [];
+      }
+      const results = await fetchSymbolSearch(input.query);
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
+      }
+      return results;
+    }),
+
+       fetchMarketScreener: protectedProcedure // Add this new procedure
+    .input(
+      z.object({
+        query: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Return empty array if query is too short to avoid useless API calls
+      if (input.query.length < 2) {
+        return [];
+      }
+      const results = await fetchMarketScreener(input.query);
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
+      }
+      return results;
+    }),
+
+    fetchTrendingTickers  : protectedProcedure 
+    .query(async () => {
+      const results = await fetchTrendingTickers();
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
+      }
+      return results;
+    }),
+
+      fetchMarketDataByTickers: protectedProcedure
+    .input(
+      z.object({ 
+        tickers: z.array(z.string()) 
+      })
+    )
+    .query(async ({ input }) => {
+      // Call the new, correct fetching function from lib/yahoo.ts
+      const marketData = await fetchMarketDataByTickers(input.tickers);
+
+      if (!marketData) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Failed to fetch market data" });
+      }
+      return marketData;
+    }),
+
+      fetchCryptoScreener: protectedProcedure
+    .input(
+      z.object({
+        screener: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const results = await fetchCryptoScreener(input.screener);
+      if (!results) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Crypto screener failed" });
+      }
+      return results;
     }),
 
   
