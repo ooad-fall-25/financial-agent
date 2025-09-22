@@ -5,32 +5,65 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ExternalLink, Loader, StarsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { AskAINewsLinkDialog } from "./ask-ai-news-link-dialog";
 
 interface Props {
     marketCategory: string;
     provider: string;
 }
-export const MarketNewsTable = ({ marketCategory, provider }: Props) => {
-    if (provider === "polygon") {
-        return (
-            <PolygonNewsTable />
-        )
-    } else {
-        return (
-            <FinnhubNewsTable marketCategory={marketCategory} />
-        )
-    }
+interface DialogDataProps {
+    providerName: string;
+    url: string;
+    category: string;
+    headline: string;
+    summary: string;
 }
 
-const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
+export const MarketNewsTable = ({ marketCategory, provider }: Props) => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogData, setDialogData] = useState<DialogDataProps | null>(null);
+
+    const openDialog = (data: DialogDataProps) => {
+        setDialogData(data);
+        setIsDialogOpen(true);
+    };
+
+    return (
+        <>
+            {provider === "polygon" ? (
+                <PolygonNewsTable openDialog={openDialog} />
+
+            ) : (
+                <FinnhubNewsTable marketCategory={marketCategory} openDialog={openDialog} />
+
+            )}
+            <AskAINewsLinkDialog
+                isOpen={isDialogOpen}
+                setIsOpen={setIsDialogOpen}
+                providerName={dialogData?.providerName || ""}
+                url={dialogData?.url || ""}
+                category={dialogData?.category || ""}
+                headline={dialogData?.headline || ""}
+                summary={dialogData?.summary || ""}
+            />
+
+        </>
+    )
+}
+
+interface FinnhubProps {
+    marketCategory: string;
+    openDialog: (data: DialogDataProps) => void;
+}
+
+const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
     const trpc = useTRPC();
     const { data: marketNews, isLoading } = useQuery(trpc.marketssssss.getMarketNews.queryOptions(
         {
             category: marketCategory,
         }
     ));
-
-    const newsByLink = useMutation(trpc.marketssssss.createAINewsSummaryByLink.mutationOptions()); 
 
     return (
         <div className="w-full">
@@ -66,7 +99,7 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
                                 </div>
                             </div>
                             <div className="col-span-1">
-                                <Button 
+                                <Button
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
                                     size="icon"
@@ -85,14 +118,13 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
                             </div>
                             <div className="col-span-1">
                                 <Button
-                                    onClick={() => newsByLink.mutate({
-                                        url: news.url || "",
-                                        language: "English", // TODO: should be dynamic 
+                                    onClick={() => openDialog({
                                         providerName: "Finnhub",
-                                        category: news.category || "", 
-                                        days: "1", 
+                                        url: news.url || "#",
+                                        category: news.category || "",
+                                        headline: news.headline || "",
+                                        summary: news.summary || "",
                                     })}
-                                    disabled={newsByLink.isPending}
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
                                     size="icon"
@@ -109,7 +141,11 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
     );
 }
 
-const PolygonNewsTable = () => {
+interface PolygonProps {
+    openDialog: (data: DialogDataProps) => void;
+}
+
+const PolygonNewsTable = ({ openDialog }: PolygonProps) => {
     const trpc = useTRPC();
     const { data: marketNews, isLoading } = useQuery(trpc.marketssssss.getPolygonStockNews.queryOptions());
 
@@ -147,7 +183,7 @@ const PolygonNewsTable = () => {
                                 </div>
                             </div>
                             <div className="col-span-1">
-                                <Button 
+                                <Button
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
                                     size="icon"
@@ -166,6 +202,13 @@ const PolygonNewsTable = () => {
                             </div>
                             <div className="col-span-1">
                                 <Button
+                                    onClick={() => openDialog({
+                                        providerName: "Polygon",
+                                        url: news.article_url || "#",
+                                        category: "Stock",
+                                        headline: news.title || "",
+                                        summary: news.description || "",
+                                    })}
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
                                     size="icon"
