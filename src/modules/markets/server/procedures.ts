@@ -3,15 +3,27 @@ import z from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { getMarketNews } from "@/lib/finnhub";
-import { fetchCompanyName, fetchCompCompetitors, 
-  fetchStockData, fetchStockPerformance, fetchCompNews, fetchSymbolSearch,
-  fetchMarketScreener, fetchMarketDataByTickers,fetchCryptoScreener,
-  fetchTrendingTickers} from "@/lib/yahoo";
+import {
+  fetchCompanyName,
+  fetchCompCompetitors,
+  fetchStockData,
+  fetchStockPerformance,
+  fetchCompNews,
+  fetchSymbolSearch,
+  fetchMarketScreener,
+  fetchMarketDataByTickers,
+  fetchCryptoScreener,
+  fetchTrendingTickers,
+} from "@/lib/yahoo";
 import { getStockNews } from "@/lib/polygon";
-import { getAINewsSummary } from "@/lib/langchain";
+import {
+  createAINewsSummary,
+  createAINewsSummaryByLink,
+} from "@/lib/langchain";
 import {
   getAllFinnhubNewsSummary,
   getAllPolygonNewsSummary,
+  getWebsiteHTMLText,
 } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 
@@ -66,7 +78,7 @@ export const marketsRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "No news found" });
       }
 
-      const newsSummary = await getAINewsSummary(
+      const newsSummary = await createAINewsSummary(
         accumulatedNews,
         input.language,
         input.providerName,
@@ -90,25 +102,78 @@ export const marketsRouter = createTRPCRouter({
       });
 
       // manually insert id field, easy to query back from db. it was auto assigned by db, type number
-      return {...newsSummary, id: createdSummary.id};
+      return { ...newsSummary, id: createdSummary.id };
     }),
 
-  getAINewsSummary: protectedProcedure
-    .query(async ({ ctx }) => {
-      const newsSummary = prisma.newsSummary.findFirst({
-        where: {
-          userId: ctx.auth.userId,
-        }, 
-        orderBy: {
-          createdAt: "desc"
-        }
-      })
+  getAINewsSummary: protectedProcedure.query(async ({ ctx }) => {
+    const newsSummary = prisma.newsSummary.findFirst({
+      where: {
+        userId: ctx.auth.userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-      if (!newsSummary) {
-        throw new TRPCError({code:"NOT_FOUND" , message: "Summary not found"})
+    if (!newsSummary) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Summary not found" });
+    }
+
+    return newsSummary;
+  }),
+
+  createAINewsSummaryByLink: protectedProcedure
+    .input(
+      z.object({
+        url: z.string(),
+        language: z.string(),
+        providerName: z.string(),
+        category: z.string(),
+        days: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (input.url.length == 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No link found",
+        });
+      }
+      const article = await getWebsiteHTMLText(input.url);
+
+      if (article.length == 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No news article found",
+        });
       }
 
-      return newsSummary; 
+      const summaryByLink = await createAINewsSummaryByLink(
+        article,
+        input.language,
+        input.providerName,
+        input.category,
+        input.days
+      );
+
+      if (!summaryByLink) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+      }
+
+      const createdNewsSummaryByLink = await prisma.newsSummary.create({
+        data: {
+          userId: ctx.auth.userId,
+          aiRepsonse: summaryByLink.content.toString(),
+          provider: input.providerName,
+          category: input.category,
+          language: input.language,
+          days: input.days,
+        },
+      });
+
+      console.log(summaryByLink.content.toString());
+
+      return createdNewsSummaryByLink;
     }),
 });
 
@@ -122,16 +187,19 @@ export const YahooFinanceRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const YahooStockData = await fetchStockData(input.ticker, input.range, input.interval);
+      const YahooStockData = await fetchStockData(
+        input.ticker,
+        input.range,
+        input.interval
+      );
 
       if (!YahooStockData) {
         throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });
       }
       return YahooStockData;
     }),
-    
 
-    fetchCompanyName: protectedProcedure
+  fetchCompanyName: protectedProcedure
     .input(
       z.object({
         ticker: z.string(),
@@ -146,7 +214,7 @@ export const YahooFinanceRouter = createTRPCRouter({
       return YahooStockSummary;
     }),
 
-    fetchStockPerformance: protectedProcedure
+  fetchStockPerformance: protectedProcedure
     .input(
       z.object({
         ticker: z.string(),
@@ -161,7 +229,7 @@ export const YahooFinanceRouter = createTRPCRouter({
       return YahooStockPerformance;
     }),
 
-    fetchCompCompetitors: protectedProcedure
+  fetchCompCompetitors: protectedProcedure
     .input(
       z.object({
         ticker: z.string(),
@@ -176,7 +244,7 @@ export const YahooFinanceRouter = createTRPCRouter({
       return Competitors;
     }),
 
-    fetchCompNews: protectedProcedure
+  fetchCompNews: protectedProcedure
     .input(
       z.object({
         ticker: z.string(),
@@ -191,7 +259,7 @@ export const YahooFinanceRouter = createTRPCRouter({
       return News;
     }),
 
-    searchSymbols: protectedProcedure // Add this new procedure
+  searchSymbols: protectedProcedure // Add this new procedure
     .input(
       z.object({
         query: z.string(),
@@ -209,7 +277,7 @@ export const YahooFinanceRouter = createTRPCRouter({
       return results;
     }),
 
-       fetchMarketScreener: protectedProcedure // Add this new procedure
+  fetchMarketScreener: protectedProcedure // Add this new procedure
     .input(
       z.object({
         query: z.string(),
@@ -227,19 +295,18 @@ export const YahooFinanceRouter = createTRPCRouter({
       return results;
     }),
 
-    fetchTrendingTickers  : protectedProcedure 
-    .query(async () => {
-      const results = await fetchTrendingTickers();
-      if (!results) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
-      }
-      return results;
-    }),
+  fetchTrendingTickers: protectedProcedure.query(async () => {
+    const results = await fetchTrendingTickers();
+    if (!results) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Search failed" });
+    }
+    return results;
+  }),
 
-      fetchMarketDataByTickers: protectedProcedure
+  fetchMarketDataByTickers: protectedProcedure
     .input(
-      z.object({ 
-        tickers: z.array(z.string()) 
+      z.object({
+        tickers: z.array(z.string()),
       })
     )
     .query(async ({ input }) => {
@@ -247,12 +314,15 @@ export const YahooFinanceRouter = createTRPCRouter({
       const marketData = await fetchMarketDataByTickers(input.tickers);
 
       if (!marketData) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Failed to fetch market data" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Failed to fetch market data",
+        });
       }
       return marketData;
     }),
 
-      fetchCryptoScreener: protectedProcedure
+  fetchCryptoScreener: protectedProcedure
     .input(
       z.object({
         screener: z.string(),
@@ -261,10 +331,11 @@ export const YahooFinanceRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const results = await fetchCryptoScreener(input.screener);
       if (!results) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Crypto screener failed" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Crypto screener failed",
+        });
       }
       return results;
     }),
-
-  
 });

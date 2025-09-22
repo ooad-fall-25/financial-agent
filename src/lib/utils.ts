@@ -3,6 +3,8 @@ import { twMerge } from "tailwind-merge"
 import { getMarketNews } from "./finnhub"
 import { getStockNews } from "./polygon"
 
+import * as cheerio from "cheerio";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -28,3 +30,17 @@ export const getAllPolygonNewsSummary = async () => {
   
   return summaries.join(", "); 
 }
+
+export const getWebsiteHTMLText = async (article: string) => {
+   const res = await fetch(article); 
+   const html = await res.text(); 
+
+
+   const $ = cheerio.load(html); 
+
+   $("script, style, nav, footer, header").remove(); 
+
+   const text = $("body").text().replace(/\s+/g, " ").trim(); 
+
+   return text; 
+} 

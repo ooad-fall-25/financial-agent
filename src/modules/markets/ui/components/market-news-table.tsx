@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ExternalLink, Loader, StarsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,6 +29,8 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
             category: marketCategory,
         }
     ));
+
+    const newsByLink = useMutation(trpc.marketssssss.createAINewsSummaryByLink.mutationOptions()); 
 
     return (
         <div className="w-full">
@@ -83,6 +85,14 @@ const FinnhubNewsTable = ({ marketCategory }: { marketCategory: string }) => {
                             </div>
                             <div className="col-span-1">
                                 <Button
+                                    onClick={() => newsByLink.mutate({
+                                        url: news.url || "",
+                                        language: "English", // TODO: should be dynamic 
+                                        providerName: "Finnhub",
+                                        category: news.category || "", 
+                                        days: "1", 
+                                    })}
+                                    disabled={newsByLink.isPending}
                                     variant="ghost"
                                     className="hover:bg-transparent hover:scale-x-105 transition-all duration-300 ease-out group"
                                     size="icon"
