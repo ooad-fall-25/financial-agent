@@ -130,7 +130,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         <div className="flex justify-between">
                             <Label>Language</Label>
                             <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a provider" />
+                                <SelectValue placeholder="Select a language" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
@@ -166,7 +166,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 <div className="flex justify-between">
                                     <Label>Day</Label>
                                     <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Select a provider" />
+                                        <SelectValue placeholder="Select a day" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
