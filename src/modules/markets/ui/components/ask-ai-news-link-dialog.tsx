@@ -24,6 +24,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog"
+import { Loader } from "lucide-react"
 
 interface Props {
     isOpen: boolean;
@@ -74,13 +75,15 @@ export const AskAINewsLinkDialog = ({
         })
     }
 
+    const isButtonDisabled = newsByLink.isPending || !language
+
     return (
         <Dialog defaultOpen={false} open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Generate News Summary With AI</DialogTitle>
+                    <DialogTitle >News Reporter</DialogTitle>
                     <DialogDescription>
-                        Please complete the form below
+                        Generate each news summary with AI. Please complete the form below.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -101,10 +104,23 @@ export const AskAINewsLinkDialog = ({
                     </div>
                 </Select>
 
+                <div className="flex flex-col p-4">
+                    <p className="text-xs font-mono text-center">Selected article: </p>
+                    <p className="text-sm text-center p-2">{headline}</p>
+                </div>
+
                 <Button
                     onClick={() => setIsOpenExpandDialog(true)}
+                    disabled={newsByLink.isPending}
+                    variant="outline"
                 >
-                    View latest summary
+                    <>
+                        {newsByLink.isPending ? (
+                            <span className="animate-pulse">Generating</span>
+                        ) : (
+                            <span>View latest summary</span>
+                        )}
+                    </>
                 </Button>
 
                 {content &&
@@ -114,14 +130,23 @@ export const AskAINewsLinkDialog = ({
                         content={content.aiRepsonse} />
                 }
 
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                    </DialogClose>
+                <DialogFooter >
                     <Button
                         onClick={handleNewsSubmit}
-                        disabled={newsByLink.isPending}
-                    >Generate</Button>
+                        disabled={isButtonDisabled}
+                        className="w-full"
+                    >
+                                            <>
+                        {newsByLink.isPending ? (
+                            <div className="flex items-center justify-center my-auto gap-x-2 text-muted-foreground">
+                                <Loader className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Please wait, this may take a moment...</span>
+                            </div>
+                        ) : (
+                            <span>Generate</span>
+                        )}
+                    </>
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -31,8 +31,8 @@ export const getAllPolygonNewsSummary = async () => {
   return summaries.join(", "); 
 }
 
-export const getWebsiteHTMLText = async (article: string) => {
-   const res = await fetch(article); 
+export const getWebsiteHTMLText = async (url: string) => {
+   const res = await fetch(url); 
    const html = await res.text(); 
 
 
