@@ -109,6 +109,7 @@ export const marketsRouter = createTRPCRouter({
     const newsSummary = prisma.newsSummary.findFirst({
       where: {
         userId: ctx.auth.userId,
+        url: null,
       },
       orderBy: {
         createdAt: "desc",
@@ -167,6 +168,7 @@ export const marketsRouter = createTRPCRouter({
           provider: input.providerName,
           category: input.category,
           language: input.language,
+          url: input.url,
           days: input.days,
         },
       });
@@ -175,6 +177,21 @@ export const marketsRouter = createTRPCRouter({
 
       return createdNewsSummaryByLink;
     }),
+
+  getAINewsSummaryByLink: protectedProcedure.query(async ({ctx}) => {
+    const summary = await prisma.newsSummary.findFirst({
+      where: {
+        userId: ctx.auth.userId,
+        url: {
+          not: null,
+        }
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return summary; 
+  }),
 });
 
 export const YahooFinanceRouter = createTRPCRouter({

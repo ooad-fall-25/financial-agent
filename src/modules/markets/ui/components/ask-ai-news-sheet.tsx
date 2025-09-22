@@ -74,7 +74,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
             resetStates();
         },
         onError: (error) => {
-            toast.info(error.message);
+            toast.error(error.message);
         }
     }));
 

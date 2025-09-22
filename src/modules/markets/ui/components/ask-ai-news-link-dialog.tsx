@@ -20,8 +20,10 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { useTRPC } from "@/trpc/client"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import { toast } from "sonner"
+import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog"
 
 interface Props {
     isOpen: boolean;
@@ -45,24 +47,31 @@ export const AskAINewsLinkDialog = ({
     summary,
 }: Props) => {
     const [language, setLanguage] = useState<string | null>(null);
+    const [isOpenExpandDialog, setIsOpenExpandDialog] = useState(false);
 
+    const queryClient = useQueryClient();
     const trpc = useTRPC();
-    const newsByLink = useMutation(trpc.marketssssss.createAINewsSummaryByLink.mutationOptions());
+    const newsByLink = useMutation(trpc.marketssssss.createAINewsSummaryByLink.mutationOptions(
+        {
+            onSuccess: (data) => {
+                queryClient.invalidateQueries(trpc.marketssssss.getAINewsSummaryByLink.queryOptions())
+            },
+            onError: (error) => {
+                toast.error(error.message)
+            }
+        }
+    ));
+
+    const { data: content } = useQuery(trpc.marketssssss.getAINewsSummaryByLink.queryOptions());
 
     const handleNewsSubmit = () => {
-        // newsByLink.mutate({
-        //     url: url || "",
-        //     language: language || "", // TODO: should be dynamic 
-        //     providerName: providerName || "", 
-        //     category: category || "",
-        //     days: "1",
-        // })
-        console.log(providerName,
-            url,
-            category,
-            headline,
-            summary,
-        language)
+        newsByLink.mutate({
+            url: url || "",
+            language: language || "",
+            providerName: providerName || "",
+            category: category || "",
+            days: "1",
+        })
     }
 
     return (
@@ -91,6 +100,19 @@ export const AskAINewsLinkDialog = ({
                         </SelectContent>
                     </div>
                 </Select>
+
+                <Button
+                    onClick={() => setIsOpenExpandDialog(true)}
+                >
+                    View latest summary
+                </Button>
+
+                {content &&
+                    <NewsSummaryExpandDialog
+                        isOpen={isOpenExpandDialog}
+                        setIsOpen={setIsOpenExpandDialog}
+                        content={content.aiRepsonse} />
+                }
 
                 <DialogFooter>
                     <DialogClose asChild>
