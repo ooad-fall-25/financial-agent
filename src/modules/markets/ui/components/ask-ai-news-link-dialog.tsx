@@ -1,13 +1,11 @@
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import {
@@ -24,7 +22,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog"
-import { Loader } from "lucide-react"
+import { EyeIcon, Loader } from "lucide-react"
 
 interface Props {
     isOpen: boolean;
@@ -83,7 +81,7 @@ export const AskAINewsLinkDialog = ({
                 <DialogHeader>
                     <DialogTitle >News Reporter</DialogTitle>
                     <DialogDescription>
-                        Generate each news summary with AI. Please complete the form below.
+                        Generate each news summary with AI. Please complete the info below.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -111,16 +109,27 @@ export const AskAINewsLinkDialog = ({
 
                 <Button
                     onClick={() => setIsOpenExpandDialog(true)}
-                    disabled={newsByLink.isPending}
+                    disabled={newsByLink.isPending || !content}
                     variant="outline"
                 >
-                    <>
-                        {newsByLink.isPending ? (
-                            <span className="animate-pulse">Generating</span>
-                        ) : (
-                            <span>View latest summary</span>
-                        )}
-                    </>
+
+                    {content ? (
+                        <>
+                            {newsByLink.isPending ? (
+                                <span className="animate-pulse">Generating</span>
+                            ) : (
+                                <div className="flex items-center justify-center gap-x-4">
+                                    <EyeIcon />
+                                    <span>View latest summary</span>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-xs">No content found! Generate one.</span>
+                        </>
+                    )}
+
                 </Button>
 
                 {content &&
@@ -136,16 +145,16 @@ export const AskAINewsLinkDialog = ({
                         disabled={isButtonDisabled}
                         className="w-full"
                     >
-                                            <>
-                        {newsByLink.isPending ? (
-                            <div className="flex items-center justify-center my-auto gap-x-2 text-muted-foreground">
-                                <Loader className="h-4 w-4 animate-spin" />
-                                <span className="text-sm">Please wait, this may take a moment...</span>
-                            </div>
-                        ) : (
-                            <span>Generate</span>
-                        )}
-                    </>
+                        <>
+                            {newsByLink.isPending ? (
+                                <div className="flex items-center justify-center my-auto gap-x-2 text-muted-foreground">
+                                    <Loader className="h-4 w-4 animate-spin" />
+                                    <span className="text-sm">Please wait, this may take a moment...</span>
+                                </div>
+                            ) : (
+                                <span>Generate</span>
+                            )}
+                        </>
                     </Button>
                 </DialogFooter>
             </DialogContent>
