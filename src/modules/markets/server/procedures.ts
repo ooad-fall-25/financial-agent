@@ -26,6 +26,8 @@ import {
   getWebsiteHTMLText,
 } from "@/lib/utils";
 import { prisma } from "@/lib/db";
+import puppeteer from "puppeteer";
+import { marked } from "marked";
 
 export const marketsRouter = createTRPCRouter({
   getMarketNews: protectedProcedure
@@ -178,20 +180,53 @@ export const marketsRouter = createTRPCRouter({
       return createdNewsSummaryByLink;
     }),
 
-  getAINewsSummaryByLink: protectedProcedure.query(async ({ctx}) => {
+  getAINewsSummaryByLink: protectedProcedure.query(async ({ ctx }) => {
     const summary = await prisma.newsSummary.findFirst({
       where: {
         userId: ctx.auth.userId,
         url: {
           not: null,
-        }
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
-    return summary; 
+    return summary;
   }),
+
+  markdownToPdf: protectedProcedure
+    .input(z.object({ markdown: z.string() }))
+    .mutation(async ({ input }) => {
+      const { markdown } = input;
+
+      // 1. Convert Markdown -> HTML
+      const html = marked(markdown) as string;
+
+      // 2. Optional: OCR on images
+      // TODO: parse <img> tags and run Tesseract if needed
+
+      // 3. Puppeteer: HTML -> PDF
+      const browser = await puppeteer.launch();
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: "networkidle0" });
+
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: {
+          top: "20mm",
+          bottom: "20mm",
+          left: "15mm",
+          right: "15mm",
+        },
+      });
+
+      await browser.close();
+
+      // 4. Return base64 string of PDF
+      return Buffer.from(pdfBuffer).toString("base64");
+    }),
 });
 
 export const YahooFinanceRouter = createTRPCRouter({
