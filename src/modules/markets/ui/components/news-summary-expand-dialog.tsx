@@ -1,6 +1,10 @@
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import { Loader } from "lucide-react";
 
 interface Props {
     isOpen: boolean;
@@ -9,6 +13,28 @@ interface Props {
 }
 
 export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) => {
+    const trpc = useTRPC()
+    const mutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions())
+    const handleDownload = async () => {
+        const result = await mutation.mutateAsync({ markdown: content });
+
+        // Convert base64 -> Blob
+        const pdfData = atob(result);
+        const buffer = new Uint8Array(pdfData.length);
+        for (let i = 0; i < pdfData.length; i++) {
+            buffer[i] = pdfData.charCodeAt(i);
+        }
+
+        const blob = new Blob([buffer], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "markdown.pdf";
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen} defaultOpen={false}>
             <DialogTitle></DialogTitle>
@@ -18,6 +44,13 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) =
                         <AIResponse>{content}</AIResponse>
                     </ScrollArea>
                 </div>
+                <Button onClick={handleDownload} disabled={mutation.isPending}>
+                    {mutation.isPending ? (
+                        <Loader className="animate-spin" />
+                    ) : (
+                        <span>Download as PDF</span>
+                    )}
+                </Button>
             </DialogContent>
         </Dialog>
     )
