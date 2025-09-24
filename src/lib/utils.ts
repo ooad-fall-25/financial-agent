@@ -14,7 +14,7 @@ export const getAllFinnhubNewsSummary = async (category: string) => {
   const news = newsResponse.data; 
 
   const summaries = news.map((item, index) => {
-    return `${index + 1}. ${item.summary}`;  
+    return `${index + 1}. Headline: ${item.headline}. Summary: ${item.summary}`;  
   });
   
   return summaries.join(", ");
@@ -25,7 +25,7 @@ export const getAllPolygonNewsSummary = async () => {
   const news = newsResponse.results || []; 
 
   const summaries = news.map((item, index) => {
-    return `${index + 1}. ${item.description}`
+    return `${index + 1}. Title: ${item.title}. Description: ${item.description}`;  
   })
   
   return summaries.join(", "); 
