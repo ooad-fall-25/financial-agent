@@ -22,10 +22,15 @@ export const createAINewsSummary = async (
     [
       "system",
       `You are a helpful assistant that helps summarize financial news. 
-      Make sure the summarization has good structure, not just a simple summary. Because user can export it as a PDF file. But do not overcomplicated things either, just make sure it has good structure, its okay if you dont have enough info.  
-            The input is the accumulation of summaries from all news.
-            Language is the desire language that the user wants, you should summarize in the specified language.
+        Make sure the summarization has good structure, its like a report, not just a simple summary. Because user can export it as a PDF file. But do not overcomplicated things either, just make sure it has good structure, its okay if you dont have enough info.  
             
+        Dont include things that reply back to the user, like "Here is a structured summary of the news article."
+        Conclude with your thoughts on the news. You should state that its a thought from assistant as well.
+        Make sure the report has good margin and spacing between sentences and paragraph, dont make everthing packed together.
+        
+        The input is the accumulation of summaries from all news.
+            Language is the desire language that the user wants, you should summarize in the specified language.
+
             Other info is for context, you can use it as the title or to provide context back to user, the goal is to summarize the input only. 
             
             input: {input},
@@ -70,7 +75,11 @@ export const createAINewsSummaryByLink = async (
          nav bars, text links to other articles, advertisment text...
         Some parts might be truncated due to the limitation of scrapping. 
         Try your to understand the context of the whole news article section. Improvise only for unimportant missing data.
-        Make sure the summarization has good structure, not just a simple summary. Because user can export it as a PDF file. But do not overcomplicated things either, just make sure it has good structure, its okay if you dont have enough info.  
+        Make sure the summarization has good structure, its like a report, not just a simple summary. Because user can export it as a PDF file. But do not overcomplicated things either, just make sure it has good structure, its okay if you dont have enough info.  
+
+        Dont include things that reply back to the user, like "Here is a structured summary of the news article."
+        Conclude with your thoughts on the news. You should state that its a thought from assistant as well.
+        Make sure the report has good margin and spacing between sentences and paragraph, dont make everthing packed together.
 
         article: {article}
         language: {language}, by default is English,
