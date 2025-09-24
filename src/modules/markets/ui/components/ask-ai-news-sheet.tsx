@@ -161,7 +161,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     }
                 </div>
 
-                {isLoading && (<Loader className="mx-auto animate-spin pt-4" />)}
+                {isLoading && (<Loader className="mx-auto animate-spin" />)}
                 {summary && (
                     <div className="flex items-center justify-between px-12">
                         <Kbd className="w-fit">
