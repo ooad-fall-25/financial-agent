@@ -21,7 +21,6 @@ model NewsSummary {
   provider   String
   category   String
   language   String
-  days       String
   url        String?
 
   createdAt DateTime @default(now())

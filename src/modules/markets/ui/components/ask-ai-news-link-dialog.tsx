@@ -70,7 +70,6 @@ export const AskAINewsLinkDialog = ({
             providerName: providerName || "",
             category: category || "",
             title: headline || "", 
-            days: "1",
         })
     }
 

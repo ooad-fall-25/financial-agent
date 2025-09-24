@@ -61,7 +61,6 @@ export const marketsRouter = createTRPCRouter({
         language: z.string(),
         providerName: z.string(),
         category: z.string(),
-        days: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -85,7 +84,6 @@ export const marketsRouter = createTRPCRouter({
         input.language,
         input.providerName,
         input.category,
-        input.days
       );
 
       if (!newsSummary) {
@@ -99,7 +97,6 @@ export const marketsRouter = createTRPCRouter({
           provider: input.providerName,
           category: input.category,
           language: input.language,
-          days: input.days,
         },
       });
 
@@ -133,7 +130,6 @@ export const marketsRouter = createTRPCRouter({
         language: z.string(),
         providerName: z.string(),
         category: z.string(),
-        days: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -159,7 +155,6 @@ export const marketsRouter = createTRPCRouter({
         input.category,
         input.title,
         input.url,
-        input.days
       );
 
       if (!summaryByLink) {
@@ -174,7 +169,6 @@ export const marketsRouter = createTRPCRouter({
           category: input.category,
           language: input.language,
           url: input.url,
-          days: input.days,
         },
       });
 

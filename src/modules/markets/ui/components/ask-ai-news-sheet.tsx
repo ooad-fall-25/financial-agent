@@ -40,12 +40,10 @@ const providers = [
     {
         name: "Finnhub",
         category: ["General", "Forex", "Crypto", "Merger"],
-        dayOptions: ["1", "2", "3"]
     },
     {
         name: "Polygon",
         category: ["Stock"],
-        dayOptions: ["1"]
     }
 ]
 
@@ -54,7 +52,6 @@ const languages = ["English", "Chinese", "Khmer", "Indonesian"]
 export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [providerName, setProviderName] = useState<string | null>(null);
     const [category, setCategory] = useState<string | null>(null);
-    const [dayOptions, setDayOptions] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
 
@@ -85,18 +82,16 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
             language: language || "",
             providerName: providerName?.toLowerCase() || "",
             category: category?.toLowerCase() || "",
-            days: dayOptions || "",
         })
     }
 
     const resetStates = () => {
         setProviderName(null);
         setCategory(null);
-        setDayOptions(null);
         setLanguage(null);
     }
 
-    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !dayOptions || !language; 
+    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language; 
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -162,22 +157,6 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 </div>
                             </Select>
 
-                            <Select value={dayOptions || ""} onValueChange={(value) => setDayOptions(value)}>
-                                <div className="flex justify-between">
-                                    <Label>Day</Label>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Select a day" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Day</SelectLabel>
-                                            {providers.find((e) => e.name.toLowerCase() == providerName.toLowerCase())?.dayOptions.map((item) => (
-                                                <SelectItem key={item} value={item} className="cursor-pointer">Last {item} day(s)</SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </div>
-                            </Select>
                         </div>
                     }
                 </div>

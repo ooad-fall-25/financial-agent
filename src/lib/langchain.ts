@@ -16,7 +16,6 @@ export const createAINewsSummary = async (
   language: string,
   providerName: string,
   category: string,
-  days: string
 ) => {
   const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -39,10 +38,9 @@ export const createAINewsSummary = async (
             some other info (by developer): 
                 api provider: {providerName}
                 category: {category}
-                how long ago: {days} ago, you can ignore this for now as it is not accurate yet
         `,
     ],
-    ["human", "{input}, {language}, {providerName}, {category}, {days}"],
+    ["human", "{input}, {language}, {providerName}, {category}"],
   ]);
 
   const chain = prompt.pipe(deepseekClient);
@@ -52,7 +50,6 @@ export const createAINewsSummary = async (
     language: language,
     providerName: providerName,
     category: category,
-    days: days,
   });
 
   return response;
@@ -65,7 +62,6 @@ export const createAINewsSummaryByLink = async (
   category: string,
   title: string, 
   url: string,
-  days: string
 ) => {
   const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -92,10 +88,9 @@ export const createAINewsSummaryByLink = async (
             some other info (by developer): 
                 api provider: {providerName}
                 category: {category}
-                how long ago: {days} ago, you can ignore this for now as it is not accurate yet
       `,
     ],
-    ["human", "{article}, {language}, {providerName}, {category}, {title}, {url}, {days}"],
+    ["human", "{article}, {language}, {providerName}, {category}, {title}, {url}"],
   ]);
 
   const chain = prompt.pipe(deepseekClient);
@@ -107,7 +102,6 @@ export const createAINewsSummaryByLink = async (
     category: category,
     title: title, 
     url: url,
-    days: days,
   });
 
   return response;
