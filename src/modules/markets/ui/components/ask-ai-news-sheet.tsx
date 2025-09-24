@@ -91,11 +91,11 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
         setLanguage(null);
     }
 
-    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language; 
+    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language;
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
-            <SheetContent>
+            <SheetContent className="flex flex-col">
                 <SheetHeader>
                     <SheetTitle>News Reporter</SheetTitle>
                     <SheetDescription>
@@ -103,7 +103,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className="px-4 gap-y-4 flex flex-col">
+                <div className="px-4 pb-8 gap-y-4 flex flex-col border-b border-dashed">
                     <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
                         <div className="flex justify-between">
                             <Label>Provider</Label>
@@ -161,40 +161,44 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     }
                 </div>
 
-                {isLoading && (<Loader className="mx-auto animate-spin" />)}
+                {isLoading && (<Loader className="mx-auto animate-spin pt-4" />)}
+                {summary && (
+                    <div className="flex items-center justify-between px-12">
+                        <Kbd className="w-fit">
+                            <KbdKey>Latest summary</KbdKey>
+                        </Kbd>
+                        <Button
+                            onClick={() => setIsExpand(!isExpand)}
+                            variant="outline"
+                            className=" !border-none !bg-transparent !shadow-none">
+                            <ExpandIcon />
+                        </Button>
+                    </div>
+
+                )}
 
                 {summary ? (
-                    <div className="flex flex-col">
-                        <div className="flex items-center justify-between px-12">
-                            <Kbd className="w-fit">
-                                <KbdKey>Latest summary</KbdKey>
-                            </Kbd>
-                            <Button
-                                onClick={() => setIsExpand(!isExpand)}
-                                variant="outline"
-                                className=" !border-none !bg-transparent !shadow-none">
-                                <ExpandIcon />
-                            </Button>
-                        </div>
-                        <ScrollArea className={cn("h-110 max-h-screen w-full p-2 px-12 m-4 border-y border-dashed overflow-auto mx-auto text-sm", providerName && "h-82")} >
+                    <div className="flex flex-col flex-1 min-h-0 relative ">
+                        <div className="absolute top-0 -left-0 -right-0 h-6 bg-gradient-to-b from-transparent to-background pointer-events-none " />
+                        
+                        <ScrollArea className="h-full w-full px-12 overflow-auto mx-auto text-sm" >
                             <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
                         </ScrollArea>
-                        <div className="px-12 flex">
-
-
-                        </div>
+                        <div className="absolute bottom-0 -left-0 -right-0 h-6 bg-gradient-to-b from-transparent to-background pointer-events-none" />
                     </div>
                 ) : (
                     <div>
-                        {!isLoading &&
-                            (
-                                <div className="flex flex-col items-center my-auto gap-y-2 p-4">
-                                    <FileText className="h-8 w-8 text-muted-foreground" />
-                                    <h3 className="text-lg font-semibold">No Summaries Found</h3>
-                                    <p className="text-xs text-muted-foreground">Get started by generating your first summary.</p>
-                                </div>
-                            )
-                        }
+                        <div className="flex-1 flex items-center justify-center">
+                            {!isLoading &&
+                                (
+                                    <div className="flex flex-col items-center my-auto gap-y-2 p-4">
+                                        <FileText className="h-8 w-8 text-muted-foreground" />
+                                        <h3 className="text-lg font-semibold">No Summaries Found</h3>
+                                        <p className="text-xs text-muted-foreground">Get started by generating your first summary.</p>
+                                    </div>
+                                )
+                            }
+                        </div>
                     </div>
 
                 )
@@ -202,12 +206,13 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
                 }
 
-                {summary &&
-                    <NewsSummaryExpandDialog isOpen={isExpand} setIsOpen={setIsExpand} content={summary?.aiRepsonse.toString() || ""} />
-                }
 
 
-                <SheetFooter>
+
+                <SheetFooter className="border-t border-dashed">
+                    {summary &&
+                        <NewsSummaryExpandDialog isOpen={isExpand} setIsOpen={setIsExpand} content={summary?.aiRepsonse.toString() || ""} />
+                    }
                     <Button
                         disabled={isButtonDisabled}
                         onClick={handleAskAI}
