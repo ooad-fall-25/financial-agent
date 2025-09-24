@@ -63,6 +63,8 @@ export const createAINewsSummaryByLink = async (
   language: string,
   providerName: string,
   category: string,
+  title: string, 
+  url: string,
   days: string
 ) => {
   const prompt = ChatPromptTemplate.fromMessages([
@@ -81,8 +83,11 @@ export const createAINewsSummaryByLink = async (
         Conclude with your thoughts on the news. You should state that its a thought from assistant as well.
         Make sure the report has good margin and spacing between sentences and paragraph, dont make everthing packed together.
 
+        You can include the info below for better user experience:
         article: {article}
         language: {language}, by default is English,
+        title: {title},
+        url: {url}, make sure to include url inside the report as well
 
             some other info (by developer): 
                 api provider: {providerName}
@@ -90,7 +95,7 @@ export const createAINewsSummaryByLink = async (
                 how long ago: {days} ago, you can ignore this for now as it is not accurate yet
       `,
     ],
-    ["human", "{article}, {language}, {providerName}, {category}, {days}"],
+    ["human", "{article}, {language}, {providerName}, {category}, {title}, {url}, {days}"],
   ]);
 
   const chain = prompt.pipe(deepseekClient);
@@ -100,6 +105,8 @@ export const createAINewsSummaryByLink = async (
     language: language,
     providerName: providerName,
     category: category,
+    title: title, 
+    url: url,
     days: days,
   });
 

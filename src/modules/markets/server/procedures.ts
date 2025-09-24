@@ -129,6 +129,7 @@ export const marketsRouter = createTRPCRouter({
     .input(
       z.object({
         url: z.string(),
+        title: z.string(),
         language: z.string(),
         providerName: z.string(),
         category: z.string(),
@@ -156,6 +157,8 @@ export const marketsRouter = createTRPCRouter({
         input.language,
         input.providerName,
         input.category,
+        input.title,
+        input.url,
         input.days
       );
 
