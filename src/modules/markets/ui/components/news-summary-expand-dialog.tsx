@@ -4,6 +4,7 @@ import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
+import { Loader } from "lucide-react";
 
 interface Props {
     isOpen: boolean;
@@ -43,8 +44,12 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) =
                         <AIResponse>{content}</AIResponse>
                     </ScrollArea>
                 </div>
-                <Button onClick={handleDownload}>
-                    Download as PDF
+                <Button onClick={handleDownload} disabled={mutation.isPending}>
+                    {mutation.isPending ? (
+                        <Loader className="animate-spin" />
+                    ) : (
+                        <span>Download as PDF</span>
+                    )}
                 </Button>
             </DialogContent>
         </Dialog>
