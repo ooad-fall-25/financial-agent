@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenIcon, BotIcon, ChartCandlestickIcon, ChartLineIcon, HomeIcon, MegaphoneIcon, Settings2Icon } from "lucide-react"
+import { BookOpenIcon, BotIcon, ChartCandlestickIcon, ChartLineIcon, HomeIcon, LibraryBigIcon, MegaphoneIcon, Settings2Icon } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -50,9 +50,9 @@ const items = [
         icon: BotIcon,
     },
     {
-        title: "Analytics / Trends",
-        url: "/analytics",
-        icon: ChartLineIcon,
+        title: "Library / History",
+        url: "/library",
+        icon: LibraryBigIcon,
     },
     {
         title: "Settings / Privacy",
