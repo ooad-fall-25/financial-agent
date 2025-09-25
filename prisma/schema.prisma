@@ -17,11 +17,14 @@ datasource db {
 model NewsSummary {
   id         Int     @id @default(autoincrement())
   userId     String
+  headline   String
   aiRepsonse String
   provider   String
   category   String
   language   String
   url        String?
+
+  isByCategory Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
