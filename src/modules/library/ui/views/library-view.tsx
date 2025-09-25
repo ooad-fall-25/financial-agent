@@ -16,7 +16,7 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/shadcn-io/tabs"
 import { LibraryTable } from "../components/library-table";
 
 
@@ -38,30 +38,26 @@ const tabItems = [
 export const LibraryView = () => {
     const [activeTab, setActiveTab] = useState<string>(tabItems[0].type);
 
-    return (
-        <div className="h-screen max-w-7xl mx-auto flex flex-col w-full">
-            <div className="flex-shrink-0 bg-background border-none  pt-6 pb-4">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <div className="flex justify-between px-6 border-b border-border border-dashed pb-6">
-
-                        <TabsList className="">
-                            {tabItems.map((item) => (
-                                <TabsTrigger className="" key={item.type} value={item.type}>{item.name}</TabsTrigger>
-                            ))}
-                        </TabsList>
-
-                    </div>
-
-                    <div className="mt-4" style={{ height: 'calc(100vh - 140px)' }}>
+return (
+    <div className="h-screen max-w-7xl mx-auto flex flex-col w-full">
+        <div className="flex-shrink-0 bg-background sticky top-0 z-20">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="flex justify-between p-4 border-b border-border border-dashed">
+                    <TabsList>
                         {tabItems.map((item) => (
-                            <TabsContent key={item.type} value={item.type} className="h-full overflow-y-auto">
-                                <LibraryTable selectedTab={activeTab}/>
-                            </TabsContent>
+                            <TabsTrigger className="text-xs" key={item.type} value={item.type}>
+                                {item.name}
+                            </TabsTrigger>
                         ))}
-                    </div>
-                </Tabs>
-            </div>
+                    </TabsList>
+                </div>
+            </Tabs>
         </div>
-    )
+
+        <div className="flex-1 overflow-hidden">
+            <LibraryTable selectedTab={activeTab} />
+        </div>
+    </div>
+)
 }
 

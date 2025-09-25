@@ -63,6 +63,8 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.544.0",
     "marked": "^16.3.0",
+    "motion": "^12.23.22",
+    "motion-highlight": "^0.0.1",
     "next": "15.5.3",
     "next-themes": "^0.4.6",
     "node-fetch-commonjs": "^3.3.2",
