@@ -6,7 +6,7 @@ export const libraryRouter = createTRPCRouter({
   getAllSummaryByCategory: protectedProcedure.query(async ({ ctx }) => {
     const data = await prisma.newsSummary.findMany({
       where: {
-        userId: ctx.auth.userId,
+        // userId: ctx.auth.userId,
         url: null,
         isByCategory: true,
       },
