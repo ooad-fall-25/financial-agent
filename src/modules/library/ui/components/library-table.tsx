@@ -82,7 +82,7 @@ const SummaryByCategoryTable = () => {
                 <TableBody>
                     {data?.map((item) => (
                         <TableRow key={item.id}>
-                            <TableCell className="font-medium">headline</TableCell>
+                            <TableCell className="font-medium">{item.headline}</TableCell>
                             <TableCell className="font-medium">{item.category}</TableCell>
                             <TableCell className="text-right">
                                 {format(item.createdAt, "HH:mm 'on' MMM dd, yyyy")}

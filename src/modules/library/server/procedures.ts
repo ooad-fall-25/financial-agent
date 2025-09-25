@@ -7,8 +7,8 @@ export const libraryRouter = createTRPCRouter({
         const data = await prisma.newsSummary.findMany({
             where: {
                 userId: ctx.auth.userId,
-                url: null 
-                // TODO: add isByCategory 
+                url: null, 
+                isByCategory: true,
             }
         })
         if (!data) {
