@@ -74,7 +74,7 @@ const SummaryByCategoryTable = () => {
                 </div>
             </div>
 
-            <div className="flex-shrink-0 sticky top-0 z-10 grid grid-cols-14 gap-4 px-4 py-1 bg-accent border-none font-normal text-xs text-muted-foreground">
+            <div className="flex-shrink-0 sticky top-0 z-10 grid grid-cols-14 gap-4 px-4 py-1 bg-sidebar border-none font-normal text-xs text-muted-foreground">
                 <div className="col-span-10">Headline</div>
                 <div className="col-span-2">Category</div>
                 <div className="col-span-2">Date</div>
@@ -86,7 +86,7 @@ const SummaryByCategoryTable = () => {
                         <Loader className="animate-spin mx-auto bg-none" />
                     </div>
                 ) : (
-                    <div className="divide-y divide-border text-xs font-normal">
+                    <div className="divide-y divide-border text-xs font-normal border-b border-border">
                         {filteredNews.map((item) => (
                             <div key={item.id} className="grid grid-cols-14 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
                                 <div className="col-span-10">

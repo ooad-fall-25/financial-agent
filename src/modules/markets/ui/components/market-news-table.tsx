@@ -84,17 +84,17 @@ const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
                     {marketNews?.map((news) => (
                         <div key={news.id} className="grid grid-cols-13 gap-4 p-4 hover:bg-muted/50 transition-colors">
                             <div className="col-span-4">
-                                <div className="font-medium text-foreground leading-tight">
+                                <div className="font-medium text-sm text-foreground leading-tight">
                                     <p>{news.headline}</p>
                                 </div>
                             </div>
                             <div className="col-span-5">
-                                <div className="text-sm text-muted-foreground leading-relaxed">
+                                <div className="text-xs text-muted-foreground leading-relaxed">
                                     {news.summary}
                                 </div>
                             </div>
                             <div className="col-span-2">
-                                <div className="text-sm text-muted-foreground truncate">
+                                <div className="text-xs text-muted-foreground truncate">
                                     {news.source}
                                 </div>
                             </div>
