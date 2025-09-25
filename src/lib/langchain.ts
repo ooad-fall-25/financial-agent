@@ -27,6 +27,10 @@ export const createAINewsSummary = async (
         Conclude with your thoughts on the news. You should state that its a thought from assistant as well.
         Make sure the report has good margin and spacing between sentences and paragraph, dont make everthing packed together.
         
+        Start the report by a comment in markdown (use t  his syntax: [//]: # "Comment"), the content of the comment is the overview title of the report.
+        You still need to include the overview title of the report, so one in comment and one in normal render. 
+        Basically, just do everything normally, but add an extra comment at the top for development purpose.  
+
         The input is the accumulation of summaries from all news.
             Language is the desire language that the user wants, you should summarize in the specified language.
 

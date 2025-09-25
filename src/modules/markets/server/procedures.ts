@@ -97,8 +97,11 @@ export const marketsRouter = createTRPCRouter({
           provider: input.providerName,
           category: input.category,
           language: input.language,
+          headline: "sht"
         },
       });
+
+      console.log(createdSummary);
 
       // manually insert id field, easy to query back from db. it was auto assigned by db, type number
       return { ...newsSummary, id: createdSummary.id };
@@ -169,6 +172,7 @@ export const marketsRouter = createTRPCRouter({
           category: input.category,
           language: input.language,
           url: input.url,
+          headline: "sth"
         },
       });
 
