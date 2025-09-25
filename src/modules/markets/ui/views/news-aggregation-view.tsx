@@ -69,7 +69,7 @@ export const NewsAggregationView = () => {
     }   
 
     return (
-        <div className="h-screen max-w-7xl mx-auto flex flex-col w-full">
+        <div className="h-screen max-w-8xl mx-auto flex flex-col w-full">
             <AskAINewsSheet isOpen={isSheetOpen} setIsOpen={setIsSheetOpen}/>
             {/* Fixed Header with Tabs */}
             <div className="flex-shrink-0 bg-background border-none  pt-6 pb-4">

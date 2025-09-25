@@ -39,7 +39,7 @@ export const LibraryView = () => {
     const [activeTab, setActiveTab] = useState<string>(tabItems[0].type);
 
 return (
-    <div className="h-screen max-w-8xl mx-auto flex flex-col w-full">
+    <div className="h-screen max-w-9xl mx-auto flex flex-col w-full">
         <div className="flex-shrink-0 bg-background sticky top-0 z-20">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex justify-between p-4 border-b border-border border-dashed ">
@@ -47,7 +47,7 @@ return (
                         {tabItems.map((item) => (
                             <TabsTrigger className="text-xs hover:border hover:rounded-full data-[state=active]:border data-[state=active]:rounded-full" key={item.type} value={item.type}>
                                 {item.name}
-                            </TabsTrigger>``
+                            </TabsTrigger>
                         ))}
                     </TabsList>
                 </div>
