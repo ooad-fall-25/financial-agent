@@ -1,3 +1,4 @@
+"use client";
 interface Props {
     selectedTab: string;
 }
@@ -21,15 +22,36 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { NewsSummary } from "@/generated/prisma";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader, SearchIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const SummaryByCategoryTable = () => {
+    const [searchValue, setSearchValue] = useState("");
+    const [filteredNews, setFilteredNews] = useState<NewsSummary[]>([]);
     const trpc = useTRPC();
     // TODO: consider using useInfiniteQuery
     const { data, isLoading } = useQuery(trpc.library.getAllSummaryByCategory.queryOptions());
+
+    const handleSearchChange = (value: string) => {
+        setSearchValue(value);
+        if (data) {
+            setFilteredNews(data)
+            if (value.length === 0) {
+                setFilteredNews(data);
+            } else {
+                const result = data?.filter(news => news.headline.toLowerCase().includes(value.toLowerCase()));
+                setFilteredNews(result);
+            }
+        }
+    }
+
+    useEffect(() => {
+        setFilteredNews(data || []);
+    }, [data]);
     return (
         <div className="w-full h-full flex flex-col">
             <div className="p-4 flex items-center justify-start gap-x-4">
@@ -39,7 +61,8 @@ const SummaryByCategoryTable = () => {
                         <span className=" text-xs">Input</span>
                     </div>
                     <Input
-                        type="search"
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        value={searchValue}
                         placeholder="Headline..."
                         className="pl-20 h-7 items-center !text-xs rounded-full !bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                     />
@@ -47,7 +70,7 @@ const SummaryByCategoryTable = () => {
 
                 <div>
                     <span className="text-xs">Result: </span>
-                    <span className="text-xs">{data?.length || 0}</span>
+                    <span className="text-xs">{filteredNews.length || 0}</span>
                 </div>
             </div>
 
@@ -64,7 +87,7 @@ const SummaryByCategoryTable = () => {
                     </div>
                 ) : (
                     <div className="divide-y divide-border text-xs font-normal">
-                        {data?.map((item) => (
+                        {filteredNews.map((item) => (
                             <div key={item.id} className="grid grid-cols-14 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
                                 <div className="col-span-10">
                                     <div className="font-medium leading-tight truncate">
