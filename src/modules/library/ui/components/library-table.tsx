@@ -1,27 +1,6 @@
 "use client";
-interface Props {
-    selectedTab: string;
-}
 
-export const LibraryTable = ({ selectedTab }: Props) => {
-    if (selectedTab === "category") {
-        return <SummaryByCategoryTable />
-    } else if (selectedTab === "individual") {
-        return <SummaryByIndividualLinkTable />
-    } else {
-        return;
-    }
-}
 import { Input } from "@/components/ui/input";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { NewsSummary } from "@/generated/prisma";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
@@ -29,14 +8,34 @@ import { format } from "date-fns";
 import { Loader, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+interface Props {
+    selectedTab: string;
+}
 
-const SummaryByCategoryTable = () => {
+export const LibraryTable = ({ selectedTab }: Props) => {
+    const trpc = useTRPC();
+    // TODO: consider using useInfiniteQuery
+    const { data: newsByCategory, isLoading: isCategoryLoading } = useQuery(trpc.library.getAllSummaryByCategory.queryOptions());
+    const { data: newsByIndividual, isLoading: isIndividualLoading } = useQuery(trpc.library.getAllSummaryByIndividualLink.queryOptions());
+
+    if (selectedTab === "category") {
+        return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} />
+    } else if (selectedTab === "individual") {
+        return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} />
+    } else {
+        return;
+    }
+}
+
+interface TableProps {
+    data: NewsSummary[];
+    isLoading: boolean;
+}
+
+const SummaryByTable = ({ data, isLoading }: TableProps) => {
     const router = useRouter();
     const [searchValue, setSearchValue] = useState("");
     const [filteredNews, setFilteredNews] = useState<NewsSummary[]>([]);
-    const trpc = useTRPC();
-    // TODO: consider using useInfiniteQuery
-    const { data, isLoading } = useQuery(trpc.library.getAllSummaryByCategory.queryOptions());
 
     const handleSearchChange = (value: string) => {
         setSearchValue(value);
@@ -76,9 +75,10 @@ const SummaryByCategoryTable = () => {
                 </div>
             </div>
 
-            <div className="flex-shrink-0 sticky top-0 z-10 grid grid-cols-14 gap-4 px-4 py-1 bg-sidebar border-none font-normal text-xs text-muted-foreground">
+            <div className="flex-shrink-0 sticky top-0 z-10 grid grid-cols-16 gap-4 px-4 py-1 bg-sidebar border-none font-normal text-xs text-muted-foreground">
                 <div className="col-span-10">Headline</div>
                 <div className="col-span-2">Category</div>
+                <div className="col-span-2">Language</div>
                 <div className="col-span-2">Date</div>
             </div>
 
@@ -90,7 +90,7 @@ const SummaryByCategoryTable = () => {
                 ) : (
                     <div className="divide-y divide-border text-xs font-normal border-b border-border">
                         {filteredNews.map((item) => (
-                            <div key={item.id} onClick={() => router.push(`/library/${item.id}`)} className="grid grid-cols-14 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
+                            <div key={item.id} onClick={() => router.push(`/library/${item.id}`)} className="grid grid-cols-16 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
                                 <div className="col-span-10">
                                     <div className="font-medium leading-tight truncate">
                                         <p>{item.headline}</p>
@@ -99,6 +99,11 @@ const SummaryByCategoryTable = () => {
                                 <div className="col-span-2">
                                     <div className="text-muted-foreground leading-relaxed">
                                         {item.category}
+                                    </div>
+                                </div>
+                                <div className="col-span-2">
+                                    <div className="text-muted-foreground leading-relaxed">
+                                        {item.language}
                                     </div>
                                 </div>
                                 <div className="col-span-2">
@@ -111,37 +116,6 @@ const SummaryByCategoryTable = () => {
                     </div>
                 )}
             </div>
-        </div>
-    )
-}
-
-const SummaryByIndividualLinkTable = () => {
-    const trpc = useTRPC();
-    // TODO: consider using useInfiniteQuery
-    const { data } = useQuery(trpc.library.getAllSummaryByIndividualLink.queryOptions());
-    return (
-        <div>
-            <Table>
-                <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                        <TableHead>Headline</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Created Date</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {data?.map((item) => (
-                        <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.headline}</TableCell>
-                            <TableCell className="font-medium">{item.category}</TableCell>
-                            <TableCell className="text-right">
-                                {format(item.createdAt, "HH:mm 'on' MMM dd, yyyy")}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-
-            </Table>
         </div>
     )
 }

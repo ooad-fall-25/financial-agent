@@ -83,6 +83,8 @@ export const createAINewsSummaryByLink = async (
         Conclude with your thoughts on the news. You should state that its a thought from assistant as well.
         Make sure the report has good margin and spacing between sentences and paragraph, dont make everthing packed together.
 
+        Language is the desire language that the user wants, you should summarize in the specified language.
+
         You can include the info below for better user experience:
         article: {article}
         language: {language}, by default is English,
