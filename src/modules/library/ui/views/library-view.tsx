@@ -45,7 +45,7 @@ return (
                 <div className="flex justify-between p-4 border-b border-border border-dashed ">
                     <TabsList>
                         {tabItems.map((item) => (
-                            <TabsTrigger key={item.type} value={item.type}>
+                            <TabsTrigger className="!text-sm font-normal" key={item.type} value={item.type}>
                                 {item.name}
                             </TabsTrigger>
                         ))}

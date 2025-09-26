@@ -89,12 +89,12 @@ const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
                                 </div>
                             </div>
                             <div className="col-span-5">
-                                <div className="text-xs text-muted-foreground leading-relaxed">
+                                <div className="text-sm text-muted-foreground leading-relaxed">
                                     {news.summary}
                                 </div>
                             </div>
                             <div className="col-span-2">
-                                <div className="text-xs text-muted-foreground truncate">
+                                <div className="text-sm text-muted-foreground truncate">
                                     {news.source}
                                 </div>
                             </div>
