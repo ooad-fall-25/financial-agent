@@ -72,11 +72,11 @@ export const NewsAggregationView = () => {
         <div className="h-screen max-w-8xl mx-auto flex flex-col w-full">
             <AskAINewsSheet isOpen={isSheetOpen} setIsOpen={setIsSheetOpen}/>
             {/* Fixed Header with Tabs */}
-            <div className="flex-shrink-0 bg-background border-none  pt-6 pb-4">
+            <div className="flex-shrink-0 bg-background border-none">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <div className="flex justify-between px-6 border-b border-border border-dashed pb-6">
+                    <div className="flex justify-between p-4 border-b border-border border-dashed">
 
-                        <TabsList className="">
+                        <TabsList className="bg-secondary">
                             {categoryMarketItems.map((item) => (
                                 <TabsTrigger className="max-w-32 w-24" key={item.type} value={item.type}>{item.name}</TabsTrigger>
                             ))}

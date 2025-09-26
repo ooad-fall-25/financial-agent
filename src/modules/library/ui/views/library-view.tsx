@@ -16,22 +16,22 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger,
-} from "@/components/ui/shadcn-io/tabs"
+} from "@/components/ui/tabs"
 import { LibraryTable } from "../components/library-table";
 
 
 const tabItems = [
     {
         type: "category",
-        name: "Summary by Category"
+        name: "Category"
     },
     {
         type: "individual",
-        name: "Summary by Individual",
+        name: "Individual",
     },
     {
         type: "liked",
-        name: "Liked Summary"
+        name: "Liked"
     }
 ]
 
@@ -43,9 +43,9 @@ return (
         <div className="flex-shrink-0 bg-background sticky top-0 z-20">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex justify-between p-4 border-b border-border border-dashed ">
-                    <TabsList>
+                    <TabsList className="bg-secondary">
                         {tabItems.map((item) => (
-                            <TabsTrigger className="!text-sm font-normal" key={item.type} value={item.type}>
+                            <TabsTrigger  key={item.type} value={item.type}>
                                 {item.name}
                             </TabsTrigger>
                         ))}
