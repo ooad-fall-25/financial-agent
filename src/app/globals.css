@@ -142,6 +142,7 @@
   --font-nunitoSans: var(--font-nunitoSans);
   --font-figtree: var(--font-figtree);
   --font-roboto: var(--font-roboto);
+  --font-inter: var(--font-inter);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

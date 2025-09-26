@@ -6,6 +6,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { NewsDetail } from "../components/news-detail";
+import { LibraryDetailAction } from "../components/library-detail-action";
 
 
 
@@ -43,14 +44,14 @@ export const LibraryDetailView = ({ newsId }: Props) => {
             <LibraryDetailHeader />
 
             {news ? (
-                <div className="grid grid-cols-8 flex-1 h-full text-xs" >
+                <div className="grid grid-cols-8 flex-1 h-full text-sm" >
                     <div className="col-span-5 p-8 pb-20 h-full border-r border-primary overflow-y-auto">
                         <div className="flex items-center justify-between">
                             <h1 className="text-muted-foreground ">
                                 AI generated summary report
                             </h1>
                             <Button variant="outline" onClick={() => handleDownload(news.aiRepsonse)}>
-                                <span className="text-xs">Download as PDF</span>
+                                <span>Download as PDF</span>
                             </Button>
                         </div>
                         <div className="p-8">
@@ -60,8 +61,14 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                         </div>
                     </div>
 
-                    <div className="col-span-3 h-full overflow-y-auto px-4 py-8">
-                        <NewsDetail news={news}/>
+                    <div className="col-span-3 h-full overflow-y-auto py-8 scrollbar-">
+                        <div className="flex flex-col px-4 pb-8 border-b border-primary">
+                            <NewsDetail news={news} />
+                        </div>
+                        <div>
+                            <LibraryDetailAction newsId={news.id}/>
+                        </div>
+                        
                     </div>
                 </div>
             ) : (

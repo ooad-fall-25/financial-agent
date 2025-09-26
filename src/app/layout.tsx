@@ -8,6 +8,7 @@ import {
   Nunito_Sans,
   Figtree,
   Roboto,
+  Inter,
 } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
@@ -66,6 +67,12 @@ const roboto = Roboto({
   weight: "400",
 })
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: "400",
+})
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -85,7 +92,8 @@ export default function RootLayout({
               ${nunitoSans.variable}
               ${figtree.variable}
               ${roboto.variable}
-              antialiased font-libre bg-background text-foreground`}
+              ${inter.variable}
+              antialiased font-inter bg-background text-foreground`}
           >
             <ThemeProvider
               attribute="class"
@@ -94,7 +102,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               {children}
-              <Toaster position="top-center" />
+              <Toaster position="top-center" richColors/>
             </ThemeProvider>
           </body>
         </html>

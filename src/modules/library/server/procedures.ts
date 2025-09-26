@@ -33,20 +33,40 @@ export const libraryRouter = createTRPCRouter({
   }),
 
   getOne: protectedProcedure
-  .input(z.object({
-    newsId: z.string(),
-  }))
-  .query(async ({input, ctx}) => {
-    const data = await prisma.newsSummary.findUnique({
-      where: {
-        userId: ctx.auth.userId,
-        id: input.newsId,
+    .input(
+      z.object({
+        newsId: z.string(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const data = await prisma.newsSummary.findUnique({
+        where: {
+          userId: ctx.auth.userId,
+          id: input.newsId,
+        },
+      });
+      if (!data) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
       }
-    })
-    if (!data) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
-    }
-    return data;
+      return data;
+    }),
 
-  })
+  deleteOne: protectedProcedure
+    .input(
+      z.object({
+        newsId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const data = await prisma.newsSummary.delete({
+        where: {
+          userId: ctx.auth.userId,
+          id: input.newsId,
+        },
+      });
+      if (!data) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+      }
+      return data; 
+    }),
 });

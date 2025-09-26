@@ -9,12 +9,12 @@ interface Props {
 export const NewsDetail = ({ news }: Props) => {
     return (
         <div className="flex flex-col gap-y-4">
-            <div className="flex items-center justify-start gap-x-4 text-xs pb-8">
+            <div className="flex items-center justify-start gap-x-4 text-sm pb-8">
                 <InfoIcon className="size-4" />
                 <span>Detail</span>
             </div>
 
-            <div className="grid grid-cols-6 text-xs">
+            <div className="grid grid-cols-6">
                 <div className="col-span-2 text-muted-foreground">
                     <span>Headline</span>
                 </div>
@@ -23,7 +23,7 @@ export const NewsDetail = ({ news }: Props) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-6 text-xs">
+            <div className="grid grid-cols-6">
                 <div className="col-span-2 text-muted-foreground">
                     <span>Category</span>
                 </div>
@@ -32,7 +32,7 @@ export const NewsDetail = ({ news }: Props) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-6 text-xs">
+            <div className="grid grid-cols-6">
                 <div className="col-span-2 text-muted-foreground">
                     <span>Language</span>
                 </div>
@@ -41,7 +41,7 @@ export const NewsDetail = ({ news }: Props) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-6 text-xs">
+            <div className="grid grid-cols-6">
                 <div className="col-span-2 text-muted-foreground">
                     <span>Provider</span>
                 </div>
@@ -50,7 +50,7 @@ export const NewsDetail = ({ news }: Props) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-6 text-xs">
+            <div className="grid grid-cols-6">
                 <div className="col-span-2 text-muted-foreground">
                     <span>Created Date</span>
                 </div>
