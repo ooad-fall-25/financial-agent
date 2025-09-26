@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "public"."NewsSummary" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "headline" TEXT NOT NULL,
     "aiRepsonse" TEXT NOT NULL,

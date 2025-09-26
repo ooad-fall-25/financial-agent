@@ -85,7 +85,7 @@ export default function RootLayout({
               ${nunitoSans.variable}
               ${figtree.variable}
               ${roboto.variable}
-              antialiased font-montserrat bg-background text-foreground`}
+              antialiased font-libre bg-background text-foreground`}
           >
             <ThemeProvider
               attribute="class"

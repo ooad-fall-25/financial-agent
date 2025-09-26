@@ -27,9 +27,11 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader, SearchIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const SummaryByCategoryTable = () => {
+    const router = useRouter();
     const [searchValue, setSearchValue] = useState("");
     const [filteredNews, setFilteredNews] = useState<NewsSummary[]>([]);
     const trpc = useTRPC();
@@ -56,15 +58,15 @@ const SummaryByCategoryTable = () => {
         <div className="w-full h-full flex flex-col">
             <div className="p-4 flex items-center justify-start gap-x-4">
                 <div className="flex items-center relative w-full max-w-xs">
-                    <div className="absolute left-4 flex items-center gap-x-2 ">
+                    <div className="absolute left-4 flex items-center justify-center gap-x-2 ">
                         <SearchIcon className=" h-4 w-4" />
-                        <span className=" text-xs">Input</span>
+                        <span className="items-center text-xs">Input</span>
                     </div>
                     <Input
                         onChange={(e) => handleSearchChange(e.target.value)}
                         value={searchValue}
                         placeholder="Headline..."
-                        className="pl-20 h-7 items-center !text-xs rounded-full !bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
+                        className="pl-20 h-8 !items-center border-2 !text-xs rounded-full !bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                     />
                 </div>
 
@@ -88,7 +90,7 @@ const SummaryByCategoryTable = () => {
                 ) : (
                     <div className="divide-y divide-border text-xs font-normal border-b border-border">
                         {filteredNews.map((item) => (
-                            <div key={item.id} className="grid grid-cols-14 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
+                            <div key={item.id} onClick={() => router.push(`/library/${item.id}`)} className="grid grid-cols-14 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
                                 <div className="col-span-10">
                                     <div className="font-medium leading-tight truncate">
                                         <p>{item.headline}</p>
