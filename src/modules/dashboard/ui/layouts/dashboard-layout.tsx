@@ -40,13 +40,17 @@ export const DashboardLayout = async ({ children }: { children: React.ReactNode 
 
 
       <Suspense fallback={<p>Loading messages...</p>}>
+        <div className="fixed top-0 left-[var(--sidebar-width)] w-[calc(100%-var(--sidebar-width))] flex justify-end p-4 z-50">
+          <UserButton />
+        </div>
         <SidebarInsetWrapper>
+
           <main className="flex-1">
             {children}
           </main>
         </SidebarInsetWrapper>
       </Suspense>
-      
+
 
     </SidebarProvider>
   )
