@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenIcon, BotIcon, ChartCandlestickIcon, ChartLineIcon, HomeIcon, LibraryBigIcon, MegaphoneIcon, Settings2Icon } from "lucide-react"
+import { BookOpenIcon, BotIcon, ChartCandlestickIcon, ChartLineIcon, HomeIcon, LibraryBigIcon, MegaphoneIcon, SendToBackIcon, Settings2Icon, Undo2Icon } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -63,6 +63,7 @@ const items = [
 
 export const DashboardSidebar = () => {
     const pathname = usePathname();
+    const sidebar = useSidebar(); 
     const isActive = (url: string) => {
         if (url === "/") {
             return pathname === "/";
@@ -74,15 +75,21 @@ export const DashboardSidebar = () => {
     return (
         <Sidebar variant="inset" className="group" collapsible="icon">
             <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                            <Link href="/">
-                                Back
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+                <div className="flex justify-between items-center">
+
+                    <Button
+                        asChild
+                        variant="ghost"
+                        className={cn(!sidebar.open && "hidden")}
+                    >
+                        <Link href="/">
+                            <Undo2Icon />
+                            Back
+                        </Link>
+                    </Button>
+                    <SidebarTrigger className="hover:cursor-e-resize" />
+
+                </div>
             </SidebarHeader>
 
             <SidebarContent>
@@ -112,26 +119,6 @@ export const DashboardSidebar = () => {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-
-            <SidebarFooter>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <UserButton
-                            showName
-                            appearance={{
-                                elements: {
-                                    rootBox: "w-full! h-8!",
-                                    userButtonTrigger: "w-full! p-2! hover:bg-sidebar-accent! hover:text-sidebar-accent-foreground! group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2!",
-                                    userButtonBox: "w-full! flex-row-reverse! justify-end! group-data-[collapsible=icon]:justify-center! text-sidebar-foreground!",
-                                    userButtonOuterIdentifier: "pl-0! group-data-[collapsible=icon]:hidden!",
-                                    avatarBox: "size-4!"
-                                }
-                            }}
-                        />
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarFooter>
-            <SidebarRail />
         </Sidebar>
     )
 }
