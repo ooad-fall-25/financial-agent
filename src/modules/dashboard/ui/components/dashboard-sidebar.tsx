@@ -63,6 +63,7 @@ const items = [
 
 export const DashboardSidebar = () => {
     const pathname = usePathname();
+    const sidebar = useSidebar(); 
     const isActive = (url: string) => {
         if (url === "/") {
             return pathname === "/";
@@ -74,9 +75,21 @@ export const DashboardSidebar = () => {
     return (
         <Sidebar variant="inset" className="group" collapsible="icon">
             <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarTrigger className="hover:cursor-e-resize"/>
-                </SidebarMenu>
+                <div className="flex justify-between items-center">
+
+                    <Button
+                        asChild
+                        variant="ghost"
+                        className={cn(!sidebar.open && "hidden")}
+                    >
+                        <Link href="/">
+                            <Undo2Icon />
+                            Back
+                        </Link>
+                    </Button>
+                    <SidebarTrigger className="hover:cursor-e-resize" />
+
+                </div>
             </SidebarHeader>
 
             <SidebarContent>

@@ -14,11 +14,13 @@ import {
   useSidebar, // Move this import here
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { SidebarIcon, XIcon } from "lucide-react";
+import { SidebarIcon, Undo2Icon, XIcon } from "lucide-react";
 import { Suspense } from "react";
 import { DashboardSidebar } from "../components/dashboard-sidebar";
 import { UserButton } from "@clerk/nextjs";
 import { SidebarInsetWrapper } from "./sidebar-inset-wrapper";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
