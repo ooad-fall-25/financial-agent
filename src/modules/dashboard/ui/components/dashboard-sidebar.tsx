@@ -72,7 +72,7 @@ export const DashboardSidebar = () => {
     }
 
     return (
-        <Sidebar className="group" collapsible="icon">
+        <Sidebar variant="inset" className="group" collapsible="icon">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -97,7 +97,7 @@ export const DashboardSidebar = () => {
                                         tooltip={item.title}
                                         isActive={isActive(item.url)}
                                         className={cn(
-                                            isActive(item.url) && "bg-gradient-to-b from-sidebar-primary to-[#b91c1c]! text-sidebar-primary-foreground! hover:to-[#b91c1c]/90!"
+                                            isActive(item.url) && "bg-sidebar"
                                         )}
                                     >
                                         <Link href={item.url}>

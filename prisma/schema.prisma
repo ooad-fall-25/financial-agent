@@ -15,7 +15,7 @@ datasource db {
 }
 
 model NewsSummary {
-  id         Int     @id @default(autoincrement())
+  id         String  @id @default(uuid())
   userId     String
   headline   String
   aiRepsonse String

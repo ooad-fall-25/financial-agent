@@ -3,6 +3,12 @@ import {
   Geist,
   Geist_Mono,
   Libre_Baskerville,
+  Noto_Sans,
+  Montserrat,
+  Nunito_Sans,
+  Figtree,
+  Roboto,
+  Inter,
 } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
@@ -31,6 +37,41 @@ const libreBaskerville = Libre_Baskerville({
   weight: "400",
 })
 
+const notoSans = Noto_Sans({
+  variable: "--font-noto-sans",
+  subsets: ["latin"],
+  // weight: "400"
+})
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: "400",
+})
+
+const nunitoSans = Nunito_Sans({
+  variable: "--font-nunitoSans",
+  subsets: ["latin"],
+  weight: "400",
+})
+
+const figtree = Figtree({
+  variable: "--font-figtree",
+  subsets: ["latin"],
+  weight: "400",
+})
+
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin"],
+  weight: "400",
+})
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: "400",
+})
 
 export default function RootLayout({
   children,
@@ -42,7 +83,17 @@ export default function RootLayout({
       <TRPCReactProvider>
         <html lang="en" suppressHydrationWarning>
           <body
-            className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable}  antialiased font-libre bg-background text-foreground`}
+            className={`
+              ${geistSans.variable} 
+              ${geistMono.variable} 
+              ${libreBaskerville.variable} 
+              ${notoSans.variable} 
+              ${montserrat.variable} 
+              ${nunitoSans.variable}
+              ${figtree.variable}
+              ${roboto.variable}
+              ${inter.variable}
+              antialiased font-inter bg-background text-foreground`}
           >
             <ThemeProvider
               attribute="class"
@@ -51,7 +102,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               {children}
-              <Toaster position="top-center" />
+              <Toaster position="top-center" richColors/>
             </ThemeProvider>
           </body>
         </html>

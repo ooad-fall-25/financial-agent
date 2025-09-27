@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@clerk/nextjs": "^6.32.0",
     "@hookform/resolvers": "^5.2.1",
@@ -60,11 +63,14 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.544.0",
     "marked": "^16.3.0",
+    "motion": "^12.23.22",
+    "motion-highlight": "^0.0.1",
     "next": "15.5.3",
     "next-themes": "^0.4.6",
     "node-fetch-commonjs": "^3.3.2",
     "postprocessing": "^6.37.8",
     "puppeteer": "^24.22.0",
+    "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-day-picker": "^9.9.0",
     "react-dom": "19.1.0",
