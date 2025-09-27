@@ -72,7 +72,7 @@ export const NewsAggregationView = () => {
         <div className="h-screen max-w-8xl mx-auto flex flex-col w-full">
             <AskAINewsSheet isOpen={isSheetOpen} setIsOpen={setIsSheetOpen}/>
             {/* Fixed Header with Tabs */}
-            <div className="flex-shrink-0 bg-background border-none">
+            <div className="flex-shrink-0 bg-background sticky top-0 z-20">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <div className="flex justify-between p-4 border-b border-border border-dashed">
 
@@ -110,7 +110,7 @@ export const NewsAggregationView = () => {
                     </div>
 
                     {/* Scrollable Content Area with fixed height */}
-                    <div className="mt-4 px-6" style={{ height: 'calc(100vh - 140px)' }}>
+                    <div className="mt-4 px-6" style={{ height: 'calc(100vh - 180px)' }}>
                         {categoryMarketItems.map((item) => (
                             <TabsContent key={item.type} value={item.type} className="h-full overflow-y-auto">
                                 <div className="bg-background rounded-lg border-none shadow-none">

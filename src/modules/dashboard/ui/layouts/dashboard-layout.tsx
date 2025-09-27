@@ -33,13 +33,22 @@ export const DashboardLayout = async ({ children }: { children: React.ReactNode 
         >
             <DashboardSidebar />
 
-            <SidebarInset className="flex flex-col">
-                <SidebarTrigger className="md:hidden border-none fixed top-2 left-4" />
-                <Suspense fallback={<p>loading messages. ... . </p>}>
-                    {children}
-                </Suspense>
-            </SidebarInset>
+<SidebarInset
+  className="fixed top-12 inset-x-0 bottom-0 left-[var(--sidebar-width)] 
+             w-[calc(99%-var(--sidebar-width))] max-w-8xl mx-auto flex flex-col rounded-xl overflow-hidden"
+>
+
+  <Suspense fallback={<p>Loading messages...</p>}>
+    <main className="flex-1 ">
+      {children}
+    </main>
+  </Suspense>
+</SidebarInset>
+
 
         </SidebarProvider>
     )
+
+
+
 }
