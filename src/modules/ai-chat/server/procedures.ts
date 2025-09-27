@@ -6,69 +6,122 @@ import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
 
 export const chatRouter = createTRPCRouter({
-  getChatHistory: protectedProcedure.query(async ({ ctx }) => {
-    const chatHistory = await prisma.aiChat.findMany({
+  getConversations: protectedProcedure.query(async ({ ctx }) => {
+    const conversations = await prisma.conversation.findMany({
       where: {
         userId: ctx.auth.userId,
       },
       orderBy: {
-        createdAt: "asc",
+        updatedAt: "desc",
+      },
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
+        },
       },
     });
-    return chatHistory;
+    return conversations;
   }),
+
+  getChatHistory: protectedProcedure
+    .input(z.object({ conversationId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const chatHistory = await prisma.message.findMany({
+        where: {
+          conversationId: input.conversationId,
+          userId: ctx.auth.userId,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+      return chatHistory;
+    }),
 
   createChatMessage: protectedProcedure
     .input(
       z.object({
         prompt: z.string(),
+        conversationId: z.string().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        // 1. Fetch the user's chat history
-        const history = await prisma.aiChat.findMany({
+        let conversationId = input.conversationId;
+
+        if (!conversationId) {
+          const newConversation = await prisma.conversation.create({
+            data: {
+              userId: ctx.auth.userId,
+            },
+          });
+          conversationId = newConversation.id;
+        } else {
+          const conversation = await prisma.conversation.findFirst({
+            where: {
+              id: conversationId,
+              userId: ctx.auth.userId,
+            },
+          });
+          if (!conversation) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Conversation not found",
+            });
+          }
+        }
+
+        const history = await prisma.message.findMany({
           where: {
+            conversationId: conversationId,
             userId: ctx.auth.userId,
           },
           orderBy: {
             createdAt: "asc",
           },
-          // Only select the fields needed for the history
           select: {
             role: true,
             content: true,
           },
-          take: 10, // Limit the history to the last 10 messages to manage token usage
+          take: 10,
         });
 
-        // 2. Call the AI function with the current message and the fetched history
-        const aiResponse = await createAIChatCompletion(
-          input.prompt,
-          history,
-        );
-
+        const aiResponse = await createAIChatCompletion(input.prompt, history);
         const aiResponseContent = aiResponse.content.toString();
 
-        // 3. Save the new user prompt and the AI's response to the database
-        await prisma.aiChat.createMany({
+        await prisma.message.createMany({
           data: [
             {
               userId: ctx.auth.userId,
               role: "user",
               content: input.prompt,
+              conversationId: conversationId,
             },
             {
               userId: ctx.auth.userId,
               role: "assistant",
               content: aiResponseContent,
+              conversationId: conversationId,
             },
           ],
+        });
+
+        await prisma.conversation.update({
+          where: {
+            id: conversationId,
+          },
+          data: {
+            updatedAt: new Date(),
+          },
         });
 
         return {
           user: input.prompt,
           assistant: aiResponseContent,
+          conversationId: conversationId,
         };
       } catch (error) {
         console.error("Failed to get AI response:", error);
