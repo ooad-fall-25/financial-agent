@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenIcon, BotIcon, ChartCandlestickIcon, ChartLineIcon, HomeIcon, LibraryBigIcon, MegaphoneIcon, Settings2Icon } from "lucide-react"
+import { BookOpenIcon, BotIcon, ChartCandlestickIcon, ChartLineIcon, HomeIcon, LibraryBigIcon, MegaphoneIcon, SendToBackIcon, Settings2Icon, Undo2Icon } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -75,13 +75,7 @@ export const DashboardSidebar = () => {
         <Sidebar variant="inset" className="group" collapsible="icon">
             <SidebarHeader>
                 <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                            <Link href="/">
-                                Back
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <SidebarTrigger className="hover:cursor-e-resize"/>
                 </SidebarMenu>
             </SidebarHeader>
 
@@ -112,9 +106,6 @@ export const DashboardSidebar = () => {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-
-            
-            <SidebarRail />
         </Sidebar>
     )
 }
