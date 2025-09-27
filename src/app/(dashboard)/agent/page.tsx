@@ -1,8 +1,8 @@
+import { AIChatView } from "@/modules/ai-chat/ui/views/ai-chat-view";
+
 const Page = () => {
     return (
-        <div>
-            agent
-        </div>
+        <AIChatView />
     )
 }
 
