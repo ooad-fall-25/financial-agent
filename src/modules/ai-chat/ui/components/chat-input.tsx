@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const ChatInput = ({ prompt, setPrompt, onSend, isSending }: Props) => {
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && !isSending) {
       onSend();
     }
@@ -21,7 +21,7 @@ export const ChatInput = ({ prompt, setPrompt, onSend, isSending }: Props) => {
       <Input
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        onKeyPress={handleKeyPress}
+        onKeyDown={handleKeyDown}
         placeholder="Type your message..."
         disabled={isSending}
       />

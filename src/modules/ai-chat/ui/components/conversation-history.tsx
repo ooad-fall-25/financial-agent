@@ -1,4 +1,3 @@
-// src/modules/ai-chat/ui/components/conversation-history.tsx
 import {
   DialogContent,
   DialogHeader,

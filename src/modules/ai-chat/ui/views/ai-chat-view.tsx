@@ -1,4 +1,3 @@
-// src/modules/ai-chat/ui/views/ai-chat-view.tsx
 "use client";
 
 import { useTRPC } from "@/trpc/client";
