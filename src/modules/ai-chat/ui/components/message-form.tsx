@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useCallback, useState } from "react";
+import { ChangeEvent, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutoSize from "react-textarea-autosize";
@@ -14,12 +14,12 @@ import { useDropzone } from "react-dropzone";
 interface Props {
     prompt: string;
     setPrompt: (prompt: string) => void;
-    onSend: () => void;
+    onSend: (text: string, files?: File[]) => void;
     isSending: boolean;
 }
 
 const formSchema = z.object({
-    value: z
+    text: z
         .string()
         .min(1, { message: "Value is required" })
         .max(10000, { message: "Value is too long" }),
@@ -27,49 +27,38 @@ const formSchema = z.object({
         .array(
             z.instanceof(File, { message: "Must be a valid file" })
         )
-        .min(1, { message: "File is required" })
         .max(10, { message: "You can upload up to 10 files" })
         .optional()
 })
 
 
-export const MessageForm = ({ prompt, setPrompt, onSend, isSending }: Props) => {
+export const MessageForm = ({ onSend, isSending }: Props) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            value: "",
-            files: [],
-        },
+        defaultValues: { text: "", files: [] },
     });
 
-    const onSubmit = () => {
-        onSend();
-        form.reset();
-    };
-
     const [isFocused, setIsFocused] = useState(false);
-    // const isPending = createMessage.isPending;
-    const isPending = false;
-    // const isButtonDisabled = isPending || !form.formState.isValid;
-    const isButtonDisabled = false;
-    // const showUsage = !!usage;
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        form.reset({ text: "", files: [] });
+        await onSend(values.text, values.files);
+    };
 
     const onDrop = useCallback(
         (acceptedFiles: File[]) => {
-            // merge new files with any already in form state
-            form.setValue("files", [
-                ...(form.getValues("files") ?? []),
-                ...acceptedFiles,
-            ]);
+            form.setValue("files", [...(form.getValues("files") ?? []), ...acceptedFiles]);
         },
         [form]
     );
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         multiple: true,
         noClick: true,
         noKeyboard: true,
     });
+
     return (
         <Form {...form}>
             {/* File preview */}
@@ -102,7 +91,6 @@ export const MessageForm = ({ prompt, setPrompt, onSend, isSending }: Props) => 
                 ))}
             </div>
 
-
             <form
                 {...getRootProps()}
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -110,21 +98,18 @@ export const MessageForm = ({ prompt, setPrompt, onSend, isSending }: Props) => 
                     "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
                     isFocused && "shadow-xs",
                     isDragActive && "border-dashed border-primary"
-                    // showUsage && "rounded-t-none"
                 )}
             >
-
-                {/* invisible */}
+                {/* Invisible dropzone input */}
                 <input {...getInputProps()} />
 
                 <FormField
                     control={form.control}
-                    name="value"
+                    name="text"
                     render={({ field }) => (
                         <TextareaAutoSize
                             {...field}
                             disabled={isSending}
-                            value={prompt}
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
                             minRows={2}
@@ -132,13 +117,12 @@ export const MessageForm = ({ prompt, setPrompt, onSend, isSending }: Props) => 
                             className="pt-4 resize-none border-none w-full outline-none bg-transparent"
                             placeholder="What would you like to ask?"
                             onKeyDown={(e) => {
+                                // Ctrl/Cmd + Enter sends the message
                                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                                     e.preventDefault();
-                                    form.handleSubmit(onSend)(e);
+                                    form.handleSubmit(onSubmit)(); // no arguments!
                                 }
                             }}
-                            onChange={(e) => setPrompt(e.target.value)}
-
                         />
                     )}
                 />
@@ -150,25 +134,16 @@ export const MessageForm = ({ prompt, setPrompt, onSend, isSending }: Props) => 
                         </kbd>
                         &nbsp;to submit
                     </div>
+
                     <Button
+                        type="submit" // important to trigger form submit
                         disabled={isSending}
-                        onClick={onSend}
-                        className={cn(
-                            "size-8 rounded-full",
-                            isSending && "bg-muted-foreground border"
-
-                        )}
+                        className={cn("size-8 rounded-full", isSending && "bg-muted-foreground border")}
                     >
-
-                        {isPending ? (
-                            <Loader2Icon className="size-4 animate-spin" />
-                        ) : (
-                            <ArrowUpIcon />
-                        )}
+                        {isSending ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowUpIcon />}
                     </Button>
                 </div>
             </form>
-
         </Form>
-    )
-}
+    );
+};
