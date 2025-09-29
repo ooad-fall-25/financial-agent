@@ -32,10 +32,6 @@ const finnhubItems = [
         name: "Top"
     },
     {
-        type: "forex",
-        name: "Forex"
-    },
-    {
         type: "crypto",
         name: "Crypto"
     },
