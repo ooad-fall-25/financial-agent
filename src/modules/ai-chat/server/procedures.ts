@@ -1,7 +1,10 @@
-// src/modules/ai-chat/server/procedures.ts
 import z from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
-import { createAIChatCompletion } from "@/lib/ai-chat";
+import {
+  createAIChatCompletion,
+  getRoutingDecision,
+  invokeReActAgent,
+} from "@/lib/ai-chat";
 import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
 
@@ -46,7 +49,7 @@ export const chatRouter = createTRPCRouter({
       z.object({
         prompt: z.string(),
         conversationId: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       try {
@@ -89,8 +92,28 @@ export const chatRouter = createTRPCRouter({
           take: 10,
         });
 
-        const aiResponse = await createAIChatCompletion(input.prompt, history);
-        const aiResponseContent = aiResponse.content.toString();
+        // 1. Get the routing decision, now with history
+        const routingDecision = await getRoutingDecision(input.prompt, history);
+
+        // 2. Log the decision to the terminal
+        console.log(
+          `Routing decision for prompt "${input.prompt}": ${routingDecision}`
+        );
+
+        let aiResponseContent: string;
+
+        // 3. Route the request based on the decision
+        if (routingDecision === "ReAct") {
+          // Call the ReAct agent
+          aiResponseContent = await invokeReActAgent(input.prompt, history);
+        } else {
+          // Use the direct LLM call for simple queries
+          const aiResponse = await createAIChatCompletion(
+            input.prompt,
+            history
+          );
+          aiResponseContent = aiResponse.content.toString();
+        }
 
         await prisma.message.createMany({
           data: [
