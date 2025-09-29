@@ -19,6 +19,7 @@ CREATE TABLE "public"."NewsSummary" (
 CREATE TABLE "public"."Conversation" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "title" TEXT NOT NULL DEFAULT 'New Conversation',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -37,5 +38,36 @@ CREATE TABLE "public"."Message" (
     CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."Report" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "extractedFileContent" TEXT NOT NULL,
+    "inputText" TEXT NOT NULL,
+    "contentType" TEXT NOT NULL,
+    "aiResponse" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."Media" (
+    "id" TEXT NOT NULL,
+    "bucket" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "contentType" TEXT NOT NULL,
+    "size" BIGINT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "reportId" TEXT NOT NULL,
+
+    CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
+);
+
 -- AddForeignKey
 ALTER TABLE "public"."Message" ADD CONSTRAINT "Message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Media" ADD CONSTRAINT "Media_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "public"."Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
