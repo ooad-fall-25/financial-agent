@@ -21,3 +21,9 @@ export const getMarketNews = async (category: string, minId?: number) => {
   const marketNews = await finnhubClient.marketNews(category, minId);
   return marketNews;
 };
+
+export const getFinnhubCompanyNews = async (input: string, from: string, to: string) => {
+  const finnhubClient = getFinnhubClient();
+  const CompanyNews = await finnhubClient.companyNews(input, from, to);
+  return CompanyNews;
+};

@@ -2,7 +2,10 @@ import z from "zod";
 
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { getMarketNews } from "@/lib/finnhub";
+import { 
+  getMarketNews,
+  getFinnhubCompanyNews
+} from "@/lib/finnhub";
 import {
   fetchCompanyName,
   fetchCompCompetitors,
@@ -15,7 +18,10 @@ import {
   fetchCryptoScreener,
   fetchTrendingTickers,
 } from "@/lib/yahoo";
-import { getStockNews } from "@/lib/polygon";
+import { 
+  getStockNews, 
+  getPolygonCompanyNews
+} from "@/lib/polygon";
 import {
   createAINewsSummary,
   createAINewsSummaryByLink,
@@ -29,6 +35,7 @@ import {
 import { prisma } from "@/lib/db";
 import puppeteer from "puppeteer";
 import { marked } from "marked";
+import dayjs from "dayjs";
 
 export const marketsRouter = createTRPCRouter({
   getMarketNews: protectedProcedure
@@ -50,10 +57,52 @@ export const marketsRouter = createTRPCRouter({
       return marketNews;
     }),
 
+  getFinnhubCompanyNews: protectedProcedure
+    .input(
+      z.object({
+        ticker: z.string(),
+        // from: z.string().optional, // YYYY-MM-DD
+        // to: z.string().optional, // YYYY-MM-DD
+      })
+    )
+    .query(async ({ input }) => {
+      const today = dayjs();
+      const oneWeekAgo = today.subtract(7, 'day');
+
+      const fromDate = oneWeekAgo.format('YYYY-MM-DD');
+      const toDate = today.format('YYYY-MM-DD');
+
+      const { data: companyNews } = await getFinnhubCompanyNews(
+        input.ticker,
+        fromDate,
+        toDate
+      );
+
+      if (!companyNews || companyNews.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Company news not found for Finnhub" });
+      }
+      return companyNews;
+    }),
+
   getPolygonStockNews: protectedProcedure.query(async () => {
     const stockNews = await getStockNews();
     const result = stockNews.results;
     return result;
+  }),
+
+  getPolygonCompanyNews: protectedProcedure
+    .input(
+      z.object({
+        ticker: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const companyNews = await getPolygonCompanyNews(input.ticker);
+
+      if (!companyNews || companyNews.results?.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Company news not found for Polygon" });
+      }
+      return companyNews.results;
   }),
 
   createAINewsSummary: protectedProcedure

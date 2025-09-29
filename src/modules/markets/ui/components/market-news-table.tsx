@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { AskAINewsLinkDialog } from "./ask-ai-news-link-dialog";
 import Image from "next/image";
-import Logo from "./logo.png";
 import { Badge } from "@/components/ui/badge";
 
 interface Props {
     marketCategory: string;
     provider: string;
+    ticker?: string;
 }
 interface DialogDataProps {
     providerName: string;
@@ -23,7 +23,7 @@ interface DialogDataProps {
     summary: string;
 }
 
-export const MarketNewsTable = ({ marketCategory, provider }: Props) => {
+export const MarketNewsTable = ({ marketCategory, provider, ticker }: Props) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogData, setDialogData] = useState<DialogDataProps | null>(null);
 
@@ -35,10 +35,10 @@ export const MarketNewsTable = ({ marketCategory, provider }: Props) => {
     return (
         <>
             {provider === "polygon" ? (
-                <PolygonNewsTable openDialog={openDialog} />
+                <PolygonNewsTable openDialog={openDialog} ticker={ticker}/>
 
             ) : (
-                <FinnhubNewsTable marketCategory={marketCategory} openDialog={openDialog} />
+                <FinnhubNewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker}/>
 
             )}
             <AskAINewsLinkDialog
@@ -58,15 +58,17 @@ export const MarketNewsTable = ({ marketCategory, provider }: Props) => {
 interface FinnhubProps {
     marketCategory: string;
     openDialog: (data: DialogDataProps) => void;
+    ticker?: string;
 }
 
-const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
+const FinnhubNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) => {
     const trpc = useTRPC();
-    const { data: marketNews, isLoading } = useQuery(trpc.marketssssss.getMarketNews.queryOptions(
-        {
-            category: marketCategory,
-        }
-    ));
+    const { data: marketNews, isLoading } = useQuery({
+        ...(marketCategory === "company" && ticker
+            ? trpc.marketssssss.getFinnhubCompanyNews.queryOptions({ ticker })
+            : trpc.marketssssss.getMarketNews.queryOptions({ category: marketCategory })),
+        enabled: marketCategory !== "company" || (marketCategory === "company" && !!ticker), // Only run company query if ticker is provided
+    });
 
     return (
         <div className="w-full">
@@ -86,7 +88,7 @@ const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
                                     className="group block overflow-hidden rounded-md" // Added group and overflow-hidden for animation
                                 >
                                     <Image
-                                        src={news.image || Logo} 
+                                        src={news.image || "/logo.png"} 
                                         alt="News Image"
                                         width={180} 
                                         height={120} 
@@ -107,7 +109,7 @@ const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
                                 </div>
                             </div>
                             <div className="col-span-10">
-                                <div className="text-sm text-muted-foreground leading-relaxed">
+                                <div className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
                                     {news.summary}
                                 </div>
                             </div>
@@ -143,11 +145,30 @@ const FinnhubNewsTable = ({ marketCategory, openDialog }: FinnhubProps) => {
 
 interface PolygonProps {
     openDialog: (data: DialogDataProps) => void;
+    ticker?: string;
 }
 
-const PolygonNewsTable = ({ openDialog }: PolygonProps) => {
+const PolygonNewsTable = ({ openDialog, ticker }: PolygonProps) => {
     const trpc = useTRPC();
-    const { data: marketNews, isLoading } = useQuery(trpc.marketssssss.getPolygonStockNews.queryOptions());
+    // Conditional query based on ticker
+    const { data: marketNews, isLoading } = useQuery(
+        ticker
+            ? trpc.marketssssss.getPolygonCompanyNews.queryOptions({ ticker })
+            : trpc.marketssssss.getPolygonStockNews.queryOptions(),
+    );
+
+
+    // State to manage visibility of all tickers for each news item
+    const [showAllTickers, setShowAllTickers] = useState<{ [key: string]: boolean }>({});
+
+    const toggleShowAllTickers = (id: string) => {
+        setShowAllTickers(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
+
+    const TICKER_LIMIT = 10;
 
     return (
         <div className="w-full">
@@ -166,7 +187,7 @@ const PolygonNewsTable = ({ openDialog }: PolygonProps) => {
                                     className="group block overflow-hidden rounded-md"
                                 >
                                     <Image
-                                    src={news.image_url || Logo} 
+                                    src={news.image_url || "/logo.png"} 
                                     alt="News Image"
                                     width={180} 
                                     height={120} 
@@ -188,16 +209,38 @@ const PolygonNewsTable = ({ openDialog }: PolygonProps) => {
                                 {/* Stock buttons for Polygon */}
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     {news.tickers && news.tickers.length > 0 && (
-                                        news.tickers.map((ticker) => (
-                                            <Badge key={ticker} variant="secondary">
-                                                {ticker}
-                                            </Badge>
-                                        ))
+                                        <>
+                                            {(showAllTickers[news.id] ? news.tickers : news.tickers.slice(0, TICKER_LIMIT)).map((ticker) => (
+                                                <Badge key={ticker} variant="secondary">
+                                                    {ticker}
+                                                </Badge>
+                                            ))}
+                                            {news.tickers.length > TICKER_LIMIT && !showAllTickers[news.id] && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-6 px-2 text-xs"
+                                                    onClick={() => toggleShowAllTickers(news.id)}
+                                                >
+                                                    ...
+                                                </Button>
+                                            )}
+                                            {news.tickers.length > TICKER_LIMIT && showAllTickers[news.id] && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-6 px-2 text-xs"
+                                                    onClick={() => toggleShowAllTickers(news.id)}
+                                                >
+                                                    Show Less
+                                                </Button>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
                             <div className="col-span-9">
-                                <div className="text-sm text-muted-foreground leading-relaxed">
+                                <div className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
                                     {news.description}
                                 </div>
                             </div>

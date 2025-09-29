@@ -9,8 +9,13 @@ const getRestClient = () => {
 export const getStockNews = async () => {
     const restClient = getRestClient();
     const response = await restClient.listNews();
-
-    return response; 
-
+    return response;
 }
+
+export const getPolygonCompanyNews = async (input: string) => {
+  const restClient = getRestClient();
+  const response = await restClient.listNews(input);
+  return response;
+};
+
 
