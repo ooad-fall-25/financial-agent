@@ -11,6 +11,13 @@ import { Form, FormField } from "@/components/ui/form";
 import { ArrowUpIcon, Loader2Icon, XIcon } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
+interface Props {
+    prompt: string;
+    setPrompt: (prompt: string) => void;
+    onSend: () => void;
+    isSending: boolean;
+}
+
 const formSchema = z.object({
     value: z
         .string()
@@ -22,10 +29,11 @@ const formSchema = z.object({
         )
         .min(1, { message: "File is required" })
         .max(10, { message: "You can upload up to 10 files" })
+        .optional()
 })
 
 
-export const MessageForm = () => {
+export const MessageForm = ({ prompt, setPrompt, onSend, isSending }: Props) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -33,6 +41,11 @@ export const MessageForm = () => {
             files: [],
         },
     });
+
+    const onSubmit = () => {
+        onSend();
+        form.reset();
+    };
 
     const [isFocused, setIsFocused] = useState(false);
     // const isPending = createMessage.isPending;
@@ -92,7 +105,7 @@ export const MessageForm = () => {
 
             <form
                 {...getRootProps()}
-                // onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className={cn(
                     "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
                     isFocused && "shadow-xs",
@@ -110,7 +123,8 @@ export const MessageForm = () => {
                     render={({ field }) => (
                         <TextareaAutoSize
                             {...field}
-                            // disabled={isPending}
+                            disabled={isSending}
+                            value={prompt}
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
                             minRows={2}
@@ -120,9 +134,11 @@ export const MessageForm = () => {
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                                     e.preventDefault();
-                                    // form.handleSubmit(onSubmit)(e);
+                                    form.handleSubmit(onSend)(e);
                                 }
                             }}
+                            onChange={(e) => setPrompt(e.target.value)}
+
                         />
                     )}
                 />
@@ -135,10 +151,11 @@ export const MessageForm = () => {
                         &nbsp;to submit
                     </div>
                     <Button
-                        // disabled={isButtonDisabled}
+                        disabled={isSending}
+                        onClick={onSend}
                         className={cn(
                             "size-8 rounded-full",
-                            // isButtonDisabled && "bg-muted-foreground border"
+                            isSending && "bg-muted-foreground border"
 
                         )}
                     >
