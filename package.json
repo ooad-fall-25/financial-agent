@@ -17,6 +17,7 @@
     "@icons-pack/react-simple-icons": "^13.7.0",
     "@langchain/core": "^0.3.76",
     "@langchain/deepseek": "^0.1.0",
+    "@langchain/langgraph": "^0.4.9",
     "@langchain/openai": "^0.6.12",
     "@polygon.io/client-js": "^8.2.0",
     "@prisma/client": "^6.16.1",
