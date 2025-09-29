@@ -31,10 +31,10 @@ model NewsSummary {
 }
 
 model Conversation {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   messages  Message[]
 }
 
@@ -49,4 +49,30 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
 
+model Report {
+  id                   String @id @default(uuid())
+  userId               String
+  extractedFileContent String
+  inputText            String
+  contentType          String
+  aiResponse           String
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  medias Media[] // for now, multiple files are allowed and generated into one report 
+}
+
+model Media {
+  id          String @id @default(uuid())
+  bucket      String
+  key         String
+  contentType String
+  size        BigInt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+}

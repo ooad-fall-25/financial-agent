@@ -12,6 +12,8 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.896.0",
+    "@aws-sdk/s3-request-presigner": "^3.896.0",
     "@clerk/nextjs": "^6.32.0",
     "@hookform/resolvers": "^5.2.1",
     "@icons-pack/react-simple-icons": "^13.7.0",
@@ -75,9 +77,11 @@
     "react": "19.1.0",
     "react-day-picker": "^9.9.0",
     "react-dom": "19.1.0",
+    "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.62.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.6",
+    "react-textarea-autosize": "^8.5.9",
     "recharts": "^2.15.4",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
