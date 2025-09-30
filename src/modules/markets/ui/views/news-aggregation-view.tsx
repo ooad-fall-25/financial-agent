@@ -41,7 +41,7 @@ const finnhubItems = [
         name: "Merger"
     },
     {
-        type: "company", // New section for company news
+        type: "company",
         name: "Company"
     }
 ]
@@ -52,7 +52,7 @@ const polygonItems = [
         name: "Stock"
     },
     {
-        type: "company", // New section for company news
+        type: "company", 
         name: "Company"
     }
 ]
@@ -61,12 +61,12 @@ export const NewsAggregationView = () => {
     const [categoryMarketItems, setCategoryMarketItems] = useState<ItemType[]>(finnhubItems);
     const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type);
     const [isSheetOpen, setIsSheetOpen] = useState(false); 
-    const [tickerSearchInput, setTickerSearchInput] = useState(""); // State for search bar input
-    const [searchedTicker, setSearchedTicker] = useState(""); // State for the actual ticker to search
+    const [tickerSearchInput, setTickerSearchInput] = useState(""); 
+    const [searchedTicker, setSearchedTicker] = useState(""); 
 
     const handleSetProvider = (value: string) => {
-        setTickerSearchInput(""); // Clear search input when provider changes
-        setSearchedTicker(""); // Clear searched ticker
+        setTickerSearchInput(""); 
+        setSearchedTicker(""); 
         if (value === "polygon") {
             setCategoryMarketItems(polygonItems);
             setActiveTab(polygonItems[0].type);
@@ -78,7 +78,7 @@ export const NewsAggregationView = () => {
     }   
 
     const handleTickerSearch = () => {
-        setSearchedTicker(tickerSearchInput.toUpperCase()); // Set the ticker to search, usually uppercase
+        setSearchedTicker(tickerSearchInput.toUpperCase());
     };
 
     return (
