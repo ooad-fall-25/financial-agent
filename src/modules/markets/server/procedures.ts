@@ -61,8 +61,6 @@ export const marketsRouter = createTRPCRouter({
     .input(
       z.object({
         ticker: z.string(),
-        // from: z.string().optional, // YYYY-MM-DD
-        // to: z.string().optional, // YYYY-MM-DD
       })
     )
     .query(async ({ input }) => {

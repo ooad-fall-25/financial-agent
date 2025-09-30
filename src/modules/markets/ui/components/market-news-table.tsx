@@ -187,11 +187,11 @@ const PolygonNewsTable = ({ openDialog, ticker }: PolygonProps) => {
                                     className="group block overflow-hidden rounded-md"
                                 >
                                     <Image
-                                    src={news.image_url || "/logo.png"} 
-                                    alt="News Image"
-                                    width={180} 
-                                    height={120} 
-                                    className="object-cover rounded-md aspect-video transition-transform duration-300 ease-out group-hover:scale-105"
+                                        src={news.image_url || "/logo.png"} 
+                                        alt="News Image"
+                                        width={180} 
+                                        height={120} 
+                                        className="object-cover rounded-md aspect-video transition-transform duration-300 ease-out group-hover:scale-105"
                                     />
                                 </Link>
                             </div>
