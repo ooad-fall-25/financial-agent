@@ -13,19 +13,13 @@ interface Props {
   conversations: Conversation[];
   onSelectConversation: (id: string) => void;
   selectedConversationId: string | null;
-  onClose: () => void;
 }
 
 export const ConversationHistory = ({
   conversations,
   onSelectConversation,
   selectedConversationId,
-  onClose,
 }: Props) => {
-  const handleSelect = (id: string) => {
-    onSelectConversation(id);
-    onClose();
-  };
 
   return (
     <DialogContent>
@@ -40,7 +34,7 @@ export const ConversationHistory = ({
               className={`p-2 rounded-md cursor-pointer ${
                 selectedConversationId === convo.id ? "bg-muted" : ""
               }`}
-              onClick={() => handleSelect(convo.id)}
+              onClick={() => onSelectConversation(convo.id)}
             >
               <p className="truncate font-semibold">
                 {convo.title || "New Conversation"}

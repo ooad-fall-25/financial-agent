@@ -1,5 +1,5 @@
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { MessageForm } from "./message-form";
 import { useEffect, useRef, useState } from "react";
 import { MessageCard } from "./message-card";
@@ -7,18 +7,18 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ConversationHistory } from "./conversation-history";
 import { PlusCircle, History, Loader } from "lucide-react";
+import { useRouter } from "next/navigation";
 
+interface MessagesContainerProps {
+    conversationId?: string;
+}
 
-
-export const MessagesContainer = () => {
+export const MessagesContainer = ({ conversationId }: MessagesContainerProps) => {
     const trpc = useTRPC();
+    const router = useRouter();
     const bottomRef = useRef<HTMLDivElement>(null);
-    const lastAssistantMessageIdRef = useRef<string | null>(null);
 
     const [prompt, setPrompt] = useState("");
-    const [selectedConversationId, setSelectedConversationId] = useState<
-        string | null
-    >(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const queryClient = useQueryClient();
 
@@ -28,16 +28,17 @@ export const MessagesContainer = () => {
 
     const { data: chatHistory, isLoading: isLoadingHistory } = useQuery({
         ...trpc.chat.getChatHistory.queryOptions({
-            conversationId: selectedConversationId!,
+            conversationId: conversationId!,
         }),
-        enabled: !!selectedConversationId,
+        enabled: !!conversationId,
     });
 
     const createMessage = useMutation({
         ...trpc.chat.createChatMessage.mutationOptions(),
         onSuccess: (data) => {
-            if (!selectedConversationId) {
-                setSelectedConversationId(data.conversationId);
+            // If this was a new chat, navigate to the new conversation's URL
+            if (!conversationId) {
+                router.push(`/agent/${data.conversationId}`);
             }
             queryClient.invalidateQueries(trpc.chat.getConversations.queryOptions());
             queryClient.invalidateQueries(
@@ -53,14 +54,18 @@ export const MessagesContainer = () => {
         if (prompt.trim()) {
             createMessage.mutate({
                 prompt,
-                conversationId: selectedConversationId || undefined,
+                conversationId: conversationId || undefined,
             });
         }
     };
 
     const handleCreateNewChat = () => {
-        setSelectedConversationId(null);
-        setPrompt("");
+        router.push("/agent");
+    };
+
+    const handleSelectConversation = (id: string) => {
+        router.push(`/agent/${id}`);
+        setIsHistoryOpen(false);
     };
 
     useEffect(() => {
@@ -90,16 +95,15 @@ export const MessagesContainer = () => {
                         </DialogTrigger>
                         <ConversationHistory
                           conversations={conversations || []}
-                          onSelectConversation={setSelectedConversationId}
-                          selectedConversationId={selectedConversationId}
-                          onClose={() => setIsHistoryOpen(false)}
+                          onSelectConversation={handleSelectConversation}
+                          selectedConversationId={conversationId || null}
                         />
                       </Dialog>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-8/12">
                     {isLoadingHistory && <Loader className="mx-auto animate-spin" />}
-                    {!selectedConversationId && !isLoadingHistory && (
+                    {!conversationId && !isLoadingHistory && (
                       <div className="flex items-center justify-center h-full">
                         <p className="text-muted-foreground">
                           Select a conversation from history or start a new one.
@@ -122,7 +126,7 @@ export const MessagesContainer = () => {
                 </div>
 
                 {/* {isLastMessageUser && <MessageLoading />} */}
-                {/* <div ref={bottomRef} /> */}
+                <div ref={bottomRef} />
             </div>
 
             <div className="absolute bottom-0 right-0 left-0 pointer-events-none ">
