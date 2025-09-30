@@ -6,7 +6,7 @@ import {
 
 interface Conversation {
   id: string;
-  messages: { content: string }[];
+  title: string;
 }
 
 interface Props {
@@ -43,7 +43,7 @@ export const ConversationHistory = ({
               onClick={() => handleSelect(convo.id)}
             >
               <p className="truncate font-semibold">
-                {convo.messages[0]?.content || "New Conversation"}
+                {convo.title || "New Conversation"}
               </p>
             </div>
           ))}

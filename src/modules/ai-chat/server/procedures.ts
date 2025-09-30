@@ -2,6 +2,7 @@ import z from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import {
   createAIChatCompletion,
+  generateConversationTitle,
   getRoutingDecision,
   invokeReActAgent,
 } from "@/lib/ai-chat";
@@ -16,14 +17,6 @@ export const chatRouter = createTRPCRouter({
       },
       orderBy: {
         updatedAt: "desc",
-      },
-      include: {
-        messages: {
-          orderBy: {
-            createdAt: "asc",
-          },
-          take: 1,
-        },
       },
     });
     return conversations;
@@ -54,16 +47,19 @@ export const chatRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       try {
         let conversationId = input.conversationId;
+        let conversation;
 
         if (!conversationId) {
-          const newConversation = await prisma.conversation.create({
+          const title = await generateConversationTitle(input.prompt);
+          conversation = await prisma.conversation.create({
             data: {
               userId: ctx.auth.userId,
+              title: title,
             },
           });
-          conversationId = newConversation.id;
+          conversationId = conversation.id;
         } else {
-          const conversation = await prisma.conversation.findFirst({
+          conversation = await prisma.conversation.findFirst({
             where: {
               id: conversationId,
               userId: ctx.auth.userId,

@@ -15,6 +15,12 @@ const deepseekClient = new ChatDeepSeek({
   model: "deepseek-chat",
 });
 
+const lightModel = new ChatDeepSeek({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  streamUsage: false,
+  model: "deepseek-coder",
+});
+
 /**
  * A dummy function to simulate fetching recent news for specific companies.
  * @param companyName The name of the company to fetch news for.
@@ -162,4 +168,17 @@ export const createAIChatCompletion = async (
   const response = await deepseekClient.invoke(messages);
 
   return response;
+};
+
+export const generateConversationTitle = async (
+  prompt: string
+): Promise<string> => {
+  const response = await lightModel.invoke([
+    new SystemMessage(
+      "You are an expert in creating concise and relevant titles for conversations. Generate a short title (max 5 words) for the following user prompt."
+    ),
+    new HumanMessage(prompt),
+  ]);
+
+  return response.content.toString().replace(/"/g, ""); // Remove quotes from the title
 };
