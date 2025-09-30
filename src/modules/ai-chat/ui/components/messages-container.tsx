@@ -75,7 +75,7 @@ export const MessagesContainer = ({ conversationId }: MessagesContainerProps) =>
     const currentConversation = conversations?.find(
         (convo) => convo.id === conversationId
     );
-    const title = currentConversation?.title || "New Conversation";
+    const title = currentConversation?.title || "New Chat";
 
     return (
         <div className="flex flex-col flex-1 min-h-0 ">

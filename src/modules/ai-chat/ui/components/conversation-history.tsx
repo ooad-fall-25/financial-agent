@@ -37,7 +37,7 @@ export const ConversationHistory = ({
               onClick={() => onSelectConversation(convo.id)}
             >
               <p className="truncate font-semibold">
-                {convo.title || "New Conversation"}
+                {convo.title || "New Chat"}
               </p>
             </div>
           ))}
