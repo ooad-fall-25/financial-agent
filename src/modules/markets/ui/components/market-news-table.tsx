@@ -107,6 +107,14 @@ const FinnhubNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) 
                                         <p>{news.headline}</p>
                                     </Link>
                                 </div>
+                                {/* Badge for Finnhub Company News */}
+                                {marketCategory === "company" && ticker && (
+                                    <div className="mt-2">
+                                        <Badge variant="secondary">
+                                            {ticker}
+                                        </Badge>
+                                    </div>
+                                )}
                             </div>
                             <div className="col-span-10">
                                 <div className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
