@@ -51,7 +51,7 @@ interface UserMessageProps {
 }
 const UserMessage = ({ content }: UserMessageProps) => {
     return (
-        <div className="flex flex-col items-end pb-4 pr-2 pl-10 group">
+        <div className={cn("flex flex-col items-end pb-4 pr-2 pl-10 group")}>
             <Card className="rounded-lg bg-secondary p-3 shadow-none border-none max-w-[80%] break-words text-sm">
                 {content}
             </Card>
@@ -73,13 +73,13 @@ export const AssistantMessage = ({
     createdAt,
     aiModelId,
 }: AssistantMessageProps) => {
-    
+
     return (
         <div className={cn(
             "flex flex-col group pb-4",
         )}>
             <div className="flex items-center gap-2 mb-2 px-4">
-                
+
                 <span className="text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                     {format(createdAt, "HH:mm 'on' MMM dd, yyyy")}
                 </span>
@@ -90,7 +90,7 @@ export const AssistantMessage = ({
                 </AIResponse>
             </div>
             <div className="flex items-center gap-2 mt-2 px-4">
-                
+
                 <CopyButton text={content} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
             </div>
         </div>
@@ -103,6 +103,7 @@ interface Props {
     role: string;
     createdAt: Date;
     aiModelId: string | null;
+    className?: string;
 }
 
 export const MessageCard = ({
@@ -110,19 +111,24 @@ export const MessageCard = ({
     role,
     createdAt,
     aiModelId,
+    className
 }: Props) => {
     if (role === "assistant") {
         return (
-            <AssistantMessage
-                content={content}
-                createdAt={createdAt}
-                aiModelId={aiModelId}
-            />
+            <div className={cn(className)}>
+                <AssistantMessage
+                    content={content}
+                    createdAt={createdAt}
+                    aiModelId={aiModelId}
+                />
+            </div>
         )
     }
     return (
-        <UserMessage
-            content={content}
-        />
+        <div className={cn(className)}>
+            <UserMessage
+                content={content}
+            />
+        </div>
     )
 }

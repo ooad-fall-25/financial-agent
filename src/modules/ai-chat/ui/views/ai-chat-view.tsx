@@ -17,8 +17,8 @@ import { MessagesContainer } from "../components/messages-container";
 export const AIChatView = () => {
     
     return (
-        <div className="h-full">
-            <div className="flex flex-col min-h-0">
+        <div className="h-full flex flex-col">
+            <div className="flex-1 min-h-0">
                 <Suspense fallback={<p>loading messages. ... . </p>}>
                     <MessagesContainer />
                 </Suspense>
