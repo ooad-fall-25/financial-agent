@@ -72,7 +72,10 @@ export const MessagesContainer = ({ conversationId }: MessagesContainerProps) =>
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [chatHistory]);
 
-
+    const currentConversation = conversations?.find(
+        (convo) => convo.id === conversationId
+    );
+    const title = currentConversation?.title || "New Conversation";
 
     return (
         <div className="flex flex-col flex-1 min-h-0 ">
@@ -80,7 +83,7 @@ export const MessagesContainer = ({ conversationId }: MessagesContainerProps) =>
             <div className="flex-1 pb-44 pt-12 overflow-y-auto">
                 <div className="max-w-3xl mx-auto pt-2 pb-4 ">
                      <div className="p-4 border-b flex justify-between items-center">
-                    <h1 className="text-xl font-bold">AI Chat</h1>
+                    <h1 className="text-xl font-bold truncate pr-4">{title}</h1>
                     <div className="flex items-center space-x-2">
                       <Button variant="outline" onClick={handleCreateNewChat}>
                         <PlusCircle className="h-4 w-4 mr-2" />
