@@ -110,9 +110,11 @@ const FinnhubNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) 
                                 {/* Badge for Finnhub Company News */}
                                 {marketCategory === "company" && ticker && (
                                     <div className="mt-2">
-                                        <Badge variant="secondary">
-                                            {ticker}
-                                        </Badge>
+                                        <Link href={`market-data/${ticker}`}>
+                                            <Badge variant="secondary" className="transition-transform hover:scale-110 cursor-pointer">
+                                                {ticker}
+                                            </Badge>
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -219,9 +221,11 @@ const PolygonNewsTable = ({ openDialog, ticker }: PolygonProps) => {
                                     {news.tickers && news.tickers.length > 0 && (
                                         <>
                                             {(showAllTickers[news.id] ? news.tickers : news.tickers.slice(0, TICKER_LIMIT)).map((ticker) => (
-                                                <Badge key={ticker} variant="secondary">
-                                                    {ticker}
-                                                </Badge>
+                                                <Link href={`market-data/${ticker}`} key={ticker}>
+                                                    <Badge key={ticker} variant="secondary" className="transition-transform hover:scale-110 cursor-pointer">
+                                                        {ticker}
+                                                    </Badge>
+                                                </Link>
                                             ))}
                                             {news.tickers.length > TICKER_LIMIT && !showAllTickers[news.id] && (
                                                 <Button

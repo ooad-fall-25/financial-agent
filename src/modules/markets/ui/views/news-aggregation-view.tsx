@@ -95,7 +95,7 @@ export const NewsAggregationView = () => {
                                     <TabsTrigger className="max-w-32 w-24" key={item.type} value={item.type}>{item.name}
                                     </TabsTrigger>
                                 ))}
-                            </TabsList>
+                            </TabsList> 
 
                             {activeTab === "company" && (
                                 <div className="flex items-center gap-2">
