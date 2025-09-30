@@ -72,7 +72,7 @@ export const marketsRouter = createTRPCRouter({
     }),
 
   getPolygonStockNews: protectedProcedure.query(async () => {
-    const stockNews = await getStockNews();
+    const stockNews = await getStockNews(50);
     const result = stockNews.results;
     return result;
   }),
@@ -84,7 +84,7 @@ export const marketsRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const companyNews = await getPolygonCompanyNews(input.ticker);
+      const companyNews = await getPolygonCompanyNews(input.ticker, 50); 
 
       if (!companyNews || companyNews.results?.length === 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Company news not found for Polygon" });

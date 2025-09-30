@@ -6,15 +6,15 @@ const getRestClient = () => {
         return rest;
 }
 
-export const getStockNews = async () => {
-    const restClient = getRestClient();
-    const response = await restClient.listNews();
+export const getStockNews = async (limit?: number) => {
+    const rest = getRestClient();
+    const response = await rest.listNews(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, limit);
     return response;
 }
 
-export const getPolygonCompanyNews = async (input: string) => {
+export const getPolygonCompanyNews = async (input: string, limit?: number) => {
   const restClient = getRestClient();
-  const response = await restClient.listNews(input);
+  const response = await restClient.listNews(input, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, limit);
   return response;
 };
 
