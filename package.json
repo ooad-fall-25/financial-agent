@@ -94,6 +94,7 @@
     "three": "^0.180.0",
     "tough-cookie": "^6.0.0",
     "ts-key-enum": "^3.0.13",
+    "use-debounce": "^10.0.6",
     "vaul": "^1.1.2",
     "yahoo-finance": "^0.3.8",
     "yahoo-finance2": "^2.13.3",
