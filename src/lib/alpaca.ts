@@ -6,7 +6,6 @@ export interface PerformanceData {
   benchmark_return: number;
 }
 
-const BROWSER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36';
 
 
 // This is our single, reusable client for making direct API calls to Alpaca.
@@ -36,7 +35,16 @@ export const alpacaCryptoApi = axios.create({
     'accept': 'application/json',
     'APCA-API-KEY-ID': process.env.ALPACA_API_KEY_ID,
     'APCA-API-SECRET-KEY': process.env.ALPACA_API_SECRET_KEY,
-    'User-Agent': BROWSER_USER_AGENT,
+  }
+});
+
+export const alpacaCryptoClient = axios.create({
+  // Include the '/us' region directly in the base URL
+  baseURL: 'https://data.alpaca.markets/v1beta3/crypto/us', 
+  headers: {
+    'accept': 'application/json',
+    'APCA-API-KEY-ID': process.env.ALPACA_API_KEY_ID,
+    'APCA-API-SECRET-KEY': process.env.ALPACA_API_SECRET_KEY,
   }
 });
 
