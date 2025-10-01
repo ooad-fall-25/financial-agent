@@ -33,7 +33,7 @@ model NewsSummary {
 model Conversation {
   id        String    @id @default(uuid())
   userId    String
-  title     String    @default("New Conversation")
+  title     String    @default("New Chat")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   messages  Message[]

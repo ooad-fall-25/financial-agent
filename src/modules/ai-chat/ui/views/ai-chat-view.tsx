@@ -14,13 +14,13 @@ import { useAuth } from "@clerk/nextjs";
 import { MessagesContainer } from "../components/messages-container";
 
 
-export const AIChatView = () => {
+export const AIChatView = ({ conversationId }: { conversationId?: string }) => {
     
     return (
         <div className="h-full flex flex-col">
             <div className="flex-1 min-h-0">
                 <Suspense fallback={<p>loading messages. ... . </p>}>
-                    <MessagesContainer />
+                    <MessagesContainer conversationId={conversationId} />
                 </Suspense>
             </div>
         </div>

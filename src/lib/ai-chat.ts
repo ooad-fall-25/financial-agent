@@ -15,6 +15,12 @@ const deepseekClient = new ChatDeepSeek({
   model: "deepseek-chat",
 });
 
+const lightModel = new ChatDeepSeek({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  streamUsage: false,
+  model: "deepseek-coder",
+});
+
 /**
  * A dummy function to simulate fetching recent news for specific companies.
  * @param companyName The name of the company to fetch news for.
@@ -81,11 +87,11 @@ export const invokeReActAgent = async (
 
   const agentMessages: BaseMessage[] = [
     new SystemMessage(
-        "You are a helpful financial assistant." +
-        "You have access to a tool that can fetch recent news about specific companies." +
-        "Pay close attention to the conversation history. If the user's latest message is a follow-up to a previous request that used a tool, it's highly likely you should use a tool again." +
-        "If a user asks for information that you cannot obtain with your available tools, you MUST explicitly state that you do not have the capability to fulfill the request." +
-        "Do not invent or hallucinate information you don't have access to."
+        "You are a helpful financial assistant. Your primary function is to provide accurate and timely financial information by leveraging the tools at your disposal." +
+        "For any user query that requires accessing external, real-time, or specific data (such as company news, stock prices, financial reports, etc.), you MUST use the appropriate tool from your available toolkit." +
+        "Carefully analyze the user's request to determine which tool, if any, is suitable for the task." +
+        "Pay close attention to the conversation history. If the user's latest message is a follow-up, consider the context to see if a tool is needed again." +
+        "If you do not have a tool that can fulfill the user's request, or if a tool returns no information, you MUST inform the user that you do not have the capability to provide that specific data. Do not, under any circumstances, invent or hallucinate information."
     ),
     ...messages,
     new HumanMessage(currentMessage),
@@ -162,4 +168,17 @@ export const createAIChatCompletion = async (
   const response = await deepseekClient.invoke(messages);
 
   return response;
+};
+
+export const generateConversationTitle = async (
+  prompt: string
+): Promise<string> => {
+  const response = await lightModel.invoke([
+    new SystemMessage(
+      "You are an expert in creating concise and relevant titles for conversations. Generate a short title (max 5 words) for the following user prompt."
+    ),
+    new HumanMessage(prompt),
+  ]);
+
+  return response.content.toString().replace(/"/g, ""); // Remove quotes from the title
 };
