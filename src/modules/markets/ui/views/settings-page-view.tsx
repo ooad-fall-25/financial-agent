@@ -14,12 +14,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
+import { Language, useSettingsStore } from '@/stores/settings-store';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const [language, setLanguage] = useState('en');
   const [darkMode, setDarkMode] = useState(false);
   const [fileRetention, setFileRetention] = useState(true);
+
+  const language = useSettingsStore((state) => state.language);
+  const setLanguage = useSettingsStore((state) => state.setLanguage); 
 
   useEffect(() => {
     if (theme) { 
@@ -43,13 +46,13 @@ export default function SettingsPage() {
             {/* Language Selection */}
             <div className="flex items-center justify-between">
               <Label htmlFor="language">Language</Label>
-              <Select value={language} onValueChange={setLanguage}>
+              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select a language" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="cn">Chinese</SelectItem>
+                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="Chinese">Chinese</SelectItem>
                  </SelectContent>
               </Select>
             </div>

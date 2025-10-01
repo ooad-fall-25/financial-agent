@@ -100,7 +100,8 @@
     "vaul": "^1.1.2",
     "yahoo-finance": "^0.3.8",
     "yahoo-finance2": "^2.13.3",
-    "zod": "^4.1.8"
+    "zod": "^4.1.8",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
