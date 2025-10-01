@@ -16,11 +16,12 @@ import {
   createAINewsSummaryByLink,
 } from "@/lib/langchain";
 import {
+  getAllAlpacaNewsSummary,
   getAllFinnhubNewsSummary,
   getAllPolygonNewsSummary,
   getHeadlineFromAIResponse,
   getWebsiteHTMLText,
-} from "@/lib/utils";
+} from "@/lib/helper";
 import { prisma } from "@/lib/db";
 import puppeteer from "puppeteer";
 import { marked } from "marked";
@@ -102,14 +103,16 @@ export const marketsRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       let accumulatedNews = "";
-      if (input.providerName === "finnhub") {
+      if (input.providerName.toLocaleUpperCase() === "finnhub") {
         accumulatedNews = await getAllFinnhubNewsSummary(
           input.category.toLowerCase()
         );
-      } else if (input.providerName === "polygon") {
+      } else if (input.providerName.toLowerCase() === "polygon") {
         accumulatedNews = await getAllPolygonNewsSummary();
+      } else if (input.providerName.toLowerCase() === "alpaca") { 
+        accumulatedNews = await getAllAlpacaNewsSummary(); 
       } else {
-        return;
+        return; 
       }
 
       if (accumulatedNews.length == 0) {

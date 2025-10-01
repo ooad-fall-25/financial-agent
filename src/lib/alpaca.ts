@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import Alpaca from "@alpacahq/alpaca-trade-api"; 
 export interface PerformanceData {
   period: string; // e.g., "YTD", "1Y", "3Y", "5Y"
   stock_return: number;
@@ -39,3 +39,14 @@ export const alpacaCryptoApi = axios.create({
     'User-Agent': BROWSER_USER_AGENT,
   }
 });
+
+const alpaca = new Alpaca({
+  keyId: process.env.ALPACA_API_KEY_ID,
+  secretKey: process.env.ALPACA_API_SECRET_KEY,
+  paper: true,
+})
+
+export const getAlpacaStockNews =  () => {
+  const news = alpaca.getNews({});
+  return news;  
+}
