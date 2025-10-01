@@ -754,10 +754,16 @@ export const AlpacaDataRouter = createTRPCRouter({
       // The date logic is identical to the stock version
       const start = new Date();
       switch (range) {
-        case '1d': start.setDate(start.getDate() - 2); break; // Fetch 2 days for intraday
-        case '5d': start.setDate(start.getDate() - 6); break;
-        // ... all other cases ...
-        default: start.setDate(start.getDate() - 2);
+        case '1d': start.setDate(start.getDate() - 1); break;
+        case '5d': start.setDate(start.getDate() - 5); break;
+        case '1mo': start.setMonth(start.getMonth() - 1); break;
+        case '6mo': start.setMonth(start.getMonth() - 6); break;
+        case 'ytd': start.setMonth(0); start.setDate(1); break;
+        case '1y': start.setFullYear(start.getFullYear() - 1); break;
+        case '5y': start.setFullYear(start.getFullYear() - 5); break;
+        case 'max': start.setFullYear(start.getFullYear() - 10); break;
+        default: start.setDate(start.getDate() - 1);
+        
       }
       
       try {

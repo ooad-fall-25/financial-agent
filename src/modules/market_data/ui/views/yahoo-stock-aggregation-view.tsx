@@ -41,13 +41,16 @@
         const [selectedAsset, setSelectedAsset] = useState<AssetCategory>("stocks");
 
         const [submittedTickerStock, setSubmittedTickerStock] = useState(ticker || 'AAPL');
-        const [submittedTickerCrypto] = useState('BTC/USD');
+        const [submittedTickerCrypto, setSubmittedTickerCrypto] = useState('BTC/USD');
         const [selectedRange, setSelectedRange] = useState<RangeOption>(rangeOptions[0]);
 
         const handleStockSelectStock = (newTicker: string) => {
             setSubmittedTickerStock(newTicker.toUpperCase());
         };
-
+        
+         const handleStockSelectCrypto = (newTicker: string) => {
+            setSubmittedTickerCrypto(newTicker.toUpperCase());
+        };
         return (
             <div className="w-full h-screen min-h-0 flex flex-col overflow-y-auto pb-16">
                 <Card className="w-full bg-transparent">
@@ -66,22 +69,26 @@
                                     <StockSearchBar onSelect={handleStockSelectStock} />
                                 </div>
                             )}
+
+                            {selectedAsset === 'crypto' && (
+                            <div className="w-full md:w-2/3 lg:w-1/2 relative z-50">
+                                <StockSearchBar onSelect={handleStockSelectCrypto} />
+                            </div>
+                            )}
                             
                             {/* Conditionally show the range selector only for the stocks view */}
-                            {selectedAsset === 'stocks' && (
-                                <div className="flex items-center gap-2 p-1 bg-muted rounded-md">
-                                {rangeOptions.map((option) => (
-                                        <Button
-                                            key={option.label}
-                                            variant={selectedRange.label === option.label ? "secondary" : "ghost"}
-                                            size="sm"
-                                            onClick={() => setSelectedRange(option)}
-                                        >
-                                            {option.label}
-                                        </Button>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2 p-1 bg-muted rounded-md">
+                            {rangeOptions.map((option) => (
+                                    <Button
+                                        key={option.label}
+                                        variant={selectedRange.label === option.label ? "secondary" : "ghost"}
+                                        size="sm"
+                                        onClick={() => setSelectedRange(option)}
+                                    >
+                                        {option.label}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
                         
                         {/* --- 4. CONDITIONALLY RENDER THE MAIN CONTENT --- */}
@@ -112,6 +119,8 @@
                         )}
 
                         {/* This block renders when "Crypto" is selected */}
+
+
                         {selectedAsset === 'crypto' && (
                             <div className="mt-8">
                                 {submittedTickerCrypto && <CryptoStockHeader Ticker={submittedTickerCrypto} />}
@@ -122,6 +131,11 @@
                                         Interval={selectedRange.interval}
                                     />
                                 )}
+
+                                <div className="mt-12">
+                                    {submittedTickerCrypto && <StockNews Ticker={submittedTickerCrypto} />}
+                                </div>
+
                             </div>
                         )}
 

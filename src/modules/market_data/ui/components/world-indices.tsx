@@ -8,7 +8,7 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
 
 // ========================================================================
-// 1. Data, Types, and Configuration
+// 1. Data, Types, and Configuration (UNCHANGED)
 // ========================================================================
 
 export interface AlpacaSnapshot {
@@ -30,15 +30,12 @@ const indexNames: { [key: string]: string } = {
 };
 
 // ========================================================================
-// 2. Internal Sub-Components
+// 2. Internal Sub-Components (UNCHANGED)
 // ========================================================================
 
-/**
- * A tiny, stateless component to render a sparkline area chart.
- */
 const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
   if (!data || data.length < 2) {
-    return <div className="w-20 h-8" />; // Render an empty div if there's not enough data
+    return <div className="w-20 h-8" />;
   }
   
   const chartData = data.map(price => ({ price }));
@@ -48,10 +45,7 @@ const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
     <div className="w-20 h-8">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-          <YAxis 
-            hide={true} // This makes the axis and labels invisible
-            domain={['dataMin', 'dataMax']} // This scales the chart to the data's min/max
-          />
+          <YAxis hide={true} domain={['dataMin', 'dataMax']} />
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.4}/>
@@ -59,7 +53,7 @@ const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
             </linearGradient>
           </defs>
           <Area 
-            type="monotone" 
+            type="natural"
             dataKey="price" 
             stroke={color} 
             strokeWidth={2} 
@@ -73,9 +67,6 @@ const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
   );
 };
 
-/**
- * Renders a single row in an indices table, now including the sparkline.
- */
 const IndexRow = ({ symbol, data, sparklineData }: { symbol: string; data: AlpacaSnapshot, sparklineData: number[] }) => {
     const [highlightClass, setHighlightClass] = useState('');
     const price = data.latestTrade?.p ?? data.dailyBar?.c ?? 0;
@@ -84,7 +75,7 @@ const IndexRow = ({ symbol, data, sparklineData }: { symbol: string; data: Alpac
     const prevClose = data.prevDailyBar?.c ?? 0;
     const changePercent = prevClose !== 0 ? ((price - prevClose) / prevClose) * 100 : 0;
     const isPositive = changePercent >= 0;
-    const chartColor = isPositive ? '#22c55e' : '#ef4444'; // green-500 or red-500
+    const chartColor = isPositive ? '#22c55e' : '#ef4444';
     const companyName = indexNames[symbol] || symbol;
   
     useEffect(() => {
@@ -99,16 +90,14 @@ const IndexRow = ({ symbol, data, sparklineData }: { symbol: string; data: Alpac
   
     return (
       <tr className="border-b border-border/50 last:border-b-0">
-        <td className="py-2 px-2 font-semibold truncate whitespace-nowrap">{companyName}</td>
-        <td className="py-2 px-2">
-            <Sparkline data={sparklineData} color={chartColor} />
-        </td>
-        <td className="py-2 px-2 text-right font-mono">
+        <td className="py-2 px-2 font-semibold truncate">{companyName}</td>
+        <td className="py-2 px-2"><Sparkline data={sparklineData} color={chartColor} /></td>
+        <td className="py-2 px-2 text-right font-mono whitespace-nowrap">
           <span className={`inline-block px-1 rounded-md transition-colors duration-1000 ${highlightClass}`}>
             {price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </td>
-        <td className={`py-2 px-2 text-right font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+        <td className={`py-2 px-2 text-right font-semibold whitespace-nowrap ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
           <span className={`inline-block px-1 rounded-md transition-colors duration-1000 ${highlightClass}`}>
             {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
           </span>
@@ -117,10 +106,6 @@ const IndexRow = ({ symbol, data, sparklineData }: { symbol: string; data: Alpac
     );
 };
 
-/**
- * A reusable component that renders a complete table for one region,
- * fetching both snapshot and sparkline data.
- */
 const IndicesTable = ({ title, tickers }: { title: string; tickers: string[] }) => {
     const trpc = useTRPC();
     
@@ -155,10 +140,10 @@ const IndicesTable = ({ title, tickers }: { title: string; tickers: string[] }) 
         <table className="w-full table-auto text-sm text-foreground">
           <thead>
             <tr className="text-left text-muted-foreground border-b border-border">
-              <th className="py-1 px-2 font-normal w-[40%]">Symbol</th>
-              <th className="py-1 px-2 font-normal w-[20%]">Chart</th>
-              <th className="py-1 px-2 font-normal text-right w-[20%]">Price</th>
-              <th className="py-1 px-2 font-normal text-right w-[20%]">Change %</th>
+              <th className="py-1 px-2 font-normal">Symbol</th>
+              <th className="py-1 px-2 font-normal">Chart</th>
+              <th className="py-1 px-2 font-normal text-right">Price</th>
+              <th className="py-1 px-2 font-normal text-right whitespace-nowrap">Change %</th>
             </tr>
           </thead>
           <tbody>
@@ -182,7 +167,7 @@ const IndicesTable = ({ title, tickers }: { title: string; tickers: string[] }) 
 };
 
 // ========================================================================
-// 4. Main Exported Component
+// 4. Main Exported Component (WITH FINAL FIX)
 // ========================================================================
 export const WorldIndices = () => {
   return (
@@ -201,10 +186,16 @@ export const WorldIndices = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <IndicesTable title={indicesData.americas.title} tickers={indicesData.americas.tickers} />
-        <IndicesTable title={indicesData.europe.title} tickers={indicesData.europe.tickers} />
-        <IndicesTable title={indicesData.asia.title} tickers={indicesData.asia.tickers} />
+      <div className="overflow-x-auto pb-4">
+        
+        {/* --- THE ONLY CHANGE IS HERE --- */}
+        {/* Increased the minimum width from 1200px to 1350px */}
+        <div className="grid grid-cols-3 gap-6 min-w-[1350px]">
+            <IndicesTable title={indicesData.americas.title} tickers={indicesData.americas.tickers} />
+            <IndicesTable title={indicesData.europe.title} tickers={indicesData.europe.tickers} />
+            <IndicesTable title={indicesData.asia.title} tickers={indicesData.asia.tickers} />
+        </div>
+
       </div>
     </div>
   );

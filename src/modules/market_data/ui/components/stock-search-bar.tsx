@@ -1,20 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { Search } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useTRPC } from "@/trpc/client";
 import { useDebounce } from "@/lib/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 
-// --- STEP 1: Add an optional 'placeholder' prop to the interface ---
 interface StockSearchBarProps {
   onSelect: (ticker: string) => void;
-  placeholder?: string; // <-- THE FIX IS HERE
 }
 
-// --- STEP 2: Accept the new 'placeholder' prop in the function signature ---
-export function StockSearchBar({ onSelect, placeholder }: StockSearchBarProps) {
+// Define a type for the stock object from your search results
+interface SearchResult {
+  symbol: string | null;
+  description: string | null;
+  type: string | null;
+}
+
+export function StockSearchBar({ onSelect }: StockSearchBarProps) {
   const [query, setQuery] = React.useState("");
   const [isFocused, setIsFocused] = React.useState(false);
   const debouncedQuery = useDebounce(query, 300);
@@ -26,10 +29,33 @@ export function StockSearchBar({ onSelect, placeholder }: StockSearchBarProps) {
     enabled: debouncedQuery.length > 0,
   });
 
-  const handleSelect = (ticker: string) => {
-    onSelect(ticker);
-    setQuery("");
-    setIsFocused(false);
+  // --- 1. NEW: Unified function to process and select the ticker ---
+  const processAndSelectTicker = (ticker: string, assetType?: string | null) => {
+    let finalTicker = ticker.toUpperCase();
+
+    // Heuristic: Check if the asset type is crypto from the search results,
+    // OR if the typed text looks like a common crypto symbol (e.g., BTC, ETH).
+    const isCrypto = assetType === 'crypto';
+    const looksLikeCrypto = /^[A-Z]{3,5}$/.test(finalTicker);
+
+    // If it's likely a crypto symbol and doesn't already have a '/', append '/USD'.
+    if ((isCrypto || looksLikeCrypto) && !finalTicker.includes('/')) {
+      finalTicker = `${finalTicker}/USD`;
+    }
+
+    onSelect(finalTicker); // Call the parent function with the formatted ticker
+    setQuery("");          // Clear the input
+    setIsFocused(false);   // Hide the dropdown
+  };
+
+  // --- 2. NEW: Function to handle the "Enter" key press ---
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && query) {
+      event.preventDefault(); // Prevent default form submission
+      
+      // Pass the raw query to our new processing function
+      processAndSelectTicker(query);
+    }
   };
 
   const isDropdownOpen = isFocused && query.length > 0;
@@ -37,12 +63,13 @@ export function StockSearchBar({ onSelect, placeholder }: StockSearchBarProps) {
   return (
     <Command className="relative w-full max-w-sm overflow-visible">
       <CommandInput
-        // --- STEP 3: Use the placeholder prop OR a default value ---
-        placeholder={placeholder || "Search for stocks & more..."} // <-- THE FIX IS HERE
+        placeholder="Search for stocks & more..."
         value={query}
         onValueChange={setQuery}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+        // --- ADD THIS onKeyDown prop ---
+        onKeyDown={handleKeyDown}
       />
 
       {isDropdownOpen && (
@@ -54,11 +81,12 @@ export function StockSearchBar({ onSelect, placeholder }: StockSearchBarProps) {
             )}
             {searchResults && searchResults.result.length > 0 && (
               <CommandGroup heading="Symbols">
-                {searchResults.result.map((stock) => (
+                {(searchResults.result as SearchResult[]).map((stock) => (
                   <CommandItem
                     key={stock.symbol}
-                    value={stock.symbol}
-                    onSelect={() => handleSelect(stock.symbol || "")}
+                    value={stock.symbol!}
+                    // --- 3. MODIFIED: Use the processing function on select ---
+                    onSelect={() => processAndSelectTicker(stock.symbol || "", stock.type)}
                     className="cursor-pointer"
                   >
                     <div className="flex w-full justify-between items-center">

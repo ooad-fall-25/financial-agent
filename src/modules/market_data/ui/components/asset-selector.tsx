@@ -1,39 +1,34 @@
+// components/asset-selector.tsx (NEW - WITH THE FIX)
+
 "use client";
 
-import * as React from "react";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-// Define the possible categories the user can select
 export type AssetCategory = "stocks" | "crypto";
 
-interface AssetSelectorProps {
-  // A function to call when the user selects a new category
+// --- STEP 1: Add the 'value' prop to the interface ---
+export interface AssetSelectorProps {
+  defaultValue?: AssetCategory; // Can keep this for uncontrolled usage if needed
+  value?: AssetCategory; // <-- THE FIX IS HERE: Add the 'value' prop
   onValueChange: (value: AssetCategory) => void;
-  // The currently selected value
-  defaultValue: AssetCategory;
 }
 
-export function AssetSelector({ onValueChange, defaultValue }: AssetSelectorProps) {
+// --- STEP 2: Accept the new 'value' prop ---
+export const AssetSelector = ({ defaultValue, value, onValueChange }: AssetSelectorProps) => {
   return (
-    <Select onValueChange={onValueChange} defaultValue={defaultValue}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select an asset class" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>Asset Classes</SelectLabel>
-          <SelectItem value="stocks">Stocks</SelectItem>
-          <SelectItem value="crypto">Cryptocurrencies</SelectItem>
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+    <ToggleGroup
+      type="single"
+      // --- STEP 3: Pass BOTH value and defaultValue down ---
+      // The ToggleGroup component knows to prioritize 'value' for controlled behavior.
+      defaultValue={defaultValue}
+      value={value} // <-- THE FIX IS HERE: Use the 'value' prop
+      onValueChange={(value) => {
+        // This ensures it doesn't fire with an empty value when deselecting
+        if (value) onValueChange(value as AssetCategory);
+      }}
+    >
+      <ToggleGroupItem value="stocks">Stocks</ToggleGroupItem>
+      <ToggleGroupItem value="crypto">Crypto</ToggleGroupItem>
+    </ToggleGroup>
   );
-}
+};
