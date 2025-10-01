@@ -44,10 +44,14 @@ const providers = [
     {
         name: "Polygon",
         category: ["Stock"],
+    }, 
+    {
+        name: "Alpaca",
+        category: ["Stock"],
     }
 ]
 
-const languages = ["English", "Chinese", "Khmer", "Indonesian"]
+const languages = ["English", "Chinese"]
 
 export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [providerName, setProviderName] = useState<string | null>(null);
