@@ -71,6 +71,14 @@ const FinnhubNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) 
         enabled: marketCategory !== "company" || (marketCategory === "company" && !!ticker), // Only run company query if ticker is provided
     });
 
+    if (marketCategory === "company" && !ticker) {
+        return <div className="text-center p-10 translate-y-50">Search a Company!</div>;
+    }
+
+    if (!isLoading && marketNews?.length === 0) {
+        return <div className="text-center p-10 translate-y-50">Sorry, result not found~</div>;
+    }
+
     return (
         <div className="w-full">
             
@@ -182,6 +190,14 @@ const PolygonNewsTable = ({ openDialog, ticker }: PolygonProps) => {
     };
 
     const TICKER_LIMIT = 10;
+
+    if (ticker === "") {
+        return <div className="text-center p-10 translate-y-50">Search a Company!</div>;
+    }
+
+    if (!isLoading && marketNews?.length === 0) {
+        return <div className="text-center p-10 translate-y-50">Sorry, result not found~</div>;
+    }
 
     return (
         <div className="w-full">
@@ -315,6 +331,14 @@ const AlpacaNewsTable = ({ openDialog, ticker }: AlpacaProps) => {
             [id]: !prev[id]
         }));
     };
+
+    if (ticker === "") {
+        return <div className="text-center p-10 translate-y-50">Search a Company!</div>;
+    }
+
+    if (!isLoading && marketNews?.length === 0) {
+        return <div className="text-center p-10 translate-y-50">Sorry, result not found~</div>;
+    }
 
     const TICKER_LIMIT = 10;
 
