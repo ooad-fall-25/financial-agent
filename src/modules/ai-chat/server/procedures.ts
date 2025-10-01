@@ -150,4 +150,42 @@ export const chatRouter = createTRPCRouter({
         });
       }
     }),
+
+  renameConversation: protectedProcedure
+    .input(
+      z.object({
+        conversationId: z.string(),
+        newTitle: z.string().min(1, "Title cannot be empty"),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { conversationId, newTitle } = input;
+
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          userId: ctx.auth.userId,
+        },
+      });
+
+      if (!conversation) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Conversation not found or you do not have permission to edit it.",
+        });
+      }
+
+      await prisma.conversation.update({
+        where: {
+          id: conversationId,
+        },
+        data: {
+          title: newTitle,
+          updatedAt: new Date(),
+        },
+      });
+
+      return { success: true };
+    }),
 });
