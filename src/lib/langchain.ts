@@ -112,3 +112,33 @@ export const createAINewsSummaryByLink = async (
 
   return response;
 };
+
+export const translateSummary = async (content: string, language: string) => {
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      `
+      You are a helpful assistant that helps translate a news acticle.
+      Your job is simply to translate the content from user to their desired language. 
+
+      content: {content},
+      language: {language}, this is the language that you should translate to. 
+       
+      `,
+    ],
+    ["human", "{content}, {language}"],
+  ]);
+
+
+  console.log(content + language + "0000000000000000000000000000000")
+  const chain = prompt.pipe(deepseekClient); 
+
+  const response = await chain.invoke({
+    content: content,
+    language: language, 
+  })
+
+  console.log ("responseeeeeeeeeee" , response)
+
+  return response; 
+}
