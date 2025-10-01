@@ -40,11 +40,6 @@ const items = [
         icon: MegaphoneIcon,
     },
     {
-        title: "Reports",
-        url: "/reports",
-        icon: BookOpenIcon,
-    },
-    {
         title: "Custom Queries / Agent",
         url: "/agent",
         icon: BotIcon,

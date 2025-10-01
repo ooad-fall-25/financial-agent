@@ -41,8 +41,8 @@ export const YahooStockView = ({ ticker }: YahooStockViewProps) => {
     };
 
     return (
-        <div className="w-full py-6 px-4">
-            <Card className="w-full bg-card">
+        <div className="w-full h-screen min-h-0 flex flex-col overflow-y-auto pb-16">
+            <Card className="w-full bg-transparent">
                 <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-4">
                          <div className="w-full md:w-2/3 lg:w-1/2 relative z-50">

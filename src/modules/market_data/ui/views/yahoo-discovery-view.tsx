@@ -26,7 +26,7 @@ export default function DiscoveryPage() {
   // The useState for 'submittedTicker' is no longer needed on this page.
 
   return (
-    <main className="text-white p-4 md:p-8 min-h-screen">
+    <main className=" p-4 md:p-8 min-h-0 h-screen flex flex-col overflow-y-auto">
       <div className="container mx-auto">
         <WorldIndices />
         <div className="flex flex-col items-start mb-8 gap-4">
