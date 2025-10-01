@@ -1,10 +1,15 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface Props {
     isOpen: boolean;
@@ -13,10 +18,22 @@ interface Props {
 }
 
 export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) => {
-    const trpc = useTRPC()
-    const mutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions())
+    const languageSetting = useSettingsStore((state) => state.language);
+    const [displayContent, setDisplayContent] = useState(content);
+    const trpc = useTRPC();
+    const downloadMutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions({
+        onError: (error) => {
+            toast.error(error.message);
+        }
+    }));
+    const translateMutation = useMutation(trpc.marketssssss.translate.mutationOptions({
+        onError: (error) => {
+            toast.error(error.message);
+        }
+    }));
+
     const handleDownload = async () => {
-        const result = await mutation.mutateAsync({ markdown: content });
+        const result = await downloadMutation.mutateAsync({ markdown: displayContent });
 
         // Convert base64 -> Blob
         const pdfData = atob(result);
@@ -35,22 +52,41 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) =
         window.URL.revokeObjectURL(url);
     };
 
+    const handleTranslation = async () => {
+        const translatedContent = await translateMutation.mutateAsync({
+            content: displayContent,
+            language: languageSetting
+        });
+        setDisplayContent(translatedContent);
+    }
+
+    const isPageLoading = downloadMutation.isPending || translateMutation.isPending;
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen} defaultOpen={false}>
             <DialogTitle></DialogTitle>
             <DialogContent showCloseButton={false} className="sm:max-w-[425px] md:max-w-[800px] lg:max-w-[1200px] w-auto h-auto  max-h-[735px]">
-                <div className="flex flex-col">
-                    <ScrollArea className="sm:max-w-[425px] md:max-w-[800px] lg:max-w-[1200px] w-auto h-auto max-h-[635px] text-sm p-4">
-                        <AIResponse>{content}</AIResponse>
-                    </ScrollArea>
-                </div>
-                <Button onClick={handleDownload} disabled={mutation.isPending}>
-                    {mutation.isPending ? (
-                        <Loader className="animate-spin" />
-                    ) : (
-                        <span>Download as PDF</span>
-                    )}
-                </Button>
+                {isPageLoading ? (
+                    <Loader className="animate-spin" />
+                ) : (
+                    <div className="flex flex-col">
+                        <ScrollArea className="sm:max-w-[425px] md:max-w-[800px] lg:max-w-[1200px] w-auto h-auto max-h-[635px] text-sm p-4">
+                            <AIResponse>{displayContent}</AIResponse>
+                        </ScrollArea>
+                        <div className="w-full flex gap-x-4">
+                            <Button className="flex-1" onClick={handleDownload} disabled={downloadMutation.isPending}>
+                                {downloadMutation.isPending ? (
+                                    <Loader className="animate-spin" />
+                                ) : (
+                                    <span>Download as PDF</span>
+                                )}
+                            </Button>
+                            <Button className="flex-1" onClick={handleTranslation} disabled={translateMutation.isPending}>
+                                <span>Translate</span>
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     )

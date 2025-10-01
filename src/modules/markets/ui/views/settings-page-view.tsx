@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import { Language, useSettingsStore } from '@/stores/settings-store';
 
+
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [darkMode, setDarkMode] = useState(false);

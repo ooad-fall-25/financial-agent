@@ -14,6 +14,7 @@ import {
 import {
   createAINewsSummary,
   createAINewsSummaryByLink,
+  translateSummary,
 } from "@/lib/langchain";
 import {
   getAllAlpacaNewsSummary,
@@ -273,5 +274,17 @@ export const marketsRouter = createTRPCRouter({
       // 4. Return base64 string of PDF
       return Buffer.from(pdfBuffer).toString("base64");
     }),
-});
 
+  translate: protectedProcedure
+  .input(z.object({
+    content: z.string(), 
+    language: z.string(), 
+  }))
+  .mutation(async ({input}) => {
+    const translatedContent = await translateSummary(input.content, input.language); 
+    if (!translatedContent) {
+      throw new TRPCError({code: "NOT_FOUND", message: "No translation found"})
+    }
+    return translatedContent.content.toString(); 
+  })
+});
