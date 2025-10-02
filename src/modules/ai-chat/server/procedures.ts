@@ -188,4 +188,34 @@ export const chatRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  deleteConversation: protectedProcedure
+    .input(z.object({ conversationId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const { conversationId } = input;
+      const { userId } = ctx.auth;
+
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          userId: userId,
+        },
+      });
+
+      if (!conversation) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Conversation not found or you do not have permission to delete it.",
+        });
+      }
+
+      await prisma.conversation.delete({
+        where: {
+          id: conversationId,
+        },
+      });
+
+      return { success: true };
+    }),
 });

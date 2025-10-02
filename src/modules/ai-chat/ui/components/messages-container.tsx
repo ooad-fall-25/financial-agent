@@ -125,6 +125,13 @@ export const MessagesContainer = ({
     setIsHistoryOpen(false);
   };
 
+  const handleDeleteConversation = (deletedId: string) => {
+    if (deletedId === conversationId) {
+      router.push("/agent");
+    }
+    setIsHistoryOpen(false);
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
@@ -165,6 +172,7 @@ export const MessagesContainer = ({
               <ConversationHistory
                 conversations={conversations || []}
                 onSelectConversation={handleSelectConversation}
+                onDeleteConversation={handleDeleteConversation}
                 selectedConversationId={conversationId || null}
               />
             </Dialog>

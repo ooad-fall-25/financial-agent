@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, Save } from "lucide-react";
+import { Edit, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,12 +18,14 @@ interface Conversation {
 interface Props {
   conversations: Conversation[];
   onSelectConversation: (id: string) => void;
+  onDeleteConversation: (id: string) => void;
   selectedConversationId: string | null;
 }
 
 export const ConversationHistory = ({
   conversations,
   onSelectConversation,
+  onDeleteConversation,
   selectedConversationId,
 }: Props) => {
   const [editingConversationId, setEditingConversationId] = useState<
@@ -39,6 +41,14 @@ export const ConversationHistory = ({
       queryClient.invalidateQueries(trpc.chat.getConversations.queryOptions());
       setEditingConversationId(null);
       setNewTitle("");
+    },
+  });
+
+  const deleteConversation = useMutation({
+    ...trpc.chat.deleteConversation.mutationOptions(),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(trpc.chat.getConversations.queryOptions());
+      onDeleteConversation(variables.conversationId);
     },
   });
 
@@ -58,6 +68,12 @@ export const ConversationHistory = ({
         conversationId: editingConversationId,
         newTitle: newTitle.trim(),
       });
+    }
+  };
+
+  const handleDelete = (conversationId: string) => {
+    if (window.confirm("Are you sure you want to delete this conversation?")) {
+      deleteConversation.mutate({ conversationId });
     }
   };
 
@@ -112,14 +128,24 @@ export const ConversationHistory = ({
                       {convo.title || "New Chat"}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-0 group-hover:opacity-100"
-                    onClick={() => handleStartEditing(convo)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStartEditing(convo)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => handleDelete(convo.id)}
+                      disabled={deleteConversation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
