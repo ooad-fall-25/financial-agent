@@ -41,23 +41,25 @@ export const LibraryDetailView = ({ newsId }: Props) => {
     return (
 
         <div className="flex flex-col w-full h-screen overflow-y-hidden">
-            <LibraryDetailHeader />
+            <LibraryDetailHeader route="/library" name="Library" />
 
             {news ? (
                 <div className="grid grid-cols-8 flex-1 h-full text-sm" >
-                    <div className="col-span-5 p-8 pb-20 h-full border-r border-primary overflow-y-auto">
-                        <div className="flex items-center justify-between">
-                            <h1 className="text-muted-foreground ">
-                                AI generated summary report
-                            </h1>
-                            <Button variant="outline" onClick={() => handleDownload(news.aiRepsonse)}>
-                                <span>Download as PDF</span>
-                            </Button>
-                        </div>
-                        <div className="p-8">
-                            <AIResponse>
-                                {news.aiRepsonse}
-                            </AIResponse>
+                    <div className="col-span-5 p-8 h-full border-r border-primary overflow-y-auto">
+                        <div className="pb-30">
+                            <div className="flex items-center justify-between">
+                                <h1 className="text-muted-foreground ">
+                                    AI generated summary report
+                                </h1>
+                                <Button variant="outline" onClick={() => handleDownload(news.aiRepsonse)}>
+                                    <span>Download as PDF</span>
+                                </Button>
+                            </div>
+                            <div className="p-8">
+                                <AIResponse>
+                                    {news.aiRepsonse}
+                                </AIResponse>
+                            </div>
                         </div>
                     </div>
 
@@ -66,9 +68,9 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                             <NewsDetail news={news} />
                         </div>
                         <div>
-                            <LibraryDetailAction newsId={news.id}/>
+                            <LibraryDetailAction newsId={news.id} />
                         </div>
-                        
+
                     </div>
                 </div>
             ) : (

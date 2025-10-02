@@ -1,18 +1,18 @@
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Edit2Icon, WrenchIcon } from "lucide-react"
+import { Edit2Icon, Edit3Icon, EditIcon, TrashIcon, WrenchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -29,7 +29,7 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
             }
             router.push("/library");
             toast.success("News deleted", {
-                description: `Headline: ${data.headline}` ,
+                description: `Headline: ${data.headline}`,
             })
         },
         onError: (error) => {
@@ -55,10 +55,28 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                 </div>
                 <div className="flex flex-col gap-y-4">
                     <div className="flex items-center gap-x-4 justify-between">
+                        <span>Edit this summary</span>
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            className="size-8"
+                            onClick={() => router.push(`/library/${newsId}/edit`)}
+                        >
+                            <EditIcon />
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
                         <span>Delete this summary</span>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive">Delete</Button>
+                                <Button
+                                    size="icon"
+                                    className="size-8"
+                                    variant="destructive"
+                                >
+                                    <TrashIcon />
+                                </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -74,13 +92,6 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                    </div>
-
-                    <div className="flex items-center gap-x-4 justify-between">
-                        <span>Edit this summary</span>
-                        <Button onClick={() => router.push(`/library/${newsId}/edit`)}>
-                            <Edit2Icon />
-                        </Button>
                     </div>
                 </div>
             </div>

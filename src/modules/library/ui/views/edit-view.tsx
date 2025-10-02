@@ -11,6 +11,7 @@ import { useCreateBlockNote } from "@blocknote/react";
 import { myCustomTheme } from "../../lib/custom-theme";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { LibraryDetailHeader } from "../components/library-detail-header";
 
 
 export const EditView = ({ newsId }: { newsId: string }) => {
@@ -31,10 +32,25 @@ export const EditView = ({ newsId }: { newsId: string }) => {
 
 
   return (
-    <BlockNoteView
-      editor={editor}
-      theme={resolvedTheme === "dark" ? myCustomTheme.dark : myCustomTheme.light}
-      className="p-4 w-full h-full"
-    />
+    <div className="flex flex-col w-full h-screen overflow-y-hidden">
+      <LibraryDetailHeader route={`/library/${newsId}`} name="Back" />
+
+      <div className="grid grid-cols-9 flex-1 h-full text-sm" >
+        <div className="col-span-7 p-8 pb-20 h-full border-r border-primary overflow-y-auto">
+          <div className="pb-30">
+            <BlockNoteView
+              editor={editor}
+              theme={resolvedTheme === "dark" ? myCustomTheme.dark : myCustomTheme.light}
+              className="p-4 w-full h-full "
+            />
+          </div>
+        </div>
+
+        <div className="col-span-2 h-full overflow-y-auto py-8 scrollbar-">
+
+        </div>
+      </div>
+
+    </div>
   )
 }
