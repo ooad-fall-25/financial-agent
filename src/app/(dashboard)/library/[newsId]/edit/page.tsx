@@ -2,9 +2,15 @@
 
 import { EditView } from "@/modules/library/ui/views/edit-view";
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { use, useMemo } from "react";
 
-const Page = () => {
+interface Props {
+  params: Promise<{newsId: string}>
+}
+
+
+const Page = ({ params }: Props) => {
+    const {newsId} = use(params)
 
     const EditView = useMemo(() => dynamic(
         () => import("@/modules/library/ui/views/edit-view").then(mod => mod.EditView),
@@ -12,7 +18,7 @@ const Page = () => {
     ), [])
     return (
         <EditView 
-           
+           newsId={newsId}
         />
     )
 }

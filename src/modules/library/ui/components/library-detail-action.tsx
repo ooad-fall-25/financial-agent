@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { WrenchIcon } from "lucide-react"
+import { Edit2Icon, WrenchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -70,10 +70,17 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(newsId)} className="bg-red-400 hover:bg-red-600">Yes</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(newsId)} className="bg-red-400 hover:bg-red-600 text-foreground">Yes</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Edit this summary</span>
+                        <Button onClick={() => router.push(`/library/${newsId}/edit`)}>
+                            <Edit2Icon />
+                        </Button>
                     </div>
                 </div>
             </div>
