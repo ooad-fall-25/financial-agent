@@ -1,6 +1,5 @@
 "use client";
 import { NewsSummary } from "@/generated/prisma";
-import { LibraryDetailHeader } from "../components/library-detail-header";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";

@@ -11,7 +11,6 @@ import { useCreateBlockNote } from "@blocknote/react";
 import { myCustomTheme } from "../../lib/custom-theme";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { LibraryDetailHeader } from "../components/library-detail-header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
