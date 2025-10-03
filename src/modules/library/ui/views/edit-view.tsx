@@ -13,6 +13,8 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { LibraryDetailHeader } from "../components/library-detail-header";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeftIcon } from "lucide-react";
 
 
 export const EditView = ({ newsId }: { newsId: string }) => {
@@ -59,29 +61,55 @@ export const EditView = ({ newsId }: { newsId: string }) => {
   }
 
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden">
-      <div className="sticky top-0 z-50 bg-background">
-        <LibraryDetailHeader route={`/library/${newsId}`} name="Back" />
+    <div className="relative w-full h-full min-h-0">
+      <div
+        className="absolute top-0 left-0 right-0 z-20 bg-background border-b border-primary p-4"
+        role="banner"
+      >
+        <Button asChild variant="ghost" className="hover:border">
+          <Link href={`/library/${newsId}`} className="flex items-center gap-2">
+            <ArrowLeftIcon /> Back
+          </Link>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-9 flex-1 h-full text-sm">
-        <div className="col-span-7 p-8 pb-20 h-full border-r border-primary overflow-y-auto">
-          <div className="pb-30">
-            <BlockNoteView
-              onChange={onChange}
-              editor={editor}
-              theme={resolvedTheme === "dark" ? myCustomTheme.dark : myCustomTheme.light}
-              className="p-4 w-full h-full"
-            />
-          </div>
-        </div>
+      <div className="absolute top-0 left-0 right-0 bottom-0 pt-16 min-h-0">
+        <div className="grid grid-cols-9 h-full min-h-0">
 
-        <div className="col-span-2 h-full overflow-y-auto py-8">
-          <Button onClick={handleSave}>
-            save
-          </Button>
+
+          <div className="col-span-7 flex flex-col min-h-0 border-r border-primary">
+            <div className="flex-1 min-h-0 overflow-y-auto p-8">
+              <div className="h-full min-h-0">
+                <BlockNoteView
+                  onChange={onChange}
+                  editor={editor}
+                  theme={resolvedTheme === "dark" ? myCustomTheme.dark : myCustomTheme.light}
+                  className="w-full h-full"
+                />
+              </div>
+            </div>
+          </div>
+
+
+          <div className="col-span-2 flex flex-col min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto py-8 px-4">
+              <Button onClick={handleSave}>save</Button>
+            </div>
+          </div>
+
+
         </div>
       </div>
     </div>
+
+
+
+
+
+
+
+
+
   )
 }
+
