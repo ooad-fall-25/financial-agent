@@ -93,7 +93,7 @@ export default function RootLayout({
               ${figtree.variable}
               ${roboto.variable}
               ${inter.variable}
-              antialiased font-inter bg-background text-foreground`}
+              antialiased bg-background text-foreground`}
           >
             <ThemeProvider
               attribute="class"

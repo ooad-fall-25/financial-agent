@@ -14,6 +14,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
+import { EditAction } from "../components/edit-action";
+// import "@/modules/library/lib/style.css"
 
 
 export const EditView = ({ newsId }: { newsId: string }) => {
@@ -73,26 +75,30 @@ export const EditView = ({ newsId }: { newsId: string }) => {
       </div>
 
       <div className="absolute top-0 left-0 right-0 bottom-0 pt-16 min-h-0">
-        <div className="grid grid-cols-9 h-full min-h-0">
+        <div className="grid grid-cols-12 h-full min-h-0 text-sm">
 
 
-          <div className="col-span-7 flex flex-col min-h-0 border-r border-primary">
+          <div className="col-span-9 flex flex-col min-h-0 border-r border-primary">
             <div className="flex-1 min-h-0 overflow-y-auto p-8">
               <div className="h-full min-h-0">
+                <h1 className="text-muted-foreground text-center pb-4">
+                  Editable text
+                </h1>
                 <BlockNoteView
                   onChange={onChange}
                   editor={editor}
                   theme={resolvedTheme === "dark" ? myCustomTheme.dark : myCustomTheme.light}
                   className="w-full h-full"
+                  data-changing-font-demo
                 />
               </div>
             </div>
           </div>
 
 
-          <div className="col-span-2 flex flex-col min-h-0">
+          <div className="col-span-3 flex flex-col min-h-0">
             <div className="flex-1 min-h-0 overflow-y-auto py-8 px-4">
-              <Button onClick={handleSave}>save</Button>
+              <EditAction />
             </div>
           </div>
 
