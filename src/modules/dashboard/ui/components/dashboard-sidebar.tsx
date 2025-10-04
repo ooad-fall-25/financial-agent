@@ -103,7 +103,7 @@ export const DashboardSidebar = () => {
                                         )}
                                     >
                                         <Link href={item.url}>
-                                            <item.icon className="size-4" />
+                                            <item.icon className="!size-4" strokeWidth={2.5}/>
                                             <span>{item.title}</span>
                                         </Link>
 

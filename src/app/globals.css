@@ -235,3 +235,26 @@ body {
 .highlight-red {
   animation: flash-red 1s ease-out;
 }
+
+.bn-container[data-changing-font-demo] .bn-editor * {
+  font-size: 0.99em; 
+}
+
+@media (max-width: 992px) {
+  .bn-container[data-changing-font-demo] .bn-editor * {
+    font-size: 0.90em;
+  }
+}
+
+@media (max-width: 768px) {
+  .bn-container[data-changing-font-demo] .bn-editor * {
+    font-size: 0.85em; 
+  }
+}
+
+
+@media (max-width: 480px) {
+  .bn-container[data-changing-font-demo] .bn-editor * {
+    font-size: 0.85em; 
+  }
+}

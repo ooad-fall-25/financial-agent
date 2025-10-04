@@ -1,22 +1,24 @@
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { WrenchIcon } from "lucide-react"
+import { EditIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 import { toast } from "sonner"
 
 export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
+    const [isPending, startTransition] = useTransition()
     const router = useRouter();
     const queryClient = useQueryClient();
     const trpc = useTRPC();
@@ -29,7 +31,7 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
             }
             router.push("/library");
             toast.success("News deleted", {
-                description: `Headline: ${data.headline}` ,
+                description: `Headline: ${data.headline}`,
             })
         },
         onError: (error) => {
@@ -55,10 +57,36 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                 </div>
                 <div className="flex flex-col gap-y-4">
                     <div className="flex items-center gap-x-4 justify-between">
+                        <span>Edit this summary</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={() => {
+                                startTransition(() => {
+                                    router.push(`/library/${newsId}/edit`)
+                                })
+                            }}
+                        >
+                            {isPending ? (
+                                <LoaderIcon className="animate-spin"  strokeWidth={2.5}/>
+                            ) : (
+                                <EditIcon strokeWidth={2.5} />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
                         <span>Delete this summary</span>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive">Delete</Button>
+                                <Button
+                                    size="icon"
+                                    className="h-6 w-8"
+                                    variant="delete"
+                                >
+                                    <TrashIcon strokeWidth={2.5} />
+                                </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -70,7 +98,7 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(newsId)} className="bg-red-400 hover:bg-red-600">Yes</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(newsId)} className="bg-red-400 hover:bg-red-600 text-foreground">Yes</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
