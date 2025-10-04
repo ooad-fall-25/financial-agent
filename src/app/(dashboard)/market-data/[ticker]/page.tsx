@@ -9,6 +9,6 @@ type StockDetailPageProps = { params: { ticker: string } };
 // This is the main component for the dynamic [ticker] route.
 export default async function StockDetailPage({ params }: StockDetailPageProps) {
   // await params (Next may provide a thenable)
-  const { ticker } = (await params) as { ticker: string };
-  return <YahooStockView ticker={ticker} />;
+  const decodedTicker = decodeURIComponent(params.ticker);
+  return <YahooStockView ticker={decodedTicker} />;
 }
