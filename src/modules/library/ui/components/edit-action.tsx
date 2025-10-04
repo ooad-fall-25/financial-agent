@@ -14,7 +14,7 @@ interface Props {
 
 export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
 
-    const { downloadMarkdown, isDownloadMD } = useDownload();
+    const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -42,31 +42,14 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
         news.refetch();
         const block = await editor.tryParseMarkdownToBlocks(news.data?.aiRepsonse.toString() || "");
         editor.replaceBlocks(editor.document, block);
+    }    
+
+    const handleDownloadAsMD = () => {
+        downloadAsMarkdown("note", savedMarkdown);
     }
 
-    const downloadMutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions())
-    const handleDownloadPDF = async () => {
-        const result = await downloadMutation.mutateAsync({ markdown: savedMarkdown });
-
-        // Convert base64 -> Blob
-        const pdfData = atob(result);
-        const buffer = new Uint8Array(pdfData.length);
-        for (let i = 0; i < pdfData.length; i++) {
-            buffer[i] = pdfData.charCodeAt(i);
-        }
-
-        const blob = new Blob([buffer], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "markdown.pdf";
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
-
-    const handleDownloadMD = () => {
-        downloadMarkdown("note", savedMarkdown);
+    const handleDownloadAsPDF = () => {
+        downloadAsPDF("note", savedMarkdown);
     }
 
     return (
@@ -99,10 +82,10 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             size="icon"
                             variant="action"
                             className="h-6 w-8"
-                            onClick={handleDownloadPDF}
-                            disabled={downloadMutation.isPending}
+                            onClick={handleDownloadAsPDF}
+                            disabled={isDownloadingPDF}
                         >
-                            {downloadMutation.isPending ? (
+                            {isDownloadingPDF ? (
                                 <LoaderIcon className="animate-spin" strokeWidth={2.5} />
                             ) : (
                                 <DownloadIcon strokeWidth={2.5} />
@@ -115,10 +98,10 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             size="icon"
                             variant="action"
                             className="h-6 w-8"
-                            onClick={handleDownloadMD}
-                            disabled={isDownloadMD}
+                            onClick={handleDownloadAsMD}
+                            disabled={isDownloadingMD}
                         >
-                            {isDownloadMD ? (
+                            {isDownloadingMD ? (
                                 <LoaderIcon className="animate-spin" strokeWidth={2.5} />
                             ) : (
                                 <FileDownIcon strokeWidth={2.5} />

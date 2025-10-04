@@ -20,53 +20,53 @@ interface Props {
 export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) => {
     const languageSetting = useSettingsStore((state) => state.language);
     const [displayContent, setDisplayContent] = useState(content);
-    const trpc = useTRPC();
-    const downloadMutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions({
-        onError: (error) => {
-            toast.error(error.message);
-        }
-    }));
-    const translateMutation = useMutation(trpc.marketssssss.translate.mutationOptions({
-        onError: (error) => {
-            toast.error(error.message);
-        }
-    }));
+    // const trpc = useTRPC();
+    // const downloadMutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions({
+    //     onError: (error) => {
+    //         toast.error(error.message);
+    //     }
+    // }));
+    // const translateMutation = useMutation(trpc.marketssssss.translate.mutationOptions({
+    //     onError: (error) => {
+    //         toast.error(error.message);
+    //     }
+    // }));
 
-    const handleDownload = async () => {
-        const result = await downloadMutation.mutateAsync({ markdown: displayContent });
+    // const handleDownload = async () => {
+    //     const result = await downloadMutation.mutateAsync({ markdown: displayContent });
 
-        // Convert base64 -> Blob
-        const pdfData = atob(result);
-        const buffer = new Uint8Array(pdfData.length);
-        for (let i = 0; i < pdfData.length; i++) {
-            buffer[i] = pdfData.charCodeAt(i);
-        }
+    //     // Convert base64 -> Blob
+    //     const pdfData = atob(result);
+    //     const buffer = new Uint8Array(pdfData.length);
+    //     for (let i = 0; i < pdfData.length; i++) {
+    //         buffer[i] = pdfData.charCodeAt(i);
+    //     }
 
-        const blob = new Blob([buffer], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
+    //     const blob = new Blob([buffer], { type: "application/pdf" });
+    //     const url = window.URL.createObjectURL(blob);
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "markdown.pdf";
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
+    //     const a = document.createElement("a");
+    //     a.href = url;
+    //     a.download = "markdown.pdf";
+    //     a.click();
+    //     window.URL.revokeObjectURL(url);
+    // };
 
-    const handleTranslation = async () => {
-        const translatedContent = await translateMutation.mutateAsync({
-            content: displayContent,
-            language: languageSetting
-        });
-        setDisplayContent(translatedContent);
-    }
+    // const handleTranslation = async () => {
+    //     const translatedContent = await translateMutation.mutateAsync({
+    //         content: displayContent,
+    //         language: languageSetting
+    //     });
+    //     setDisplayContent(translatedContent);
+    // }
 
-    const isPageLoading = downloadMutation.isPending || translateMutation.isPending;
+    // const isPageLoading = downloadMutation.isPending || translateMutation.isPending;
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen} defaultOpen={false}>
             <DialogTitle></DialogTitle>
             <DialogContent showCloseButton={false} className="sm:max-w-[425px] md:max-w-[800px] lg:max-w-[1200px] w-auto h-auto  max-h-[735px]">
-                {isPageLoading ? (
+                {/* {isPageLoading ? (
                     <Loader className="animate-spin" />
                 ) : (
                     <div className="flex flex-col">
@@ -86,7 +86,7 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content }: Props) =
                             </Button>
                         </div>
                     </div>
-                )}
+                )} */}
             </DialogContent>
         </Dialog>
     )

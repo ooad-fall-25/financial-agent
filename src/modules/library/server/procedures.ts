@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { markdownToPDF } from "@/lib/helper";
+import { translateSummary } from "@/lib/langchain";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -92,6 +94,38 @@ export const libraryRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
       }
 
-      return updatedSummary; 
+      return updatedSummary;
+    }),
+
+  convertMarkdownToPdf: protectedProcedure
+    .input(
+      z.object({
+        markdown: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const pdfBuffer = await markdownToPDF(input.markdown);
+      return Buffer.from(pdfBuffer).toString("base64");
+    }),
+    
+  translate: protectedProcedure
+    .input(
+      z.object({
+        content: z.string(),
+        language: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const translatedContent = await translateSummary(
+        input.content,
+        input.language
+      );
+      if (!translatedContent) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No translation found",
+        });
+      }
+      return translatedContent.content.toString();
     }),
 });

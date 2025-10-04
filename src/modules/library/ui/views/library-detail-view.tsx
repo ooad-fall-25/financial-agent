@@ -2,12 +2,13 @@
 import { NewsSummary } from "@/generated/prisma";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { NewsDetail } from "../components/news-detail";
 import { LibraryDetailAction } from "../components/library-detail-action";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
+import { useDownload } from "@/hooks/use-download";
 
 
 
@@ -16,29 +17,19 @@ interface Props {
 }
 
 export const LibraryDetailView = ({ newsId }: Props) => {
+    const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
+
     const trpc = useTRPC();
     const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ newsId: newsId }))
 
-    const mutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions())
-    const handleDownload = async (content: string) => {
-        const result = await mutation.mutateAsync({ markdown: content });
+    const handleDownloadAsMD = () => {
+        downloadAsMarkdown("note", news.aiRepsonse);
+    }
 
-        // Convert base64 -> Blob
-        const pdfData = atob(result);
-        const buffer = new Uint8Array(pdfData.length);
-        for (let i = 0; i < pdfData.length; i++) {
-            buffer[i] = pdfData.charCodeAt(i);
-        }
+    const handleDownloadAsPDF = () => {
+        downloadAsPDF("note", news.aiRepsonse);
+    }
 
-        const blob = new Blob([buffer], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "markdown.pdf";
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
     return (
 
         <div className="relative h-full w-full min-h-0">
@@ -63,7 +54,7 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                                     <h1 className="text-muted-foreground">
                                         AI generated summary report
                                     </h1>
-                                    <Button variant="outline" onClick={() => handleDownload(news.aiRepsonse)}>
+                                    <Button variant="outline" onClick={handleDownloadAsPDF}>
                                         <span>Download as PDF</span>
                                     </Button>
                                 </div>

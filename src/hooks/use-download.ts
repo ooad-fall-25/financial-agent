@@ -1,10 +1,18 @@
 "use client";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 export const useDownload = () => {
-  const [isDownloadMD, setIsDownloadMD] = useState(false);
-  const downloadMarkdown = (filename: string, text: string) => {
-    setIsDownloadMD(true);
+  const trpc = useTRPC();
+  const [isDownloadingMD, setIsDownloadingMD] = useState(false);
+
+  const {mutateAsync: mutateAsyncAsPDF, isPending: isDownloadingPDF} = useMutation(
+    trpc.library.convertMarkdownToPdf.mutationOptions()
+  );
+
+  const downloadAsMarkdown = (filename: string, text: string) => {
+    setIsDownloadingMD(true);
     try {
       const blob = new Blob([text], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
@@ -16,12 +24,34 @@ export const useDownload = () => {
 
       URL.revokeObjectURL(url);
     } finally {
-      setIsDownloadMD(false);
+      setIsDownloadingMD(false);
     }
   };
 
+  const downloadAsPDF = async (filename: string, text: string) => {
+      const result = await mutateAsyncAsPDF({ markdown: text });
+
+      // Convert base64 -> Blob
+      const pdfData = atob(result);
+      const buffer = new Uint8Array(pdfData.length);
+      for (let i = 0; i < pdfData.length; i++) {
+        buffer[i] = pdfData.charCodeAt(i);
+      }
+
+      const blob = new Blob([buffer], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+  };
+
   return {
-    downloadMarkdown,
-    isDownloadMD,
+    downloadAsMarkdown,
+    isDownloadingMD,
+    downloadAsPDF,
+    isDownloadingPDF,
   };
 };
