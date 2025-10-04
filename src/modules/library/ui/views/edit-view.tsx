@@ -102,7 +102,7 @@ export const EditView = ({ newsId }: { newsId: string }) => {
 
           <div className="col-span-3 flex flex-col min-h-0">
             <div className="flex-1 min-h-0 overflow-y-auto py-8 px-4">
-              <EditAction newsId={newsId} savedMarkdown={saveMarkdown} />
+              <EditAction newsId={newsId} savedMarkdown={saveMarkdown} editor={editor} />
             </div>
           </div>
 
