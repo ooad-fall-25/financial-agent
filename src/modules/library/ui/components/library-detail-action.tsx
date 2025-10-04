@@ -10,14 +10,22 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { useDownload } from "@/hooks/use-download"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { EditIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
+import { DownloadIcon, EditIcon, FileDownIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
 
-export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
+interface Props {
+    newsId: string;
+    content: string;
+}
+
+export const LibraryDetailAction = ({ newsId, content }: Props) => {
+    const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
+
     const [isPending, startTransition] = useTransition()
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -47,6 +55,14 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
         })
     }
 
+    const handleDownloadAsMD = () => {
+        downloadAsMarkdown("note", content);
+    }
+
+    const handleDownloadAsPDF = () => {
+        downloadAsPDF("note", content);
+    }
+
 
     return (
         <div className="w-full h-ful">
@@ -69,12 +85,46 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                             }}
                         >
                             {isPending ? (
-                                <LoaderIcon className="animate-spin"  strokeWidth={2.5}/>
+                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
                             ) : (
                                 <EditIcon strokeWidth={2.5} />
                             )}
                         </Button>
                     </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download as PDF</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleDownloadAsPDF}
+                        >
+                            {isDownloadingPDF ? (
+                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                            ) : (
+                                <DownloadIcon strokeWidth={2.5} />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download as Markdown</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleDownloadAsMD}
+                        >
+                            {isDownloadingMD ? (
+                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                            ) : (
+                                <FileDownIcon strokeWidth={2.5} />
+                            )}
+                        </Button>
+                    </div>
+
+
 
                     <div className="flex items-center gap-x-4 justify-between">
                         <span>Delete this summary</span>
