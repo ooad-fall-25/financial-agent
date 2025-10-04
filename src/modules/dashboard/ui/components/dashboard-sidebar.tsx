@@ -58,7 +58,7 @@ const items = [
 
 export const DashboardSidebar = () => {
     const pathname = usePathname();
-    const sidebar = useSidebar(); 
+    const sidebar = useSidebar();
     const isActive = (url: string) => {
         if (url === "/") {
             return pathname === "/";
@@ -103,7 +103,7 @@ export const DashboardSidebar = () => {
                                         )}
                                     >
                                         <Link href={item.url}>
-                                            <item.icon className="!size-4" strokeWidth={2.5}/>
+                                            <item.icon className="!size-4" />
                                             <span>{item.title}</span>
                                         </Link>
 

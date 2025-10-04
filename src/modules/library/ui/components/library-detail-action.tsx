@@ -85,9 +85,9 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                             }}
                         >
                             {isPending ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <EditIcon strokeWidth={2.5} />
+                                <EditIcon />
                             )}
                         </Button>
                     </div>
@@ -101,9 +101,9 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                             onClick={handleDownloadAsPDF}
                         >
                             {isDownloadingPDF ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <DownloadIcon strokeWidth={2.5} />
+                                <DownloadIcon />
                             )}
                         </Button>
                     </div>
@@ -117,9 +117,9 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                             onClick={handleDownloadAsMD}
                         >
                             {isDownloadingMD ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <FileDownIcon strokeWidth={2.5} />
+                                <FileDownIcon />
                             )}
                         </Button>
                     </div>
@@ -135,7 +135,7 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                                     className="h-6 w-8"
                                     variant="delete"
                                 >
-                                    <TrashIcon strokeWidth={2.5} />
+                                    <TrashIcon />
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>

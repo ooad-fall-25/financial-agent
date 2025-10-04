@@ -42,7 +42,7 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
         news.refetch();
         const block = await editor.tryParseMarkdownToBlocks(news.data?.aiRepsonse.toString() || "");
         editor.replaceBlocks(editor.document, block);
-    }    
+    }
 
     const handleDownloadAsMD = () => {
         downloadAsMarkdown("note", savedMarkdown);
@@ -56,7 +56,7 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
         <div className="w-full h-full min-h-0">
             <div className="gap-y-8 flex flex-col">
                 <div className="flex items-center gap-x-4">
-                    <WrenchIcon className="size-4" strokeWidth={2.5} />
+                    <WrenchIcon className="size-4" />
                     <span>Actions</span>
                 </div>
                 <div className="flex flex-col gap-y-4">
@@ -70,9 +70,9 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             disabled={news.isLoading}
                         >
                             {news.isLoading ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <RefreshCcwIcon strokeWidth={2.5} />
+                                <RefreshCcwIcon />
                             )}
                         </Button>
                     </div>
@@ -86,9 +86,9 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             disabled={isDownloadingPDF}
                         >
                             {isDownloadingPDF ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <DownloadIcon strokeWidth={2.5} />
+                                <DownloadIcon />
                             )}
                         </Button>
                     </div>
@@ -102,9 +102,9 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             disabled={isDownloadingMD}
                         >
                             {isDownloadingMD ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <FileDownIcon strokeWidth={2.5} />
+                                <FileDownIcon />
                             )}
                         </Button>
                     </div>
@@ -118,9 +118,9 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             disabled={saveMutation.isPending}
                         >
                             {saveMutation.isPending ? (
-                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                                <LoaderIcon className="animate-spin" />
                             ) : (
-                                <SaveAllIcon strokeWidth={2.5} />
+                                <SaveAllIcon />
                             )}
                         </Button>
                     </div>
