@@ -12,11 +12,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Edit2Icon, Edit3Icon, EditIcon, TrashIcon, WrenchIcon } from "lucide-react"
+import { EditIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 import { toast } from "sonner"
 
 export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
+    const [isPending, startTransition] = useTransition()
     const router = useRouter();
     const queryClient = useQueryClient();
     const trpc = useTRPC();
@@ -58,11 +60,19 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                         <span>Edit this summary</span>
                         <Button
                             size="icon"
-                            variant="outline"
-                            className="size-8"
-                            onClick={() => router.push(`/library/${newsId}/edit`)}
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={() => {
+                                startTransition(() => {
+                                    router.push(`/library/${newsId}/edit`)
+                                })
+                            }}
                         >
-                            <EditIcon />
+                            {isPending ? (
+                                <LoaderIcon className="animate-spin"  strokeWidth={2.5}/>
+                            ) : (
+                                <EditIcon strokeWidth={2.5} />
+                            )}
                         </Button>
                     </div>
 
@@ -72,10 +82,10 @@ export const LibraryDetailAction = ({ newsId }: { newsId: string }) => {
                             <AlertDialogTrigger asChild>
                                 <Button
                                     size="icon"
-                                    className="size-8"
-                                    variant="destructive"
+                                    className="h-6 w-8"
+                                    variant="delete"
                                 >
-                                    <TrashIcon />
+                                    <TrashIcon strokeWidth={2.5} />
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>

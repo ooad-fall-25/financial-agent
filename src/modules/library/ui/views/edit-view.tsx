@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
 import { EditAction } from "../components/edit-action";
+import ShimmerText from "@/components/kokonutui/shimmer-text";
+import { ShimmeringText } from "@/components/ui/shadcn-io/shimmering-text";
 // import "@/modules/library/lib/style.css"
 
 
@@ -57,10 +59,6 @@ export const EditView = ({ newsId }: { newsId: string }) => {
     sessionStorage.setItem(`edit-${newsId}`, markdown);
   }
 
-  const handleSave = () => {
-    console.log(saveMarkdown)
-  }
-
   return (
     <div className="relative w-full h-full min-h-0">
       <div
@@ -81,9 +79,15 @@ export const EditView = ({ newsId }: { newsId: string }) => {
           <div className="col-span-9 flex flex-col min-h-0 border-r border-primary">
             <div className="flex-1 min-h-0 overflow-y-auto p-8">
               <div className="h-full min-h-0">
-                <h1 className="text-muted-foreground text-center pb-4">
-                  Editable text
-                </h1>
+
+                <div className="text-sm p-0 m-0 font-medium text-muted-foreground text-center ">
+                  <ShimmeringText
+                    text="Editable text"
+                    duration={1.5}
+                    // shimmeringColor="hsl(var(--primary))"
+                  />
+                </div>
+
                 <BlockNoteView
                   onChange={onChange}
                   editor={editor}
@@ -98,7 +102,7 @@ export const EditView = ({ newsId }: { newsId: string }) => {
 
           <div className="col-span-3 flex flex-col min-h-0">
             <div className="flex-1 min-h-0 overflow-y-auto py-8 px-4">
-              <EditAction />
+              <EditAction newsId={newsId} savedMarkdown={saveMarkdown} />
             </div>
           </div>
 
