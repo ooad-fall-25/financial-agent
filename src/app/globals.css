@@ -258,3 +258,7 @@ body {
     font-size: 0.85em; 
   }
 }
+
+.lucide {
+  stroke-width: 2.5px;
+}

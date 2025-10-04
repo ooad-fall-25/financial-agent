@@ -1,5 +1,4 @@
 "use client";
-import { NewsSummary } from "@/generated/prisma";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -8,7 +7,6 @@ import { NewsDetail } from "../components/news-detail";
 import { LibraryDetailAction } from "../components/library-detail-action";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
-import { useDownload } from "@/hooks/use-download";
 
 
 
@@ -17,18 +15,10 @@ interface Props {
 }
 
 export const LibraryDetailView = ({ newsId }: Props) => {
-    const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
 
     const trpc = useTRPC();
     const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ newsId: newsId }))
 
-    const handleDownloadAsMD = () => {
-        downloadAsMarkdown("note", news.aiRepsonse);
-    }
-
-    const handleDownloadAsPDF = () => {
-        downloadAsPDF("note", news.aiRepsonse);
-    }
 
     return (
 
@@ -50,13 +40,10 @@ export const LibraryDetailView = ({ newsId }: Props) => {
 
                         <div className="col-span-5 flex flex-col min-h-0 border-r border-primary">
                             <div className="flex-1 overflow-y-auto min-h-0 p-8">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-start">
                                     <h1 className="text-muted-foreground">
                                         AI generated summary report
                                     </h1>
-                                    <Button variant="outline" onClick={handleDownloadAsPDF}>
-                                        <span>Download as PDF</span>
-                                    </Button>
                                 </div>
                                 <div className="p-8">
                                     <AIResponse>
@@ -72,7 +59,7 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                                     <NewsDetail news={news} />
                                 </div>
                                 <div>
-                                    <LibraryDetailAction newsId={news.id} />
+                                    <LibraryDetailAction newsId={news.id} content={news.aiRepsonse} />
                                 </div>
                             </div>
                         </div>
