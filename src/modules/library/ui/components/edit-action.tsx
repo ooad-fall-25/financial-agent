@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button"
+import { useDownload } from "@/hooks/use-download";
 import { useTRPC } from "@/trpc/client";
 import { BlockNoteEditor } from "@blocknote/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DownloadIcon, LoaderIcon, RefreshCcwIcon, SaveAllIcon, WrenchIcon } from "lucide-react"
+import { DownloadIcon, FileDownIcon, LoaderIcon, RefreshCcwIcon, SaveAllIcon, WrenchIcon } from "lucide-react"
 import { toast } from "sonner";
 
 interface Props {
@@ -12,6 +13,9 @@ interface Props {
 }
 
 export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
+
+    const { downloadMarkdown, isDownloadMD } = useDownload();
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const saveMutation = useMutation(trpc.library.updateSummaryText.mutationOptions({
@@ -41,7 +45,7 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
     }
 
     const downloadMutation = useMutation(trpc.marketssssss.markdownToPdf.mutationOptions())
-    const handleDownload = async () => {
+    const handleDownloadPDF = async () => {
         const result = await downloadMutation.mutateAsync({ markdown: savedMarkdown });
 
         // Convert base64 -> Blob
@@ -60,6 +64,10 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
         a.click();
         window.URL.revokeObjectURL(url);
     };
+
+    const handleDownloadMD = () => {
+        downloadMarkdown("note", savedMarkdown);
+    }
 
     return (
         <div className="w-full h-full min-h-0">
@@ -91,13 +99,29 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
                             size="icon"
                             variant="action"
                             className="h-6 w-8"
-                            onClick={handleDownload}
+                            onClick={handleDownloadPDF}
                             disabled={downloadMutation.isPending}
                         >
                             {downloadMutation.isPending ? (
                                 <LoaderIcon className="animate-spin" strokeWidth={2.5} />
                             ) : (
                                 <DownloadIcon strokeWidth={2.5} />
+                            )}
+                        </Button>
+                    </div>
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download current edit as MD (no save required)</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8"
+                            onClick={handleDownloadMD}
+                            disabled={isDownloadMD}
+                        >
+                            {isDownloadMD ? (
+                                <LoaderIcon className="animate-spin" strokeWidth={2.5} />
+                            ) : (
+                                <FileDownIcon strokeWidth={2.5} />
                             )}
                         </Button>
                     </div>
