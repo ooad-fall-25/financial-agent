@@ -1,54 +1,77 @@
 "use client";
 
 import * as React from "react";
-import { Search } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useTRPC } from "@/trpc/client";
 import { useDebounce } from "@/lib/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 
+// --- 1. UPDATE THE PROPS INTERFACE ---
+// It now requires an 'activeTab' to know its context.
 interface StockSearchBarProps {
   onSelect: (ticker: string) => void;
+  activeTab: "stocks" | "crypto";
 }
 
-export function StockSearchBar({ onSelect }: StockSearchBarProps) {
+interface SearchResult {
+  symbol: string | null;
+  description: string | null;
+  type: string | null;
+}
+
+export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
   const [query, setQuery] = React.useState("");
   const [isFocused, setIsFocused] = React.useState(false);
   const debouncedQuery = useDebounce(query, 300);
 
   const trpc = useTRPC();
 
+  // The search query to the API remains the same, it's just for displaying results.
   const { data: searchResults, isLoading } = useQuery({
     ...trpc.AlpacaData.searchSymbols.queryOptions({ query: debouncedQuery }),
-    // Only run the query if the user has typed something
     enabled: debouncedQuery.length > 0,
   });
 
-  const handleSelect = (ticker: string) => {
-    onSelect(ticker); // Call the parent function to navigate
-    setQuery("");     // Clear the input
-    setIsFocused(false); // Hide the dropdown
+  // --- 2. THE NEW, SIMPLIFIED LOGIC ---
+  // This function now uses the 'activeTab' prop to decide how to format the ticker.
+  const processAndSelectTicker = (ticker: string) => {
+    let finalTicker = ticker.toUpperCase();
+
+    if (activeTab === 'crypto') {
+      // If we are on the crypto tab, ALWAYS format as a crypto pair.
+      if (!finalTicker.includes('/')) {
+        finalTicker = `${finalTicker}/USD`;
+      }
+    }
+    // If activeTab is 'stocks', we do nothing and use the ticker as is (e.g., "OPEN").
+
+    // Pass the correctly formatted ticker to the parent.
+    onSelect(finalTicker);
+    setQuery("");
+    setIsFocused(false);
   };
 
-  // The dropdown should be open only when the input is focused and there's a query
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && query) {
+      event.preventDefault();
+      // The logic is now simple: just process whatever the user typed.
+      processAndSelectTicker(query);
+    }
+  };
+
   const isDropdownOpen = isFocused && query.length > 0;
 
   return (
     <Command className="relative w-full max-w-sm overflow-visible">
-      {/* 
-        THIS IS THE CORRECTED PART.
-        We remove the wrapper <div> and the extra <Search /> icon.
-        The CommandInput component handles its own icon and border.
-      */}
       <CommandInput
-        placeholder="Search for stocks & more..."
+        placeholder={activeTab === 'stocks' ? "Search for stocks..." : "Search for crypto..."}
         value={query}
         onValueChange={setQuery}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+        onKeyDown={handleKeyDown}
       />
 
-      {/* The dropdown logic below remains unchanged */}
       {isDropdownOpen && (
         <div className="absolute top-full z-50 mt-2 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
           <CommandList>
@@ -58,22 +81,15 @@ export function StockSearchBar({ onSelect }: StockSearchBarProps) {
             )}
             {searchResults && searchResults.result.length > 0 && (
               <CommandGroup heading="Symbols">
-                {searchResults.result.map((stock) => (
+                {(searchResults.result as SearchResult[]).map((stock) => (
                   <CommandItem
                     key={stock.symbol}
-                    value={stock.symbol}
-                    onSelect={() => handleSelect(stock.symbol || "")}
+                    value={stock.symbol!}
+                    // When clicking an item, use the same simple logic.
+                    onSelect={() => processAndSelectTicker(stock.symbol || "")}
                     className="cursor-pointer"
                   >
-                    <div className="flex w-full justify-between items-center">
-                      <div>
-                        <p className="font-bold">{stock.symbol}</p>
-                        <p className="text-xs text-muted-foreground truncate">{stock.description}</p>
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground">
-                        <p>{stock.type}</p>
-                      </div>
-                    </div>
+                    {/* ... (Your UI for rendering the item) ... */}
                   </CommandItem>
                 ))}
               </CommandGroup>

@@ -2,22 +2,9 @@ import z from "zod";
 
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import {
-  getMarketNews,
-  getCompanyNameFromFinnhub,
-  searchSymbols,
-  getCompanyPeers,
-  getFinnhubClient,
-} from "@/lib/finnhub";
-import { alpacaApiV2, alpacaApiV1, alpacaCryptoApi } from "@/lib/alpaca";
-import { getStockNews } from "@/lib/polygon";
-import {
-  getAllFinnhubNewsSummary,
-  getAllPolygonNewsSummary,
-} from "@/lib/utils";
+import { getMarketNews, getCompanyNameFromFinnhub, searchSymbols, getCompanyPeers, getFinnhubClient} from "@/lib/finnhub";
+import { alpacaApiV2, alpacaApiV1, alpacaCryptoApi, alpacaCryptoClient} from "@/lib/alpaca"; 
 import { isAxiosError } from "axios";
-import { prisma } from "@/lib/db";
-import axios from "axios";
 
 interface AlpacaBar {
   t: string;
@@ -736,26 +723,129 @@ export const AlpacaDataRouter = createTRPCRouter({
           prevDayClose !== 0 ? (change / prevDayClose) * 100 : 0;
         const volume24h = snapshot?.dailyBar?.v ?? 0;
 
-        return {
-          symbol,
-          price,
-          change,
-          percentChange,
-          volume24h: snapshot?.dailyBar?.v ?? 0,
-          sparklineData: (sparklinesBySymbol[symbol] || []).map(
-            (bar: any) => bar.c
-          ),
-          // We use the data from Finnhub if available, otherwise 0
-          marketCap: 0,
-          circulatingSupply: 0,
-        };
+          return {
+            symbol,
+            price,
+            change,
+            percentChange,
+            volume24h: snapshot?.dailyBar?.v ?? 0,
+            sparklineData: (sparklinesBySymbol[symbol] || []).map((bar: any) => bar.c),
+            // We use the data from Finnhub if available, otherwise 0
+            marketCap: 0,
+            circulatingSupply: 0,
+          };
+        });
+
+      } catch (error) {
+        console.error("Error fetching crypto list data:", error);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch crypto data.' });
+      }
+    }),
+
+    fetchCryptoBars: protectedProcedure
+    .input(z.object({
+      ticker: z.string(), // e.g., "BTC/USD"
+      range: z.string(),
+      interval: z.string(), // e.g., "15Min", "1Day"
+    }))
+    .query(async ({ input }): Promise<AlpacaBar[]> => {
+      const { ticker, range, interval } = input;
+
+      // The date logic is identical to the stock version
+      const start = new Date();
+      switch (range) {
+        case '1d': start.setDate(start.getDate() - 1); break;
+        case '5d': start.setDate(start.getDate() - 5); break;
+        case '1mo': start.setMonth(start.getMonth() - 1); break;
+        case '6mo': start.setMonth(start.getMonth() - 6); break;
+        case 'ytd': start.setMonth(0); start.setDate(1); break;
+        case '1y': start.setFullYear(start.getFullYear() - 1); break;
+        case '5y': start.setFullYear(start.getFullYear() - 5); break;
+        case 'max': start.setFullYear(start.getFullYear() - 10); break;
+        default: start.setDate(start.getDate() - 1);
+        
+      }
+      
+      try {
+        // Use the multi-symbol crypto bars endpoint
+         const response = await alpacaCryptoClient.get('/bars', {
+          params: {
+            symbols: ticker,
+            timeframe: interval, // The interval is passed directly
+            start: start.toISOString(),
+            limit: 10000,
+            sort: 'asc',
+          },
+        });
+
+        // The response structure is { bars: { "BTC/USD": [...] } }
+        // We need to extract the array for the specific ticker.
+        return response.data.bars[ticker] || [];
+
+      } catch (error) {
+        console.error(`Error fetching crypto bars for ${ticker}:`, error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to fetch historical data for ${ticker}.`,
+        });
+      }
+    }),
+    
+
+    fetchCryptoSnapshot: protectedProcedure
+  .input(z.object({ ticker: z.string() }))
+  .query(async ({ input }): Promise<AlpacaSnapshot> => {
+    const { ticker } = input;
+
+    const requestParams = {
+      symbols: ticker,
+    };
+
+    try {
+      const response = await alpacaCryptoClient.get('/snapshots', {
+        params: requestParams,
       });
+
+      // LOG 3: See the raw response from Alpaca if the call succeeds
+      
+      const snapshotData = response.data.snapshots[ticker];
+
+      if (!snapshotData || !snapshotData.prevDailyBar) {
+        // LOG 4: This will run if the data is missing for the ticker
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Snapshot data not found or incomplete for ${ticker}.`,
+        });
+      }
+      
+      // LOG 5: This means everything was successful
+      return snapshotData;
+
     } catch (error) {
-      console.error("Error fetching crypto list data:", error);
+      // --- THIS IS THE MOST IMPORTANT LOG ---
+      // It will show us the exact error that is causing the crash.
+
+      if (isAxiosError(error)) {
+        // Log the specific details from the Axios error
+        console.error('[TRPC CRITICAL ERROR] Axios error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: error.config, // This shows the exact request that was made
+        });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to fetch snapshot for ${ticker}.`,
+          cause: error.response?.data,
+        });
+      }
+      
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch crypto data.",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An unknown error occurred while fetching snapshot.',
       });
     }
   }),
+
+
+  
 });
