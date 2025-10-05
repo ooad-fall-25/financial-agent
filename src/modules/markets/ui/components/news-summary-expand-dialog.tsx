@@ -7,9 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
-import { Loader } from "lucide-react";
+import { Loader, LoaderIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface Props {
@@ -17,14 +17,17 @@ interface Props {
     setIsOpen: (open: boolean) => void;
     content: string;
     newsId: string;
-    category: string;
+    type: string;
 }
 
-export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, newsId, category }: Props) => {
+export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, newsId, type }: Props) => {
     const router = useRouter();
     const languageSetting = useSettingsStore((state) => state.language);
     const [displayContent, setDisplayContent] = useState(content);
     const trpc = useTRPC();
+
+    const [isPending, startTransition] = useTransition()
+
 
     const translateMutation = useMutation(trpc.library.translate.mutationOptions({
         onError: (error) => {
@@ -52,8 +55,16 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, newsId, ca
                     <div className="w-full flex gap-x-4">
                         <Button
                             className="flex-1"
-                            onClick={() => router.push(`library/${newsId}?type=${category}`)}>
-                            View Detail
+                            onClick={() => {
+                                startTransition(() => {
+                                    router.push(`library/${newsId}?type=${type}`)
+                                })
+                            }}>
+                            {isPending ? (
+                                <LoaderIcon className="animate-spin"/>
+                            ) : (
+                                <span>View Detail</span>
+                            )}
                         </Button>
                     </div>
                 </div>

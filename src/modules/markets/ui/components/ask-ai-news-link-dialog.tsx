@@ -138,7 +138,7 @@ export const AskAINewsLinkDialog = ({
                         setIsOpen={setIsOpenExpandDialog}
                         content={content.aiRepsonse}
                         newsId={content.id}
-                        category={content.category.toLocaleLowerCase()}
+                        type="individual"
                     />
                 }
 

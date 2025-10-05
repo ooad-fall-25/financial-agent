@@ -220,7 +220,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             setIsOpen={setIsExpand}
                             content={summary?.aiRepsonse.toString() || ""}
                             newsId={summary.id}
-                            category={summary.category.toLowerCase()}
+                            type="category"
                         />
                     }
                     <Button
