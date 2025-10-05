@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { NewsDetail } from "../components/news-detail";
 import { LibraryDetailAction } from "../components/library-detail-action";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 
@@ -30,9 +30,10 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                 className="absolute top-0 left-0 right-0 z-20 bg-background border-b border-primary p-4"
                 role="banner"
             >
-                <Button asChild variant="ghost" className="hover:border">
+                <Button asChild variant="ghost">
                     <Link href={`/library?type=${type}`} className="flex items-center gap-2">
-                        <ArrowLeftIcon /> Library
+                        <ChevronLeftIcon className="size-6"/> 
+                        <span className="font-semibold text-xl">Library</span>
                     </Link>
                 </Button>
             </div>
