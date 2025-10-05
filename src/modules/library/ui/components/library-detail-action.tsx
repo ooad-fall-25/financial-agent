@@ -14,7 +14,7 @@ import { useDownload } from "@/hooks/use-download"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { DownloadIcon, EditIcon, FileDownIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
 
@@ -24,6 +24,9 @@ interface Props {
 }
 
 export const LibraryDetailAction = ({ newsId, content }: Props) => {
+    const searchParams = useSearchParams();
+    const type = searchParams.get("type") ?? "category";
+
     const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
 
     const [isPending, startTransition] = useTransition()
@@ -37,7 +40,7 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
             } else {
                 queryClient.invalidateQueries(trpc.library.getAllSummaryByIndividualLink.queryOptions());
             }
-            router.push("/library");
+            router.push(`/library?type=${type}`);
             toast.success("News deleted", {
                 description: `Headline: ${data.headline}`,
             })
@@ -80,7 +83,7 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                             className="h-6 w-8  "
                             onClick={() => {
                                 startTransition(() => {
-                                    router.push(`/library/${newsId}/edit`)
+                                    router.push(`/library/${newsId}/edit?type=${type}`)
                                 })
                             }}
                         >

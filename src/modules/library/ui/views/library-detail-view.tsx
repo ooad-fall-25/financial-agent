@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { NewsDetail } from "../components/news-detail";
 import { LibraryDetailAction } from "../components/library-detail-action";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 
 
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export const LibraryDetailView = ({ newsId }: Props) => {
+    const searchParams = useSearchParams();
+    const type = searchParams.get("type") ?? "category";
 
     const trpc = useTRPC();
     const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ newsId: newsId }))
@@ -27,9 +30,10 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                 className="absolute top-0 left-0 right-0 z-20 bg-background border-b border-primary p-4"
                 role="banner"
             >
-                <Button asChild variant="ghost" className="hover:border">
-                    <Link href={`/library`} className="flex items-center gap-2">
-                        <ArrowLeftIcon /> Library
+                <Button asChild variant="ghost">
+                    <Link href={`/library?type=${type}`} className="flex items-center gap-2">
+                        <ChevronLeftIcon className="size-6"/> 
+                        <span className="font-semibold text-xl">Library</span>
                     </Link>
                 </Button>
             </div>

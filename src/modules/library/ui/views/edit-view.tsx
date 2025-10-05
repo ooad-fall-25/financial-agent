@@ -13,14 +13,17 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 import { EditAction } from "../components/edit-action";
 import ShimmerText from "@/components/kokonutui/shimmer-text";
 import { ShimmeringText } from "@/components/ui/shadcn-io/shimmering-text";
+import { useSearchParams } from "next/navigation";
 // import "@/modules/library/lib/style.css"
 
 
 export const EditView = ({ newsId }: { newsId: string }) => {
+  const searchParams = useSearchParams();
+  const type = searchParams.get("type") ?? "category";
   const { resolvedTheme } = useTheme();
 
   const trpc = useTRPC();
@@ -66,8 +69,9 @@ export const EditView = ({ newsId }: { newsId: string }) => {
         role="banner"
       >
         <Button asChild variant="ghost" className="hover:border">
-          <Link href={`/library/${newsId}`} className="flex items-center gap-2">
-            <ArrowLeftIcon /> Back
+          <Link href={`/library/${newsId}?type=${type}`} className="flex items-center gap-2">
+            <ChevronLeftIcon className="size-6" />
+            <span className="font-semibold text-xl">Back</span>
           </Link>
         </Button>
       </div>
@@ -84,7 +88,7 @@ export const EditView = ({ newsId }: { newsId: string }) => {
                   <ShimmeringText
                     text="Editable text"
                     duration={1.5}
-                    // shimmeringColor="hsl(var(--primary))"
+                  // shimmeringColor="hsl(var(--primary))"
                   />
                 </div>
 

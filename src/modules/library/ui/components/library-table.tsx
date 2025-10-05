@@ -19,9 +19,9 @@ export const LibraryTable = ({ selectedTab }: Props) => {
     const { data: newsByIndividual, isLoading: isIndividualLoading } = useQuery(trpc.library.getAllSummaryByIndividualLink.queryOptions());
 
     if (selectedTab === "category") {
-        return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} />
+        return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} type={selectedTab} />
     } else if (selectedTab === "individual") {
-        return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} />
+        return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} type={selectedTab} />
     } else {
         return;
     }
@@ -30,10 +30,12 @@ export const LibraryTable = ({ selectedTab }: Props) => {
 interface TableProps {
     data: NewsSummary[];
     isLoading: boolean;
+    type: string; 
 }
 
-const SummaryByTable = ({ data, isLoading }: TableProps) => {
+const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
     const router = useRouter();
+
     const [searchValue, setSearchValue] = useState("");
     const [filteredNews, setFilteredNews] = useState<NewsSummary[]>([]);
 
@@ -94,7 +96,7 @@ const SummaryByTable = ({ data, isLoading }: TableProps) => {
                             <div className="flex-1 overflow-y-auto">
                                 <div className="divide-y divide-border text-xs font-normal border-b border-border">
                                     {filteredNews.map((item) => (
-                                        <div key={item.id} onClick={() => router.push(`/library/${item.id}`)} className="grid grid-cols-16 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
+                                        <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-16 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
                                             <div className="col-span-10">
                                                 <div className="font-medium leading-tight truncate">
                                                     <p>{item.headline}</p>
