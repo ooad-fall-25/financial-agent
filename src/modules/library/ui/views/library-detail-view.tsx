@@ -7,6 +7,7 @@ import { NewsDetail } from "../components/news-detail";
 import { LibraryDetailAction } from "../components/library-detail-action";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 
 
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export const LibraryDetailView = ({ newsId }: Props) => {
+    const searchParams = useSearchParams();
+    const type = searchParams.get("type") ?? "category";
 
     const trpc = useTRPC();
     const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ newsId: newsId }))
@@ -28,7 +31,7 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                 role="banner"
             >
                 <Button asChild variant="ghost" className="hover:border">
-                    <Link href={`/library`} className="flex items-center gap-2">
+                    <Link href={`/library?type=${type}`} className="flex items-center gap-2">
                         <ArrowLeftIcon /> Library
                     </Link>
                 </Button>
