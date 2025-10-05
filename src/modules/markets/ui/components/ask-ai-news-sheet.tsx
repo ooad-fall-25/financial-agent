@@ -17,18 +17,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ExpandIcon, FileText, Loader } from "lucide-react";
+import { ExpandIcon, FileText, Loader, LoaderIcon } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { cn } from "@/lib/utils";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
 import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
+import { useRouter } from "next/navigation";
 
 interface Props {
     isOpen: boolean;
@@ -58,6 +59,10 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [category, setCategory] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
+
+    const [isPending, startTransition] = useTransition();
+
+    const router = useRouter();
 
     // TODO: consider simplifying: use setIsOpen directly with Sheet, no need to reset the state 
     const handleOpenChange = (open: boolean) => {
@@ -204,11 +209,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             }
                         </div>
                     </div>
-
-                )
-
-
-                }
+                )}
 
 
 
@@ -223,22 +224,40 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             type="category"
                         />
                     }
-                    <Button
-                        disabled={isButtonDisabled}
-                        onClick={handleAskAI}
-                    >
-                        {newsMutation.isPending ? (
-                            <div className="flex items-center justify-center my-auto gap-x-2 text-muted-foreground">
-                                <Loader className="h-4 w-4 animate-spin" />
-                                <span className="text-sm">Please wait, this may take a moment...</span>
-                            </div>
-                        ) : (
-                            <span>Generate Summary</span>
-                        )}
-                    </Button>
+                    <div className="flex justify-between gap-x-4">
+                        <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                                startTransition(() => router.push(`library?type=category`))
+                            }}
+                        >
+                            {isPending ? (
+                                <LoaderIcon className="animate-spin" />
+                            ) : (
+                                <span>View all</span>
+                            )}
+                        </Button>
+                        <Button
+                            disabled={isButtonDisabled}
+                            onClick={() => {
+                                toast.info("Please wait, this may take a moment...")
+                                handleAskAI();
+                            }}
+                            className="flex-1"
+                        >
+                            {newsMutation.isPending ? (
+                                <div className="items-center">
+                                    <Loader className="h-4 w-4 animate-spin" />
+                                </div>
+                            ) : (
+                                <span>Generate Summary</span>
+                            )}
+                        </Button>
+                    </div>
                 </SheetFooter>
 
             </SheetContent>
-        </Sheet>
+        </Sheet >
     )
 }

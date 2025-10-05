@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/select"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog"
-import { EyeIcon, Loader } from "lucide-react"
+import { EyeIcon, Loader, LoaderIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface Props {
     isOpen: boolean;
@@ -47,6 +48,8 @@ export const AskAINewsLinkDialog = ({
 }: Props) => {
     const [language, setLanguage] = useState<string | null>(null);
     const [isOpenExpandDialog, setIsOpenExpandDialog] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    const router = useRouter();
 
     const queryClient = useQueryClient();
     const trpc = useTRPC();
@@ -143,22 +146,40 @@ export const AskAINewsLinkDialog = ({
                 }
 
                 <DialogFooter >
-                    <Button
-                        onClick={handleNewsSubmit}
-                        disabled={isButtonDisabled}
-                        className="w-full"
-                    >
-                        <>
-                            {newsByLink.isPending ? (
-                                <div className="flex items-center justify-center my-auto gap-x-2 text-muted-foreground">
-                                    <Loader className="h-4 w-4 animate-spin" />
-                                    <span className="text-sm">Please wait, this may take a moment...</span>
-                                </div>
+                    <div className="flex w-full justify-between gap-x-4">
+
+                        <Button 
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                                startTransition(() => router.push(`library?type=individual`))
+                            }}
+                        >
+                            {isPending ? (
+                                <LoaderIcon className="animate-spin"/>
                             ) : (
-                                <span>Generate</span>
+                                <span>View All</span>
                             )}
-                        </>
-                    </Button>
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                toast.info("Please wait, this may take a moment...")
+                                handleNewsSubmit();
+                            }}
+                            disabled={isButtonDisabled}
+                            className="flex-1"
+                        >
+                            <>
+                                {newsByLink.isPending ? (
+                                    <div className="items-center">
+                                        <Loader className="h-4 w-4 animate-spin" />
+                                    </div>
+                                ) : (
+                                    <span>Generate</span>
+                                )}
+                            </>
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
