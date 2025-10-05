@@ -44,7 +44,7 @@ const providers = [
     {
         name: "Polygon",
         category: ["Stock"],
-    }, 
+    },
     {
         name: "Alpaca",
         category: ["Stock"],
@@ -184,7 +184,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                 {summary ? (
                     <div className="flex flex-col flex-1 min-h-0 relative ">
                         <div className="absolute top-0 -left-0 -right-0 h-6 bg-gradient-to-b from-transparent to-background pointer-events-none " />
-                        
+
                         <ScrollArea className="h-full w-full px-12 overflow-auto mx-auto text-sm" >
                             <AIResponse>{summary.aiRepsonse.toString()}</AIResponse>
                         </ScrollArea>
@@ -215,7 +215,13 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
                 <SheetFooter className="border-t border-dashed">
                     {summary &&
-                        <NewsSummaryExpandDialog isOpen={isExpand} setIsOpen={setIsExpand} content={summary?.aiRepsonse.toString() || ""} />
+                        <NewsSummaryExpandDialog
+                            isOpen={isExpand}
+                            setIsOpen={setIsExpand}
+                            content={summary?.aiRepsonse.toString() || ""}
+                            newsId={summary.id}
+                            category={summary.category.toLowerCase()}
+                        />
                     }
                     <Button
                         disabled={isButtonDisabled}

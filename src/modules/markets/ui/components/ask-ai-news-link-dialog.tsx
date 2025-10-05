@@ -69,7 +69,7 @@ export const AskAINewsLinkDialog = ({
             language: language || "",
             providerName: providerName || "",
             category: category || "",
-            title: headline || "", 
+            title: headline || "",
         })
     }
 
@@ -136,7 +136,10 @@ export const AskAINewsLinkDialog = ({
                     <NewsSummaryExpandDialog
                         isOpen={isOpenExpandDialog}
                         setIsOpen={setIsOpenExpandDialog}
-                        content={content.aiRepsonse} />
+                        content={content.aiRepsonse}
+                        newsId={content.id}
+                        category={content.category.toLocaleLowerCase()}
+                    />
                 }
 
                 <DialogFooter >
