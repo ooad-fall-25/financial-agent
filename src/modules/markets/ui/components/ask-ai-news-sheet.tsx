@@ -42,15 +42,15 @@ interface Props {
 const providers = [
     {
         name: "Finnhub",
-        category: ["General", "Forex", "Crypto", "Merger"],
+        category: ["General", "Crypto", "Merger", "Company"],
     },
     {
         name: "Polygon",
-        category: ["Stock"],
+        category: ["Stock", "Company"],
     },
     {
         name: "Alpaca",
-        category: ["Stock"],
+        category: ["Stock", "Company"],
     }
 ]
 
