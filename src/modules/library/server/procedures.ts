@@ -37,14 +37,14 @@ export const libraryRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(
       z.object({
-        newsId: z.string(),
+        summaryId: z.string(),
       })
     )
     .query(async ({ input, ctx }) => {
       const data = await prisma.newsSummary.findUnique({
         where: {
           userId: ctx.auth.userId,
-          id: input.newsId,
+          id: input.summaryId,
         },
       });
       if (!data) {
@@ -56,14 +56,14 @@ export const libraryRouter = createTRPCRouter({
   deleteOne: protectedProcedure
     .input(
       z.object({
-        newsId: z.string(),
+        summaryId: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const data = await prisma.newsSummary.delete({
         where: {
           userId: ctx.auth.userId,
-          id: input.newsId,
+          id: input.summaryId,
         },
       });
       if (!data) {
@@ -76,13 +76,13 @@ export const libraryRouter = createTRPCRouter({
     .input(
       z.object({
         text: z.string(),
-        newsId: z.string(),
+        summaryId: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const updatedSummary = await prisma.newsSummary.update({
         where: {
-          id: input.newsId,
+          id: input.summaryId,
           userId: ctx.auth.userId,
         },
         data: {
@@ -107,7 +107,7 @@ export const libraryRouter = createTRPCRouter({
       const pdfBuffer = await markdownToPDF(input.markdown);
       return Buffer.from(pdfBuffer).toString("base64");
     }),
-    
+
   translate: protectedProcedure
     .input(
       z.object({

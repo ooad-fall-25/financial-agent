@@ -12,15 +12,15 @@ import { useSearchParams } from "next/navigation";
 
 
 interface Props {
-    newsId: string;
+    summaryId: string;
 }
 
-export const LibraryDetailView = ({ newsId }: Props) => {
+export const LibraryDetailView = ({ summaryId }: Props) => {
     const searchParams = useSearchParams();
     const type = searchParams.get("type") ?? "category";
 
     const trpc = useTRPC();
-    const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ newsId: newsId }))
+    const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ summaryId: summaryId }))
 
 
     return (
@@ -32,7 +32,7 @@ export const LibraryDetailView = ({ newsId }: Props) => {
             >
                 <Button asChild variant="ghost">
                     <Link href={`/library?type=${type}`} className="flex items-center gap-2">
-                        <ChevronLeftIcon className="size-6"/> 
+                        <ChevronLeftIcon className="size-6" />
                         <span className="font-semibold text-xl">Library</span>
                     </Link>
                 </Button>
@@ -63,7 +63,7 @@ export const LibraryDetailView = ({ newsId }: Props) => {
                                     <NewsDetail news={news} />
                                 </div>
                                 <div>
-                                    <LibraryDetailAction newsId={news.id} content={news.aiRepsonse} />
+                                    <LibraryDetailAction summaryId={news.id} content={news.aiRepsonse} />
                                 </div>
                             </div>
                         </div>

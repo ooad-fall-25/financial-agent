@@ -21,20 +21,20 @@ import { useSearchParams } from "next/navigation";
 // import "@/modules/library/lib/style.css"
 
 
-export const EditView = ({ newsId }: { newsId: string }) => {
+export const EditView = ({ summaryId }: { summaryId: string }) => {
   const searchParams = useSearchParams();
   const type = searchParams.get("type") ?? "category";
   const { resolvedTheme } = useTheme();
 
   const trpc = useTRPC();
-  const { data: news } = useQuery(trpc.library.getOne.queryOptions({ newsId: newsId }));
+  const { data: news } = useQuery(trpc.library.getOne.queryOptions({ summaryId: summaryId }));
 
   const editor = useCreateBlockNote();
 
   const [saveMarkdown, setSaveMarkdown] = useState("");
 
   useEffect(() => {
-    const sessionContent = sessionStorage.getItem(`edit-${newsId}`);
+    const sessionContent = sessionStorage.getItem(`edit-${summaryId}`);
     if (sessionContent) {
       setSaveMarkdown(sessionContent);
     } else if (news?.aiRepsonse) {
@@ -42,11 +42,11 @@ export const EditView = ({ newsId }: { newsId: string }) => {
     } else {
       return;
     }
-  }, [news, newsId])
+  }, [news, summaryId])
 
   useEffect(() => {
     async function loadContent() {
-      const sessionContent = sessionStorage.getItem(`edit-${newsId}`);
+      const sessionContent = sessionStorage.getItem(`edit-${summaryId}`);
       const contentToLoad = sessionContent || news?.aiRepsonse;
       if (contentToLoad) {
         const blocks = await editor.tryParseMarkdownToBlocks(contentToLoad);
@@ -54,12 +54,12 @@ export const EditView = ({ newsId }: { newsId: string }) => {
       }
     }
     loadContent();
-  }, [news, editor, newsId]);
+  }, [news, editor, summaryId]);
 
   const onChange = async () => {
     const markdown = await editor.blocksToMarkdownLossy(editor.document);
     setSaveMarkdown(markdown);
-    sessionStorage.setItem(`edit-${newsId}`, markdown);
+    sessionStorage.setItem(`edit-${summaryId}`, markdown);
   }
 
   return (
@@ -69,7 +69,7 @@ export const EditView = ({ newsId }: { newsId: string }) => {
         role="banner"
       >
         <Button asChild variant="ghost" className="hover:border">
-          <Link href={`/library/${newsId}?type=${type}`} className="flex items-center gap-2">
+          <Link href={`/library/${summaryId}?type=${type}`} className="flex items-center gap-2">
             <ChevronLeftIcon className="size-6" />
             <span className="font-semibold text-xl">Back</span>
           </Link>
@@ -106,7 +106,7 @@ export const EditView = ({ newsId }: { newsId: string }) => {
 
           <div className="col-span-3 flex flex-col min-h-0">
             <div className="flex-1 min-h-0 overflow-y-auto py-8 px-4">
-              <EditAction newsId={newsId} savedMarkdown={saveMarkdown} editor={editor} />
+              <EditAction summaryId={summaryId} savedMarkdown={saveMarkdown} editor={editor} />
             </div>
           </div>
 

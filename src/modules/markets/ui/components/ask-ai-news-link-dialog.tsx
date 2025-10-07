@@ -140,7 +140,7 @@ export const AskAINewsLinkDialog = ({
                         isOpen={isOpenExpandDialog}
                         setIsOpen={setIsOpenExpandDialog}
                         content={content.aiRepsonse}
-                        newsId={content.id}
+                        summaryId={content.id}
                         type="individual"
                     />
                 }
@@ -148,7 +148,7 @@ export const AskAINewsLinkDialog = ({
                 <DialogFooter >
                     <div className="flex w-full justify-between gap-x-4">
 
-                        <Button 
+                        <Button
                             variant="outline"
                             className="flex-1"
                             onClick={() => {
@@ -156,7 +156,7 @@ export const AskAINewsLinkDialog = ({
                             }}
                         >
                             {isPending ? (
-                                <LoaderIcon className="animate-spin"/>
+                                <LoaderIcon className="animate-spin" />
                             ) : (
                                 <span>View All</span>
                             )}

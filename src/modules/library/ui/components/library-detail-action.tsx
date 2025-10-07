@@ -19,11 +19,11 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 
 interface Props {
-    newsId: string;
+    summaryId: string;
     content: string;
 }
 
-export const LibraryDetailAction = ({ newsId, content }: Props) => {
+export const LibraryDetailAction = ({ summaryId, content }: Props) => {
     const searchParams = useSearchParams();
     const type = searchParams.get("type") ?? "category";
 
@@ -52,9 +52,9 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
         }
     }));
 
-    const handleDelete = async (newsId: string) => {
+    const handleDelete = async (summaryId: string) => {
         const deletedData = await mutation.mutateAsync({
-            newsId: newsId,
+            summaryId: summaryId,
         })
     }
 
@@ -83,7 +83,7 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                             className="h-6 w-8  "
                             onClick={() => {
                                 startTransition(() => {
-                                    router.push(`/library/${newsId}/edit?type=${type}`)
+                                    router.push(`/library/${summaryId}/edit?type=${type}`)
                                 })
                             }}
                         >
@@ -151,7 +151,7 @@ export const LibraryDetailAction = ({ newsId, content }: Props) => {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(newsId)} className="bg-red-400 hover:bg-red-600 text-foreground">Yes</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(summaryId)} className="bg-red-400 hover:bg-red-600 text-foreground">Yes</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>

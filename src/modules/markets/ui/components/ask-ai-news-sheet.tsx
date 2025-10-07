@@ -192,7 +192,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             <Textarea
                                 placeholder="Type your message here."
                                 className="!bg-secondary focus-visible:ring-0 focus-visible:ring-offset-0 "
-                                value={customQueryText || ""}      
+                                value={customQueryText || ""}
                                 onChange={handleCustomQueryChange}
                             />
                         }
@@ -252,7 +252,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             isOpen={isExpand}
                             setIsOpen={setIsExpand}
                             content={summary?.aiRepsonse.toString() || ""}
-                            newsId={summary.id}
+                            summaryId={summary.id}
                             type="category"
                         />
                     }
