@@ -104,7 +104,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
-            <SheetContent className="flex flex-col">
+            <SheetContent className="flex flex-col md:max-w-2xl lg:max-w-3xl">
                 <SheetHeader>
                     <SheetTitle>News Reporter</SheetTitle>
                     <SheetDescription>
@@ -112,12 +112,11 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className="px-4 pb-8 gap-y-4 flex flex-col border-b border-dashed">
+                <div className="px-4 pb-8 gap-y-4 flex justify-between border-b border-dashed">
                     <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
                         <div className="flex justify-between">
-                            <Label>Provider</Label>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a provider" />
+                            <SelectTrigger className="w-[150px]">
+                                <SelectValue placeholder="Provider" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
@@ -132,9 +131,8 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
                     <Select value={language || ""} onValueChange={(value) => setLanguage(value)}>
                         <div className="flex justify-between">
-                            <Label>Language</Label>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a language" />
+                            <SelectTrigger className="w-[150px]">
+                                <SelectValue placeholder="Language" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
@@ -147,18 +145,17 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </div>
                     </Select>
 
-                    {providerName &&
+                    
                         <div className="gap-y-4 flex flex-col">
-                            <Select value={category || ""} onValueChange={(value) => setCategory(value)}>
+                            <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!providerName || providerName?.length === 0)}>
                                 <div className="flex justify-between">
-                                    <Label>Category</Label>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Select a category" />
+                                    <SelectTrigger className="w-[150px]" >
+                                        <SelectValue placeholder="Category" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
                                             <SelectLabel>Category</SelectLabel>
-                                            {providers.find((e) => e.name.toLowerCase() == providerName.toLowerCase())?.category.map((item) => (
+                                            {providers.find((e) => e.name.toLowerCase() == providerName?.toLowerCase())?.category.map((item) => (
                                                 <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
                                             ))}
                                         </SelectGroup>
@@ -167,7 +164,6 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             </Select>
 
                         </div>
-                    }
                 </div>
 
                 {isLoading && (<Loader className="mx-auto animate-spin" />)}
