@@ -5,22 +5,22 @@ import { Suspense } from "react";
 
 interface Props {
     params: Promise<{
-        newsId: string;
+        summaryId: string;
     }>
 }
 const Page = async ({ params }: Props) => {
-    const { newsId } = await params;
+    const { summaryId } = await params;
 
     const queryClient = getQueryClient();
     void queryClient.prefetchQuery(trpc.library.getOne.queryOptions({
-        newsId: newsId
+        summaryId: summaryId
     }))
 
     return (
 
         <HydrationBoundary state={dehydrate(queryClient)}>
             <Suspense fallback={<p>Loading ... </p>}>
-                <LibraryDetailView newsId={newsId} />
+                <LibraryDetailView summaryId={summaryId} />
             </Suspense>
         </HydrationBoundary>
     )

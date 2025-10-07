@@ -16,11 +16,11 @@ interface Props {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
     content: string;
-    newsId: string;
+    summaryId: string;
     type: string;
 }
 
-export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, newsId, type }: Props) => {
+export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, summaryId, type }: Props) => {
     const router = useRouter();
     const languageSetting = useSettingsStore((state) => state.language);
     const [displayContent, setDisplayContent] = useState(content);
@@ -57,11 +57,11 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, newsId, ty
                             className="flex-1"
                             onClick={() => {
                                 startTransition(() => {
-                                    router.push(`library/${newsId}?type=${type}`)
+                                    router.push(`library/${summaryId}?type=${type}`)
                                 })
                             }}>
                             {isPending ? (
-                                <LoaderIcon className="animate-spin"/>
+                                <LoaderIcon className="animate-spin" />
                             ) : (
                                 <span>View Detail</span>
                             )}

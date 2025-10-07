@@ -7,12 +7,12 @@ import { DownloadIcon, FileDownIcon, LoaderIcon, RefreshCcwIcon, SaveAllIcon, Wr
 import { toast } from "sonner";
 
 interface Props {
-    newsId: string;
+    summaryId: string;
     savedMarkdown: string;
     editor: BlockNoteEditor;
 }
 
-export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
+export const EditAction = ({ summaryId, savedMarkdown, editor }: Props) => {
 
     const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
 
@@ -20,7 +20,7 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
     const queryClient = useQueryClient();
     const saveMutation = useMutation(trpc.library.updateSummaryText.mutationOptions({
         onSuccess: () => {
-            queryClient.invalidateQueries(trpc.library.getOne.queryOptions({ newsId }));
+            queryClient.invalidateQueries(trpc.library.getOne.queryOptions({ summaryId }));
             toast.success("Summary is successfully saved");
         },
         onError: (error) => {
@@ -28,17 +28,17 @@ export const EditAction = ({ newsId, savedMarkdown, editor }: Props) => {
         }
     }));
 
-    const news = useQuery(trpc.library.getOne.queryOptions({ newsId }));
+    const news = useQuery(trpc.library.getOne.queryOptions({ summaryId }));
 
     const handleSave = async () => {
         await saveMutation.mutateAsync({
-            newsId: newsId,
+            summaryId: summaryId,
             text: savedMarkdown,
         })
     }
 
     const handleLoadSave = async () => {
-        sessionStorage.removeItem(`edit-${newsId}`);
+        sessionStorage.removeItem(`edit-${summaryId}`);
         news.refetch();
         const block = await editor.tryParseMarkdownToBlocks(news.data?.aiRepsonse.toString() || "");
         editor.replaceBlocks(editor.document, block);

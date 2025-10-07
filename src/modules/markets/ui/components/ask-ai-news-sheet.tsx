@@ -17,7 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { useState, useTransition } from "react";
+import { ChangeEventHandler, useState, useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
 import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
     isOpen: boolean;
@@ -40,15 +42,15 @@ interface Props {
 const providers = [
     {
         name: "Finnhub",
-        category: ["General", "Forex", "Crypto", "Merger"],
+        category: ["General", "Crypto", "Merger", "Company"],
     },
     {
         name: "Polygon",
-        category: ["Stock"],
+        category: ["Stock", "Company"],
     },
     {
         name: "Alpaca",
-        category: ["Stock"],
+        category: ["Stock", "Company"],
     }
 ]
 
@@ -59,6 +61,8 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [category, setCategory] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
+    const [customQueryText, setCustomQueryText] = useState<string | null>(null);
+    const [isEnableCustomQuery, setIsEnableCustomQuery] = useState(false);
 
     const [isPending, startTransition] = useTransition();
 
@@ -94,17 +98,24 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
         })
     }
 
+    const handleCustomQueryChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
+        setCustomQueryText(e.target.value);
+        console.log(e.target.value)
+    };
+
     const resetStates = () => {
         setProviderName(null);
         setCategory(null);
         setLanguage(null);
+        setCustomQueryText(null);
+        setIsEnableCustomQuery(false);
     }
 
-    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language;
+    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language || !(!isEnableCustomQuery || customQueryText);
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
-            <SheetContent className="flex flex-col">
+            <SheetContent className="flex flex-col md:max-w-2xl lg:max-w-3xl">
                 <SheetHeader>
                     <SheetTitle>News Reporter</SheetTitle>
                     <SheetDescription>
@@ -112,63 +123,84 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className="px-4 pb-8 gap-y-4 flex flex-col border-b border-dashed">
-                    <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
-                        <div className="flex justify-between">
-                            <Label>Provider</Label>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a provider" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Providers</SelectLabel>
-                                    {providers.map((item) => (
-                                        <SelectItem key={item.name} value={item.name.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </div>
-                    </Select>
+                <div className="flex flex-col gap-y-4">
+                    <div className="px-4 gap-y-4 flex justify-between">
+                        <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
+                            <div className="flex justify-between">
+                                <SelectTrigger className="w-[150px]">
+                                    <SelectValue placeholder="Provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Providers</SelectLabel>
+                                        {providers.map((item) => (
+                                            <SelectItem key={item.name} value={item.name.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </div>
+                        </Select>
 
-                    <Select value={language || ""} onValueChange={(value) => setLanguage(value)}>
-                        <div className="flex justify-between">
-                            <Label>Language</Label>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a language" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Language</SelectLabel>
-                                    {languages.map((item) => (
-                                        <SelectItem key={item} value={item} className="cursor-pointer">{item}</SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </div>
-                    </Select>
+                        <Select value={language || ""} onValueChange={(value) => setLanguage(value)}>
+                            <div className="flex justify-between">
+                                <SelectTrigger className="w-[150px]">
+                                    <SelectValue placeholder="Language" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Language</SelectLabel>
+                                        {languages.map((item) => (
+                                            <SelectItem key={item} value={item} className="cursor-pointer">{item}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </div>
+                        </Select>
 
-                    {providerName &&
-                        <div className="gap-y-4 flex flex-col">
-                            <Select value={category || ""} onValueChange={(value) => setCategory(value)}>
-                                <div className="flex justify-between">
-                                    <Label>Category</Label>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Category</SelectLabel>
-                                            {providers.find((e) => e.name.toLowerCase() == providerName.toLowerCase())?.category.map((item) => (
-                                                <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </div>
-                            </Select>
 
+                        <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!providerName || providerName?.length === 0)}>
+                            <div className="flex justify-between">
+                                <SelectTrigger className="w-[150px]" >
+                                    <SelectValue placeholder="Category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Category</SelectLabel>
+                                        {providers.find((e) => e.name.toLowerCase() == providerName?.toLowerCase())?.category.map((item) => (
+                                            <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </div>
+                        </Select>
+
+
+                        <div className="flex gap-x-4 items-center">
+                            <Switch
+                                id="custom-query"
+                                checked={isEnableCustomQuery}
+                                onCheckedChange={setIsEnableCustomQuery}
+                            />
+                            <Label htmlFor="custom-query" className="cursor-pointer">
+                                Add custom query
+                            </Label>
                         </div>
-                    }
+                    </div>
+
+                    <div className="px-4 pb-8 gap-y-4 flex justify-between">
+                        {isEnableCustomQuery &&
+                            <Textarea
+                                placeholder="Type your message here."
+                                className="!bg-secondary focus-visible:ring-0 focus-visible:ring-offset-0 "
+                                value={customQueryText || ""}
+                                onChange={handleCustomQueryChange}
+                            />
+                        }
+                    </div>
+
                 </div>
+
+
 
                 {isLoading && (<Loader className="mx-auto animate-spin" />)}
                 {summary && (
@@ -220,7 +252,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             isOpen={isExpand}
                             setIsOpen={setIsExpand}
                             content={summary?.aiRepsonse.toString() || ""}
-                            newsId={summary.id}
+                            summaryId={summary.id}
                             type="category"
                         />
                     }
