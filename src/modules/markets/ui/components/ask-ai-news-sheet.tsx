@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
 import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 interface Props {
     isOpen: boolean;
@@ -59,6 +60,8 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [category, setCategory] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
+    const [customQueryText, setCustomQueryText] = useState<string | null>(null);
+    const [isEnableCustomQuery, setIsEnableCustomQuery] = useState(false);
 
     const [isPending, startTransition] = useTransition();
 
@@ -98,6 +101,8 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
         setProviderName(null);
         setCategory(null);
         setLanguage(null);
+        setCustomQueryText(null);
+        setIsEnableCustomQuery(false);
     }
 
     const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language;
@@ -145,25 +150,36 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </div>
                     </Select>
 
-                    
-                        <div className="gap-y-4 flex flex-col">
-                            <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!providerName || providerName?.length === 0)}>
-                                <div className="flex justify-between">
-                                    <SelectTrigger className="w-[150px]" >
-                                        <SelectValue placeholder="Category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Category</SelectLabel>
-                                            {providers.find((e) => e.name.toLowerCase() == providerName?.toLowerCase())?.category.map((item) => (
-                                                <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </div>
-                            </Select>
 
+                    <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!providerName || providerName?.length === 0)}>
+                        <div className="flex justify-between">
+                            <SelectTrigger className="w-[150px]" >
+                                <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Category</SelectLabel>
+                                    {providers.find((e) => e.name.toLowerCase() == providerName?.toLowerCase())?.category.map((item) => (
+                                        <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
                         </div>
+                    </Select>
+
+
+                    <div className="flex gap-x-4 items-center">
+                        <Switch
+                            id="custom-query"
+                            checked={isEnableCustomQuery}
+                            onCheckedChange={setIsEnableCustomQuery}
+                        />
+                        <Label htmlFor="custom-query" className="cursor-pointer">
+                            Add custom query
+                        </Label>
+                    </div>
+
+
                 </div>
 
                 {isLoading && (<Loader className="mx-auto animate-spin" />)}
