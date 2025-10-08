@@ -12,7 +12,7 @@ export type MarketNews = {
   imageUrl?: string;
   related?: string;
   source?: string;
-  datetime?: number;
+  datetime?: number | string;
 };
 
 export const getFinnhubClient = () => {
@@ -71,33 +71,21 @@ export const getMarketNews = async (
       datetime: item.datetime,
     }));
   } else if (category === "stock") {
-    const marketNews = await rest.listNews(
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      limit
-    );
-    if (!marketNews.results) {
+
+    const marketNews = await alpaca.getNews({}); 
+    if (!marketNews) {
         return [] as MarketNews[]
     }
-    return marketNews.results.map((item) => ({
-      id: item.id?.toString(),
-      headline: item.title,
-      summary: item.description,
+    return marketNews.map((item) => ({
+      id: item.ID?.toString(),
+      headline: item.Headline,
+      summary: item.Content,
       category: "stock",
-      url: item.article_url,
-      imageUrl: item.image_url,
-      related: item.tickers.join(" "), // tickers is arr, convert to string separate by space
-      source: item.publisher.name,
-      datetime: undefined,
+      url: item.URL,
+      imageUrl: item.Images[0].URL,
+      related: item.Symbols.join(" "), // tickers is arr, convert to string separate by space
+      source: item.Source,
+      datetime: item.UpdatedAt,
     }));
   }
 
