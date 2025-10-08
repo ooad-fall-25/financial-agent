@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import { ExpandIcon, FileText, Loader, LoaderIcon } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
-import { cn } from "@/lib/utils";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
 import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
 import { useRouter } from "next/navigation";
@@ -39,25 +38,23 @@ interface Props {
 }
 
 // TODO:consider putting these in db
-const providers = [
+const markets = [
     {
-        name: "Finnhub",
-        category: ["General", "Crypto", "Merger", "Company"],
+        name: "US News",
+        type: "us",
+        category: ["General", "Stock", "Crypto", "Merger", "Company"],
     },
     {
-        name: "Polygon",
-        category: ["Stock", "Company"],
+        name: "Chinese News",
+        type: "cn",
+        category: ["Finance", "Business"],
     },
-    {
-        name: "Alpaca",
-        category: ["Stock", "Company"],
-    }
 ]
 
 const languages = ["English", "Chinese"]
 
 export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
-    const [providerName, setProviderName] = useState<string | null>(null);
+    const [marketType, setMarketType] = useState<string | null>(null);
     const [category, setCategory] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
@@ -93,7 +90,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const handleAskAI = () => {
         newsMutation.mutate({
             language: language || "",
-            providerName: providerName?.toLowerCase() || "",
+            providerName: marketType?.toLowerCase() || "",
             category: category?.toLowerCase() || "",
         })
     }
@@ -104,14 +101,14 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     };
 
     const resetStates = () => {
-        setProviderName(null);
+        setMarketType(null);
         setCategory(null);
         setLanguage(null);
         setCustomQueryText(null);
         setIsEnableCustomQuery(false);
     }
 
-    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language || !(!isEnableCustomQuery || customQueryText);
+    const isButtonDisabled = newsMutation.isPending || !marketType || !category || !language || !(!isEnableCustomQuery || customQueryText);
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -125,16 +122,16 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
                 <div className="flex flex-col gap-y-4">
                     <div className="px-4 gap-y-4 flex justify-between">
-                        <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
+                        <Select value={marketType || ""} onValueChange={(value) => setMarketType(value)}>
                             <div className="flex justify-between">
                                 <SelectTrigger className="w-[150px]">
-                                    <SelectValue placeholder="Provider" />
+                                    <SelectValue placeholder="Market" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectLabel>Providers</SelectLabel>
-                                        {providers.map((item) => (
-                                            <SelectItem key={item.name} value={item.name.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
+                                        <SelectLabel>Markets</SelectLabel>
+                                        {markets.map((item) => (
+                                            <SelectItem key={item.type} value={item.type.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
                                         ))}
                                     </SelectGroup>
                                 </SelectContent>
@@ -158,7 +155,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </Select>
 
 
-                        <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!providerName || providerName?.length === 0)}>
+                        <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!marketType || marketType?.length === 0)}>
                             <div className="flex justify-between">
                                 <SelectTrigger className="w-[150px]" >
                                     <SelectValue placeholder="Category" />
@@ -166,7 +163,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 <SelectContent>
                                     <SelectGroup>
                                         <SelectLabel>Category</SelectLabel>
-                                        {providers.find((e) => e.name.toLowerCase() == providerName?.toLowerCase())?.category.map((item) => (
+                                        {markets.find((e) => e.type.toLowerCase() == marketType?.toLowerCase())?.category.map((item) => (
                                             <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
                                         ))}
                                     </SelectGroup>
