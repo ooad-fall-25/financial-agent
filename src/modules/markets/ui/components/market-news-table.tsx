@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ExternalLink, Loader, LogOut, StarsIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader, StarsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { AskAINewsLinkDialog } from "./ask-ai-news-link-dialog";
@@ -17,7 +17,7 @@ interface Props {
     ticker?: string;
 }
 interface DialogDataProps {
-    providerName: string;
+    marketType: string;
     url: string;
     category: string;
     headline: string;
@@ -39,7 +39,7 @@ export const MarketNewsTable = ({ marketCategory, marketType, ticker }: Props) =
             <AskAINewsLinkDialog
                 isOpen={isDialogOpen}
                 setIsOpen={setIsDialogOpen}
-                providerName={dialogData?.providerName || ""}
+                marketType={dialogData?.marketType || ""}
                 url={dialogData?.url || ""}
                 category={dialogData?.category || ""}
                 headline={dialogData?.headline || ""}
@@ -153,7 +153,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps)
                             <div className="col-span-1">
                                 <Button
                                     onClick={() => openDialog({
-                                        providerName: marketType,
+                                        marketType: marketType,
                                         url: news.url || "#",
                                         category: news.category || "",
                                         headline: news.headline || "",

@@ -28,19 +28,19 @@ import { useRouter } from "next/navigation"
 interface Props {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
-    providerName: string;
+    marketType: string;
     url: string;
     category: string;
     headline: string;
     summary: string;
 }
 
-const languages = ["English", "Chinese", "Khmer", "Indonesian"]
+const languages = ["English", "Chinese"]
 
 export const AskAINewsLinkDialog = ({
     isOpen,
     setIsOpen,
-    providerName,
+    marketType,
     url,
     category,
     headline,
@@ -70,7 +70,7 @@ export const AskAINewsLinkDialog = ({
         newsByLink.mutate({
             url: url || "",
             language: language || "",
-            providerName: providerName || "",
+            providerName: marketType || "",
             category: category || "",
             title: headline || "",
         })
