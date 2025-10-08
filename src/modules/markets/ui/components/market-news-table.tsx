@@ -13,7 +13,7 @@ import { MarketNews } from "@/lib/news-summary";
 
 interface Props {
     marketCategory: string;
-    provider: string;
+    marketType: string;
     ticker?: string;
 }
 interface DialogDataProps {
@@ -24,7 +24,7 @@ interface DialogDataProps {
     summary: string;
 }
 
-export const MarketNewsTable = ({ marketCategory, provider, ticker }: Props) => {
+export const MarketNewsTable = ({ marketCategory, marketType, ticker }: Props) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogData, setDialogData] = useState<DialogDataProps | null>(null);
 
@@ -35,7 +35,7 @@ export const MarketNewsTable = ({ marketCategory, provider, ticker }: Props) => 
 
     return (
         <>
-            <NewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker} marketType={provider}/>
+            <NewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker} marketType={marketType}/>
             <AskAINewsLinkDialog
                 isOpen={isDialogOpen}
                 setIsOpen={setIsDialogOpen}
@@ -65,7 +65,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps)
     const {data: News, isLoading} = useQuery(trpc.marketssssss.getMarketNews.queryOptions({
         category: marketCategory, marketType: marketType
     },
-))
+    ))
     
     const {data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketssssss.getUSCompanyNews.queryOptions({
         ticker: ticker || ""
@@ -153,7 +153,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps)
                             <div className="col-span-1">
                                 <Button
                                     onClick={() => openDialog({
-                                        providerName: "us",
+                                        providerName: marketType,
                                         url: news.url || "#",
                                         category: news.category || "",
                                         headline: news.headline || "",

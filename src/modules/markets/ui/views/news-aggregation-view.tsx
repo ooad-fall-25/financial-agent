@@ -59,7 +59,7 @@ const cnItems = [
 
 
 export const NewsAggregationView = () => {
-  const [provider, setProvider] = useState<string | null>(null);
+  const [marketType, setMarketType] = useState<string | null>(null);
   const [categoryMarketItems, setCategoryMarketItems] =
     useState<ItemType[]>(usItems);
   const [activeTab, setActiveTab] = useState<string>(usItems[0].type);
@@ -67,7 +67,7 @@ export const NewsAggregationView = () => {
   const [tickerSearchInput, setTickerSearchInput] = useState("");
   const [searchedTicker, setSearchedTicker] = useState("");
 
-  const handleSetProvider = (value: string) => {
+  const handleSetMarketType = (value: string) => {
     setTickerSearchInput("");
     setSearchedTicker("");
     if (value === "us") {
@@ -78,7 +78,7 @@ export const NewsAggregationView = () => {
       setCategoryMarketItems(cnItems);
       setActiveTab(cnItems[0].type);
     }
-    setProvider(value);
+    setMarketType(value);
   };
 
   const handleTickerSearch = () => {
@@ -133,15 +133,15 @@ export const NewsAggregationView = () => {
 
             <div className="flex gap-x-4">
               <Select
-                onValueChange={(value) => handleSetProvider(value)}
+                onValueChange={(value) => handleSetMarketType(value)}
                 defaultValue="us"
               >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select a provider" />
+                  <SelectValue placeholder="Select a marketType" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Providers</SelectLabel>
+                    <SelectLabel>Market</SelectLabel>
                     <SelectItem value="us" className="cursor-pointer">
                       US News
                     </SelectItem>
@@ -191,7 +191,7 @@ export const NewsAggregationView = () => {
                   </div>
                   <MarketNewsTable
                     marketCategory={item.type}
-                    provider={provider || ""}
+                    marketType={marketType || ""}
                     ticker={
                       item.type === "company" ? searchedTicker : undefined
                     } // Pass ticker if "company" tab
