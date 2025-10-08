@@ -114,9 +114,18 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
             <SheetContent className="flex flex-col md:max-w-2xl lg:max-w-3xl">
                 <SheetHeader>
-                    <SheetTitle>News Reporter</SheetTitle>
+                    <SheetTitle className="text-2xl font-semibold">
+                        News Summary
+                    </SheetTitle>
                     <SheetDescription>
-                        Select the options below and gain more insight on financial news
+                        <div className="flex flex-col gap-y-1 text-sm text-muted-foreground">
+                            <span >
+                                Let AI refine the most important information for you.
+                            </span>
+                            <span >
+                                Select your preferences below to explore key insights from the market.
+                            </span>
+                        </div>
                     </SheetDescription>
                 </SheetHeader>
 
@@ -184,7 +193,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </div>
                     </div>
 
-                    <div className="px-4 pb-8 gap-y-4 flex justify-between">
+                    <div className="px-4 gap-y-4 flex justify-between">
                         {isEnableCustomQuery &&
                             <Textarea
                                 placeholder="Type your message here."
