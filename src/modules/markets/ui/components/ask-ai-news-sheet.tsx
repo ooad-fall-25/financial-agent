@@ -117,15 +117,9 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                     <SheetTitle className="text-2xl font-semibold">
                         News Summary
                     </SheetTitle>
-                    <SheetDescription>
-                        <div className="flex flex-col gap-y-1 text-sm text-muted-foreground">
-                            <span >
-                                Let AI refine the most important information for you.
-                            </span>
-                            <span >
-                                Select your preferences below to explore key insights from the market.
-                            </span>
-                        </div>
+                    <SheetDescription className="gap-y-1 text-sm text-muted-foreground">
+                        Let AI refine the most important information for you. 
+                        Select your preferences below to explore key insights from the market.
                     </SheetDescription>
                 </SheetHeader>
 
