@@ -1,4 +1,6 @@
+import axios from "axios";
 import { DefaultApi } from "finnhub-ts";
+import MarketAux from "marketaux-api";
 import Alpaca from "@alpacahq/alpaca-trade-api";
 import { restClient } from "@polygon.io/client-js";
 
@@ -14,6 +16,39 @@ export type MarketNews = {
   source?: string;
   datetime?: number | string;
 };
+
+interface TianNewsItem {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  picUrl: string;
+  url: string;
+  ctime: string;
+}
+
+export interface MediastackNewsItem {
+  author: string | null; 
+  title: string;
+  description: string;
+  url: string;
+  source: string;
+  image: string | null; 
+  category: string;
+  language: string;
+  country: string;
+  published_at: string; 
+}
+
+export interface MediastackResponse {
+  pagination: {
+    limit: number;
+    offset: number;
+    count: number;
+    total: number;
+  };
+  data: MediastackNewsItem[];
+}
 
 export const getFinnhubClient = () => {
   const finnhubClient = new DefaultApi({
@@ -42,6 +77,9 @@ const alpaca = new Alpaca({
   secretKey: process.env.ALPACA_API_SECRET_KEY,
   paper: true,
 });
+
+const apiKey = process.env.MARKETAUX_API_KEY || "";
+const marketauxClient = new MarketAux(apiKey);
 
 export const getUSMarketNews = async (
   category: string
@@ -124,7 +162,7 @@ export const getUSCompanyNews = async (ticker: string) => {
 
   const companyNews = await finnhubClient.companyNews(
     ticker,
-    "2025-10-03",
+    "2025-10-03", // TODO: reconsider this
     "2025-10-05"
   );
   if (!companyNews.data) {
@@ -135,11 +173,72 @@ export const getUSCompanyNews = async (ticker: string) => {
     id: item.id?.toString(),
     headline: item.headline,
     summary: item.summary,
-    category: item.category,
+    category: "company",
     url: item.url,
     imageUrl: item.image,
     related: item.related,
     source: item.source,
     datetime: item.datetime,
   }));
+};
+
+export const getChineseNews = async (category: string): Promise<MarketNews[]> => {
+  let result = [] as MarketNews[];
+  if (category.toLowerCase() === "finance") {
+    const news = await marketauxClient.news.getFeed({ countries: "cn" });
+    const auxNews = news.data.map((item) => ({
+      id: item.uuid.toString(),
+      headline: item.title,
+      summary: item.description,
+      category: "stock",
+      url: item.url,
+      imageUrl: item.image_url,
+      related: item.entities
+        ? item.entities.map((entity) => entity.symbol).join(" ")
+        : "",
+      source: item.source,
+      datetime: item.published_at,
+    }));
+
+    const res = await axios.get<{ result: { newslist: TianNewsItem[] } }>(
+      `https://apis.tianapi.com/caijing/index?key=${process.env.TIAN_API_KEY}&num=1`,
+      { headers: { Accept: "application/json" } }
+    );
+
+    const tianNews = res.data.result.newslist.map((item: any) => ({
+      id: item.id?.toString(),
+      headline: item.title as string,
+      summary: item.description as string,
+      category: "finance" as string,
+      url: item.url?.startsWith("//") ? "https:" + item.url : item.url,
+      imageUrl: item.picUrl?.startsWith("//")
+        ? "https:" + item.picUrl
+        : item.picUrl,
+      related: "",
+      source: item.source as string,
+      datetime: item.ctime as string,
+    }));
+    result = [...tianNews, ...auxNews];
+
+  } else if (category === "business") {
+    const mediaStackRes = await axios.get<MediastackResponse>(
+      `http://api.mediastack.com/v1/news?access_key=${process.env.MEDIASTACK_API_KEY}&categories=business&countries=cn`
+    );
+
+    const newsList = mediaStackRes.data.data.map((item) => ({
+      id: item.url , 
+      headline: item.title ,
+      summary: item.description,
+      category: item.category,
+      url: item.url,
+      imageUrl: item.image as string,
+      related: "",
+      source: item.source,
+      datetime: item.published_at,
+    }));
+
+    result = newsList;
+  }
+
+  return result;
 };

@@ -30,19 +30,12 @@ export const MarketNewsTable = ({ marketCategory, provider, ticker }: Props) => 
 
     const openDialog = (data: DialogDataProps) => {
         setDialogData(data);
-        setIsDialogOpen(true);``
+        setIsDialogOpen(true);
     };
 
     return (
         <>
-            {provider === "us-news" ? (
-                <USNewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker}/>
-            ) : provider === "cn-news" ? (
-                // <AlpacaNewsTable openDialog={openDialog} ticker={ticker}/>
-                <div></div>
-            ) : (
-                <USNewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker}/>
-            )}
+            <NewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker} marketType={provider}/>
             <AskAINewsLinkDialog
                 isOpen={isDialogOpen}
                 setIsOpen={setIsDialogOpen}
@@ -56,24 +49,25 @@ export const MarketNewsTable = ({ marketCategory, provider, ticker }: Props) => 
         </>
     )
 }
-                                                // FINNHUB //
-
-interface FinnhubProps {
+                                             
+interface NewsProps {
     marketCategory: string;
     openDialog: (data: DialogDataProps) => void;
     ticker?: string;
+    marketType: string;
 }
 
-const USNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) => {
+const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps) => {
     const trpc = useTRPC();
     const [marketNews, setMarketNews] = useState<MarketNews[]>(); 
 
 
-    const {data: USMarketNews, isLoading} = useQuery(trpc.marketssssss.getUSMarketNews.queryOptions({
-        category: marketCategory, marketType: "us-news"
-    }))
+    const {data: News, isLoading} = useQuery(trpc.marketssssss.getMarketNews.queryOptions({
+        category: marketCategory, marketType: marketType
+    },
+))
     
-    const {data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketssssss.getCompanyNews.queryOptions({
+    const {data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketssssss.getUSCompanyNews.queryOptions({
         ticker: ticker || ""
     },
     {
@@ -85,9 +79,9 @@ const USNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) => {
         if (marketCategory === "company") {
         setMarketNews(USCompanyNews)
 } else {
-        setMarketNews(USMarketNews)
+        setMarketNews(News)
     }
-    }, [marketCategory, USMarketNews, USCompanyNews])
+    }, [marketCategory, News, USCompanyNews])
     
 
     if (marketCategory === "company" && !ticker) {
@@ -159,7 +153,7 @@ const USNewsTable = ({ marketCategory, openDialog, ticker }: FinnhubProps) => {
                             <div className="col-span-1">
                                 <Button
                                     onClick={() => openDialog({
-                                        providerName: "us-news",
+                                        providerName: "us",
                                         url: news.url || "#",
                                         category: news.category || "",
                                         headline: news.headline || "",

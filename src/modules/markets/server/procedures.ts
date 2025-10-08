@@ -2,13 +2,10 @@ import z from "zod";
 
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { getMarketNews, getFinnhubCompanyNews } from "@/lib/finnhub";
 
-import { getStockNews, getPolygonCompanyNews } from "@/lib/polygon";
 import {
   createAINewsSummary,
   createAINewsSummaryByLink,
-  translateSummary,
 } from "@/lib/langchain";
 import {
   getAllAlpacaNewsSummary,
@@ -18,81 +15,14 @@ import {
   getWebsiteHTMLText,
 } from "@/lib/helper";
 import { prisma } from "@/lib/db";
-import dayjs from "dayjs";
-import { getUSCompanyNews, getUSMarketNews } from "@/lib/news-summary";
+import {
+  getChineseNews,
+  getUSCompanyNews,
+  getUSMarketNews,
+  MarketNews,
+} from "@/lib/news-summary";
 
 export const marketsRouter = createTRPCRouter({
-  getMarketNews: protectedProcedure
-    .input(
-      z.object({
-        category: z.string(),
-        minId: z.number().optional(),
-      })
-    )
-    .query(async ({ input }) => {
-      const { data: marketNews } = await getMarketNews(
-        input.category,
-        input.minId
-      );
-
-      if (!marketNews) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "News not found" });
-      }
-      return marketNews;
-    }),
-
-  getFinnhubCompanyNews: protectedProcedure
-    .input(
-      z.object({
-        ticker: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const today = dayjs();
-      const oneWeekAgo = today.subtract(7, "day");
-
-      const fromDate = oneWeekAgo.format("YYYY-MM-DD");
-      const toDate = today.format("YYYY-MM-DD");
-
-      const { data: companyNews } = await getFinnhubCompanyNews(
-        input.ticker,
-        fromDate,
-        toDate
-      );
-
-      if (!companyNews || companyNews.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Company news not found for Finnhub",
-        });
-      }
-      return companyNews;
-    }),
-
-  getPolygonStockNews: protectedProcedure.query(async () => {
-    const stockNews = await getStockNews(50);
-    const result = stockNews.results;
-    return result;
-  }),
-
-  getPolygonCompanyNews: protectedProcedure
-    .input(
-      z.object({
-        ticker: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const companyNews = await getPolygonCompanyNews(input.ticker, 50);
-
-      if (!companyNews || companyNews.results?.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Company news not found for Polygon",
-        });
-      }
-      return companyNews.results;
-    }),
-
   createAINewsSummary: protectedProcedure
     .input(
       z.object({
@@ -243,7 +173,7 @@ export const marketsRouter = createTRPCRouter({
     return summary;
   }),
 
-  getUSMarketNews: protectedProcedure // TODO: rename
+  getMarketNews: protectedProcedure // TODO: rename
     .input(
       z.object({
         category: z.string(),
@@ -251,15 +181,20 @@ export const marketsRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const news = await getUSMarketNews(input.category);
-      if (!news) {
+      let marketNews = [] as MarketNews[];
+      if (input.marketType === "cn") {
+        marketNews = await getChineseNews(input.category);
+      } else {
+        marketNews = await getUSMarketNews(input.category);
+      }
+      if (!marketNews) {
         throw new TRPCError({ code: "NOT_FOUND", message: "No news found!" });
       }
 
-      return news;
+      return marketNews;
     }),
 
-  getCompanyNews: protectedProcedure
+  getUSCompanyNews: protectedProcedure
     .input(
       z.object({
         ticker: z.string(),

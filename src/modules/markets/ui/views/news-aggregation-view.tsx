@@ -47,12 +47,12 @@ const usItems = [
 
 const cnItems = [
   {
-    type: "stock",
-    name: "Stock",
+    type: "finance",
+    name: "Finance",
   },
   {
-    type: "company",
-    name: "Company",
+    type: "business",
+    name: "Business",
   },
 ];
 
@@ -70,7 +70,7 @@ export const NewsAggregationView = () => {
   const handleSetProvider = (value: string) => {
     setTickerSearchInput("");
     setSearchedTicker("");
-    if (value === "us-news") {
+    if (value === "us") {
       setCategoryMarketItems(usItems);
       setActiveTab(usItems[0].type);
     }
@@ -134,7 +134,7 @@ export const NewsAggregationView = () => {
             <div className="flex gap-x-4">
               <Select
                 onValueChange={(value) => handleSetProvider(value)}
-                defaultValue="us-news"
+                defaultValue="us"
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select a provider" />
@@ -142,10 +142,10 @@ export const NewsAggregationView = () => {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Providers</SelectLabel>
-                    <SelectItem value="us-news" className="cursor-pointer">
+                    <SelectItem value="us" className="cursor-pointer">
                       US News
                     </SelectItem>
-                    <SelectItem value="cn-news" className="cursor-pointer">
+                    <SelectItem value="cn" className="cursor-pointer">
                       Chinese News
                     </SelectItem>
                   </SelectGroup>
