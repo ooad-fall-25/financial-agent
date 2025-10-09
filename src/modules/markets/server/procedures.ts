@@ -8,9 +8,7 @@ import {
   createAINewsSummaryByLink,
 } from "@/lib/langchain";
 import {
-  getAllAlpacaNewsSummary,
-  getAllFinnhubNewsSummary,
-  getAllPolygonNewsSummary,
+  getAccumulatedNews,
   getHeadlineFromAIResponse,
   getWebsiteHTMLText,
 } from "@/lib/helper";
@@ -27,23 +25,12 @@ export const marketsRouter = createTRPCRouter({
     .input(
       z.object({
         language: z.string(),
-        providerName: z.string(),
+        marketType: z.string(),
         category: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      let accumulatedNews = "";
-      if (input.providerName.toLocaleUpperCase() === "finnhub") {
-        accumulatedNews = await getAllFinnhubNewsSummary(
-          input.category.toLowerCase()
-        );
-      } else if (input.providerName.toLowerCase() === "polygon") {
-        accumulatedNews = await getAllPolygonNewsSummary();
-      } else if (input.providerName.toLowerCase() === "alpaca") {
-        accumulatedNews = await getAllAlpacaNewsSummary();
-      } else {
-        return;
-      }
+      const accumulatedNews = await getAccumulatedNews(input.marketType, input.category, 0);
 
       if (accumulatedNews.length == 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "No news found" });
@@ -52,7 +39,7 @@ export const marketsRouter = createTRPCRouter({
       const newsSummary = await createAINewsSummary(
         accumulatedNews,
         input.language,
-        input.providerName,
+        input.marketType,
         input.category
       );
 
@@ -69,7 +56,7 @@ export const marketsRouter = createTRPCRouter({
         data: {
           userId: ctx.auth.userId,
           aiRepsonse: newsSummary.content.toString(),
-          provider: input.providerName,
+          provider: input.marketType,
           category: input.category,
           language: input.language,
           headline: headline,

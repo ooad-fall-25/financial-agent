@@ -104,7 +104,7 @@ export const getUSMarketNews = async (
       imageUrl: item.image,
       related: item.related,
       source: item.source,
-      datetime: item.datetime,
+      datetime: item.datetime ? new Date(item.datetime * 1000).toISOString(): undefined, // time form finnhub is in unix format
     }));
   } else if (category === "stock") {
     // const marketNews = await alpaca.getNews({});
@@ -123,7 +123,7 @@ export const getUSMarketNews = async (
     //   datetime: item.UpdatedAt,
     // }));
 
-    const marketNews = await rest.listNews(
+    const marketNews = await rest.listNews( 
       undefined,
       undefined,
       undefined,
@@ -149,7 +149,7 @@ export const getUSMarketNews = async (
       imageUrl: item.image_url,
       related: item.tickers.join(" "), // tickers is arr, convert to string separate by space
       source: item.publisher.name,
-      datetime: undefined,
+      datetime: new Date(item.published_utc).toISOString(),
     }));
   } else {
     return [] as MarketNews[];
@@ -178,7 +178,7 @@ export const getUSCompanyNews = async (ticker: string) => {
     imageUrl: item.image,
     related: item.related,
     source: item.source,
-    datetime: item.datetime,
+    datetime: item.datetime ? new Date(item.datetime * 1000).toISOString(): undefined,
   }));
 };
 
@@ -197,7 +197,7 @@ export const getChineseNews = async (category: string): Promise<MarketNews[]> =>
         ? item.entities.map((entity) => entity.symbol).join(" ")
         : "",
       source: item.source,
-      datetime: item.published_at,
+      datetime: new Date(item.published_at).toISOString(), // time from marketaux is in this format: 2025-10-09T08:23:31.000000Z
     }));
 
     const res = await axios.get<{ result: { newslist: TianNewsItem[] } }>(
@@ -216,7 +216,7 @@ export const getChineseNews = async (category: string): Promise<MarketNews[]> =>
         : item.picUrl,
       related: "",
       source: item.source as string,
-      datetime: item.ctime as string,
+      datetime: new Date(item.ctime + "Z").toISOString() as string, // time from tianapi is 2021-02-04 18:00
     }));
     result = [...tianNews, ...auxNews];
 
@@ -234,7 +234,7 @@ export const getChineseNews = async (category: string): Promise<MarketNews[]> =>
       imageUrl: item.image as string,
       related: "",
       source: item.source,
-      datetime: item.published_at,
+      datetime: new Date(item.published_at).toISOString(),
     }));
 
     result = newsList;

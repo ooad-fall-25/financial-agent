@@ -7,38 +7,38 @@ import { marked } from "marked";
 import puppeteer from "puppeteer";
 import { read, utils } from "xlsx";
 import { PDFParse } from "pdf-parse";
+import { getChineseNews, getUSMarketNews, MarketNews } from "./news-summary";
 
 //********important**********: dont import this help.ts to client components (the .tsx file)
 
-export const getAllFinnhubNewsSummary = async (category: string) => {
-  const newsResponse = await getMarketNews(category);
-  const news = newsResponse.data;
+export const getAccumulatedNews = async (
+  marketType: string,
+  category: string,
+  limit: number
+) => {
+  let news = [] as MarketNews[];
+  if (marketType === "us") {
+    news = await getUSMarketNews(category);
+  } else if (marketType === "cn") {
+    news = await getChineseNews(category);
+  } else {
+    return "";
+  }
 
-  const summaries = news.map((item, index) => {
+  news.sort((a, b) => {
+    const timeA = a.datetime ? new Date(a.datetime).getTime() : 0;
+    const timeB = b.datetime ? new Date(b.datetime).getTime() : 0;
+    return timeB - timeA; // descending
+  });
+
+  if (limit === 0 || limit > news.length) {
+    limit = news.length;
+  }
+
+  const limitedNews = news.slice(0, limit);
+
+  const summaries = limitedNews.map((item, index) => {
     return `${index + 1}. Headline: ${item.headline}. Summary: ${item.summary}`;
-  });
-
-  return summaries.join(", ");
-};
-
-export const getAllPolygonNewsSummary = async () => {
-  const newsResponse = await getStockNews();
-  const news = newsResponse.results || [];
-
-  const summaries = news.map((item, index) => {
-    return `${index + 1}. Title: ${item.title}. Description: ${
-      item.description
-    }`;
-  });
-
-  return summaries.join(", ");
-};
-
-export const getAllAlpacaNewsSummary = async () => {
-  const news = await getAlpacaStockNews();
-
-  const summaries = news.map((item, index) => {
-    return `${index + 1}. Headline: ${item.Headline}. Summary: ${item.Summary}`;
   });
 
   return summaries.join(", ");
@@ -88,8 +88,8 @@ export const markdownToPDF = async (markdown: string) => {
   });
 
   await browser.close();
-  
-  return pdfBuffer; 
+
+  return pdfBuffer;
 };
 
 export const pdfToText = async (content: Buffer) => {

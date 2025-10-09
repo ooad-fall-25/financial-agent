@@ -1,3 +1,4 @@
+import { tool } from "@langchain/core/tools";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatDeepSeek } from "@langchain/deepseek";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -11,11 +12,21 @@ const deepseekClient = new ChatDeepSeek({
   model: "deepseek-chat",
 });
 
+const getAccumulatedNews = tool(
+  async (input: { marketType: string, category: string, limit?: number }) => {
+    return 
+  },
+  {
+    name: "get_accumulate_news",
+    description: ""
+  }
+);
+
 export const createAINewsSummary = async (
   input: string,
   language: string,
   providerName: string,
-  category: string,
+  category: string
 ) => {
   const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -64,8 +75,8 @@ export const createAINewsSummaryByLink = async (
   language: string,
   providerName: string,
   category: string,
-  title: string, 
-  url: string,
+  title: string,
+  url: string
 ) => {
   const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -96,7 +107,10 @@ export const createAINewsSummaryByLink = async (
                 category: {category}
       `,
     ],
-    ["human", "{article}, {language}, {providerName}, {category}, {title}, {url}"],
+    [
+      "human",
+      "{article}, {language}, {providerName}, {category}, {title}, {url}",
+    ],
   ]);
 
   const chain = prompt.pipe(deepseekClient);
@@ -106,7 +120,7 @@ export const createAINewsSummaryByLink = async (
     language: language,
     providerName: providerName,
     category: category,
-    title: title, 
+    title: title,
     url: url,
   });
 
@@ -129,16 +143,15 @@ export const translateSummary = async (content: string, language: string) => {
     ["human", "{content}, {language}"],
   ]);
 
-
-  console.log(content + language + "0000000000000000000000000000000")
-  const chain = prompt.pipe(deepseekClient); 
+  console.log(content + language + "0000000000000000000000000000000");
+  const chain = prompt.pipe(deepseekClient);
 
   const response = await chain.invoke({
     content: content,
-    language: language, 
-  })
+    language: language,
+  });
 
-  console.log ("responseeeeeeeeeee" , response)
+  console.log("responseeeeeeeeeee", response);
 
-  return response; 
-}
+  return response;
+};
