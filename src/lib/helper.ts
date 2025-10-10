@@ -5,6 +5,8 @@ import { getMarketNews } from "./finnhub";
 import { getAlpacaStockNews } from "./alpaca";
 import { marked } from "marked";
 import puppeteer from "puppeteer";
+import XLSX from "xlsx";
+import {PDFParse} from "pdf-parse";
 
 //********important**********: dont import this help.ts to client components (the .tsx file)
 
@@ -88,4 +90,26 @@ export const markdownToPDF = async (markdown: string) => {
   await browser.close();
   
   return pdfBuffer; 
+};
+
+export const pdfToText = async (content: Buffer) => {
+    const parser = new PDFParse({ data: content });
+    const result = await parser.getText();
+    console.log(result.text);
+    return result.text;
+};
+
+export const xlsxToText = (content: Buffer) => {  
+    // load workbook
+    const workbook = XLSX.read(content, {type: 'buffer'});
+  
+    // pick a sheet
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+  
+    // convert sheet to JSON to text
+    const data: any[] = XLSX.utils.sheet_to_json(sheet, {header:1});
+    const textData = data.map(row => row.join('\t')).join('\n');
+  
+    console.log(textData);
 };
