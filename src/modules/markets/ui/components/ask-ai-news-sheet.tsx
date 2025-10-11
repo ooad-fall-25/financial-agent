@@ -23,7 +23,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ExpandIcon, FileText, Loader, LoaderIcon } from "lucide-react";
+import { EditIcon, ExpandIcon, EyeIcon, FileText, Loader, LoaderIcon } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
@@ -61,7 +61,9 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [userMessage, setuserMessage] = useState<string | null>(null);
     const [isEnableCustomQuery, setIsEnableCustomQuery] = useState(false);
 
-    const [isPending, startTransition] = useTransition();
+    const [isViewAllPending, startViewAllTransition] = useTransition();
+    const [isViewEditPending, startViewEditTransition] = useTransition();
+    const [isViewDetailPending, startViewDetailTransition] = useTransition();
 
     const router = useRouter();
 
@@ -118,7 +120,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         News Summary
                     </SheetTitle>
                     <SheetDescription className="gap-y-1 text-sm text-muted-foreground">
-                        Let AI refine the most important information for you. 
+                        Let AI refine the most important information for you.
                         Select your preferences below to explore key insights from the market.
                     </SheetDescription>
                 </SheetHeader>
@@ -205,15 +207,56 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                 {isLoading && (<Loader className="mx-auto animate-spin" />)}
                 {summary && (
                     <div className="flex items-center justify-between px-12">
-                        <Kbd className="w-fit">
-                            <KbdKey>Latest summary</KbdKey>
-                        </Kbd>
-                        <Button
-                            onClick={() => setIsExpand(!isExpand)}
-                            variant="outline"
-                            className=" !border-none !bg-transparent !shadow-none">
-                            <ExpandIcon />
-                        </Button>
+                        <div>
+                            <Kbd className="w-fit">
+                                <KbdKey>Latest summary</KbdKey>
+                            </Kbd>
+                        </div>
+                        <div>
+                            <Button
+                                size="icon"
+                                variant="action"
+                                className="h-6 w-8 !mr-4"
+                                onClick={() => {
+                                    startViewDetailTransition(() => {
+                                        router.push(`/library/${summary.id}?type=category`)
+                                    })
+                                }}
+                            >
+                                {isViewDetailPending ? (
+                                    <LoaderIcon className="animate-spin" />
+                                ) : (
+                                    <EyeIcon />
+                                )}
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="action"
+                                className="h-6 w-8 !mr-4"
+                                onClick={() => {
+                                    startViewEditTransition(() => {
+                                        router.push(`/library/${summary.id}/edit?type=category`)
+                                    })
+                                }}
+                            >
+                                {isViewEditPending ? (
+                                    <LoaderIcon className="animate-spin" />
+                                ) : (
+                                    <EditIcon />
+                                )}
+                            </Button>
+                            <Button
+                                onClick={() => setIsExpand(!isExpand)}
+                                // variant="outline"
+                                // className=" !border-none !bg-transparent !shadow-none"
+                                variant="action"
+                                className="h-6 w-8  "
+                            >
+                                <ExpandIcon />
+                            </Button>
+                        </div>
+
+
                     </div>
 
                 )}
@@ -261,10 +304,10 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             variant="outline"
                             className="flex-1"
                             onClick={() => {
-                                startTransition(() => router.push(`library?type=category`))
+                                startViewAllTransition(() => router.push(`library?type=category`))
                             }}
                         >
-                            {isPending ? (
+                            {isViewAllPending ? (
                                 <LoaderIcon className="animate-spin" />
                             ) : (
                                 <span>View all</span>
