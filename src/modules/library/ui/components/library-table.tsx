@@ -1,11 +1,12 @@
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { NewsSummary } from "@/generated/prisma";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Loader, SearchIcon, TablePropertiesIcon } from "lucide-react";
+import { SearchIcon, TablePropertiesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 interface Props {
@@ -30,7 +31,7 @@ export const LibraryTable = ({ selectedTab }: Props) => {
 interface TableProps {
     data: NewsSummary[];
     isLoading: boolean;
-    type: string; 
+    type: string;
 }
 
 const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
@@ -87,7 +88,7 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
 
             {isLoading ? (
                 <div className="my-8">
-                    <Loader className="animate-spin mx-auto bg-none" />
+                    <Spinner className="mx-auto bg-none" />
                 </div>
             ) : (
                 <div>

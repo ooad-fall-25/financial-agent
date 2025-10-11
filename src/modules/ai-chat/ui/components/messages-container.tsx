@@ -6,9 +6,10 @@ import { MessageCard } from "./message-card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ConversationHistory } from "./conversation-history";
-import { PlusCircle, History, Loader } from "lucide-react";
+import { PlusCircle, History } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 interface MessagesContainerProps {
   conversationId?: string;
@@ -182,7 +183,7 @@ export const MessagesContainer = ({
 
       <div className="flex-1 overflow-y-auto px-4">
         <div className="max-w-3xl mx-auto space-y-2 pt-4 pb-28">
-          {isLoadingHistory && <Loader className="mx-auto animate-spin" />}
+          {isLoadingHistory && <Spinner className="mx-auto" />}
           {!conversationId && !isLoadingHistory && (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground">

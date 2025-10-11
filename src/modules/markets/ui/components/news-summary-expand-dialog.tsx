@@ -1,5 +1,6 @@
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
@@ -7,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
-import { Loader, LoaderIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, summaryId,
                                 })
                             }}>
                             {isPending ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <span>View Detail</span>
                             )}

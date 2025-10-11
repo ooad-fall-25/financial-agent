@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Loader, StarsIcon } from "lucide-react";
+import { StarsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { AskAINewsLinkDialog } from "./ask-ai-news-link-dialog";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { MarketNews } from "@/lib/news-summary";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Props {
     marketCategory: string;
@@ -35,7 +36,7 @@ export const MarketNewsTable = ({ marketCategory, marketType, ticker }: Props) =
 
     return (
         <>
-            <NewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker} marketType={marketType}/>
+            <NewsTable marketCategory={marketCategory} openDialog={openDialog} ticker={ticker} marketType={marketType} />
             <AskAINewsLinkDialog
                 isOpen={isDialogOpen}
                 setIsOpen={setIsDialogOpen}
@@ -49,7 +50,7 @@ export const MarketNewsTable = ({ marketCategory, marketType, ticker }: Props) =
         </>
     )
 }
-                                             
+
 interface NewsProps {
     marketCategory: string;
     openDialog: (data: DialogDataProps) => void;
@@ -57,32 +58,32 @@ interface NewsProps {
     marketType: string;
 }
 
-const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps) => {
+const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps) => {
     const trpc = useTRPC();
-    const [marketNews, setMarketNews] = useState<MarketNews[]>(); 
+    const [marketNews, setMarketNews] = useState<MarketNews[]>();
 
 
-    const {data: News, isLoading} = useQuery(trpc.marketssssss.getMarketNews.queryOptions({
+    const { data: News, isLoading } = useQuery(trpc.marketssssss.getMarketNews.queryOptions({
         category: marketCategory, marketType: marketType
     },
     ))
-    
-    const {data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketssssss.getUSCompanyNews.queryOptions({
+
+    const { data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketssssss.getUSCompanyNews.queryOptions({
         ticker: ticker || ""
     },
-    {
-        enabled: (marketCategory === "company" && !!ticker)
-     }
+        {
+            enabled: (marketCategory === "company" && !!ticker)
+        }
     ))
 
     useEffect(() => {
         if (marketCategory === "company") {
-        setMarketNews(USCompanyNews)
-} else {
-        setMarketNews(News)
-    }
+            setMarketNews(USCompanyNews)
+        } else {
+            setMarketNews(News)
+        }
     }, [marketCategory, News, USCompanyNews])
-    
+
 
     if (marketCategory === "company" && !ticker) {
         return <div className="text-center p-10 translate-y-50">Search a Company!</div>;
@@ -94,10 +95,10 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps)
 
     return (
         <div className="w-full">
-            
+
             {/* Content */}
             {isLoading ? (
-                <Loader className="animate-spin mx-auto bg-none" />
+                <Spinner className="mx-auto bg-none" />
             ) : (
                 <div className="divide-y divide-border">
                     {marketNews?.map((news) => (
@@ -110,10 +111,10 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps)
                                     className="group block overflow-hidden rounded-md" // Added group and overflow-hidden for animation
                                 >
                                     <Image
-                                        src={news.imageUrl || "/logo.png"} 
+                                        src={news.imageUrl || "/logo.png"}
                                         alt="News Image"
-                                        width={180} 
-                                        height={120} 
+                                        width={180}
+                                        height={120}
                                         className="object-cover rounded-md aspect-video transition-transform duration-300 ease-out group-hover:scale-105"
                                     />
                                 </Link>
@@ -128,7 +129,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType}: NewsProps)
                                     >
                                         <p>{news.headline}</p>
                                     </Link>
-                                </div>           
+                                </div>
                                 {/* Badge for Finnhub Company News */}
                                 {marketCategory === "company" && ticker && (
                                     <div className="mt-2">

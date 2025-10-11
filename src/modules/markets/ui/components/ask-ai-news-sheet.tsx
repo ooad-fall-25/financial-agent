@@ -23,7 +23,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { EditIcon, ExpandIcon, EyeIcon, FileText, Loader, LoaderIcon, ScanEyeIcon } from "lucide-react";
+import { EditIcon, ExpandIcon, FileText, ScanEyeIcon } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
@@ -31,6 +31,7 @@ import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Props {
     isOpen: boolean;
@@ -204,7 +205,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
 
 
-                {isLoading && (<Loader className="mx-auto animate-spin" />)}
+                {isLoading && (<Spinner className="mx-auto" />)}
                 {summary && (
                     <div className="flex items-center justify-between px-12">
                         <div>
@@ -224,7 +225,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 }}
                             >
                                 {isViewDetailPending ? (
-                                    <LoaderIcon className="animate-spin" />
+                                    <Spinner />
                                 ) : (
                                     <ScanEyeIcon />
                                 )}
@@ -240,7 +241,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 }}
                             >
                                 {isViewEditPending ? (
-                                    <LoaderIcon className="animate-spin" />
+                                    <Spinner />
                                 ) : (
                                     <EditIcon />
                                 )}
@@ -308,7 +309,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             }}
                         >
                             {isViewAllPending ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <span>View all</span>
                             )}
@@ -323,7 +324,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         >
                             {newsMutation.isPending ? (
                                 <div className="items-center">
-                                    <Loader className="h-4 w-4 animate-spin" />
+                                    <Spinner className="h-4 w-4" />
                                 </div>
                             ) : (
                                 <span>Generate Summary</span>

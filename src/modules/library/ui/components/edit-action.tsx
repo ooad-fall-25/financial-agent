@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button"
 import { useDownload } from "@/hooks/use-download";
 import { useTRPC } from "@/trpc/client";
@@ -70,7 +71,7 @@ export const EditAction = ({ summaryId, savedMarkdown, editor }: Props) => {
                             disabled={news.isLoading}
                         >
                             {news.isLoading ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <RefreshCcwIcon />
                             )}
@@ -86,7 +87,7 @@ export const EditAction = ({ summaryId, savedMarkdown, editor }: Props) => {
                             disabled={isDownloadingPDF}
                         >
                             {isDownloadingPDF ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <DownloadIcon />
                             )}
@@ -102,7 +103,7 @@ export const EditAction = ({ summaryId, savedMarkdown, editor }: Props) => {
                             disabled={isDownloadingMD}
                         >
                             {isDownloadingMD ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <FileDownIcon />
                             )}
@@ -118,7 +119,7 @@ export const EditAction = ({ summaryId, savedMarkdown, editor }: Props) => {
                             disabled={saveMutation.isPending}
                         >
                             {saveMutation.isPending ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <SaveAllIcon />
                             )}

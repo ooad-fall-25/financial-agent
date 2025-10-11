@@ -22,8 +22,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog"
-import { EyeIcon, Loader, LoaderIcon } from "lucide-react"
+import { EyeIcon, LoaderIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Props {
     isOpen: boolean;
@@ -156,7 +157,7 @@ export const AskAINewsLinkDialog = ({
                             }}
                         >
                             {isPending ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <span>View All</span>
                             )}
@@ -172,7 +173,7 @@ export const AskAINewsLinkDialog = ({
                             <>
                                 {newsByLink.isPending ? (
                                     <div className="items-center">
-                                        <Loader className="h-4 w-4 animate-spin" />
+                                        <Spinner className="h-4 w-4" />
                                     </div>
                                 ) : (
                                     <span>Generate</span>
