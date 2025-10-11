@@ -89,7 +89,22 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
                     onSelect={() => processAndSelectTicker(stock.symbol || "")}
                     className="cursor-pointer"
                   >
-                    {/* ... (Your UI for rendering the item) ... */}
+                 <div className="flex items-center justify-between w-full">
+                  {/* Left side: Symbol and description */}
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <span className="font-semibold text-sm">{stock.symbol}</span>
+                    <span className="text-sm text-muted-foreground truncate">
+                      {stock.description}
+                    </span>
+                  </div>
+
+                  {/* Right side: The asset type as a tag */}
+                  {stock.type && (
+                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                      {stock.type.toUpperCase()}
+                    </span>
+                  )}
+                </div>
                   </CommandItem>
                 ))}
               </CommandGroup>
