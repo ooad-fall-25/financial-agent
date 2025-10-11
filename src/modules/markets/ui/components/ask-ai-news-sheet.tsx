@@ -23,7 +23,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { EditIcon, ExpandIcon, EyeIcon, FileText, Loader, LoaderIcon } from "lucide-react";
+import { EditIcon, ExpandIcon, EyeIcon, FileText, Loader, LoaderIcon, ScanEyeIcon } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
@@ -226,7 +226,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 {isViewDetailPending ? (
                                     <LoaderIcon className="animate-spin" />
                                 ) : (
-                                    <EyeIcon />
+                                    <ScanEyeIcon />
                                 )}
                             </Button>
                             <Button
