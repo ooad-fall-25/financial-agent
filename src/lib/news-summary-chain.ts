@@ -1,5 +1,3 @@
-import { tool } from "@langchain/core/tools";
-import { ChatOpenAI } from "@langchain/openai";
 import { ChatDeepSeek } from "@langchain/deepseek";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 
@@ -11,64 +9,6 @@ const deepseekClient = new ChatDeepSeek({
   // },
   model: "deepseek-chat",
 });
-
-const getAccumulatedNews = tool(
-  async (input: { marketType: string, category: string, limit?: number }) => {
-    return 
-  },
-  {
-    name: "get_accumulate_news",
-    description: ""
-  }
-);
-
-export const createAINewsSummary = async (
-  input: string,
-  language: string,
-  providerName: string,
-  category: string
-) => {
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are a helpful assistant that helps summarize financial news. 
-        Make sure the summarization has good structure, its like a report, not just a simple summary. Because user can export it as a PDF file. But do not overcomplicated things either, just make sure it has good structure, its okay if you dont have enough info.  
-            
-        Dont include things that reply back to the user, like "Here is a structured summary of the news article."
-        Conclude with your thoughts on the news. You should state that its a thought from assistant as well.
-        Make sure the report has good margin and spacing between sentences and paragraph, dont make everthing packed together.
-        
-        Start the report by a comment in markdown (use t  his syntax: [//]: # "Comment"), the content of the comment is the overview title of the report.
-        You still need to include the overview title of the report, so one in comment and one in normal render. 
-        Basically, just do everything normally, but add an extra comment at the top for development purpose.  
-
-        The input is the accumulation of summaries from all news.
-            Language is the desire language that the user wants, you should summarize in the specified language.
-
-            Other info is for context, you can use it as the title or to provide context back to user, the goal is to summarize the input only. 
-            
-            input: {input},
-            language: {language}, by default is English,
-
-            some other info (by developer): 
-                api provider: {providerName}
-                category: {category}
-        `,
-    ],
-    ["human", "{input}, {language}, {providerName}, {category}"],
-  ]);
-
-  const chain = prompt.pipe(deepseekClient);
-
-  const response = await chain.invoke({
-    input: input,
-    language: language,
-    providerName: providerName,
-    category: category,
-  });
-
-  return response;
-};
 
 export const createAINewsSummaryByLink = async (
   article: string,
@@ -143,15 +83,12 @@ export const translateSummary = async (content: string, language: string) => {
     ["human", "{content}, {language}"],
   ]);
 
-  console.log(content + language + "0000000000000000000000000000000");
   const chain = prompt.pipe(deepseekClient);
 
   const response = await chain.invoke({
     content: content,
     language: language,
   });
-
-  console.log("responseeeeeeeeeee", response);
 
   return response;
 };
