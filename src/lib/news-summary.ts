@@ -28,16 +28,16 @@ interface TianNewsItem {
 }
 
 export interface MediastackNewsItem {
-  author: string | null; 
+  author: string | null;
   title: string;
   description: string;
   url: string;
   source: string;
-  image: string | null; 
+  image: string | null;
   category: string;
   language: string;
   country: string;
-  published_at: string; 
+  published_at: string;
 }
 
 export interface MediastackResponse {
@@ -104,7 +104,9 @@ export const getUSMarketNews = async (
       imageUrl: item.image,
       related: item.related,
       source: item.source,
-      datetime: item.datetime ? new Date(item.datetime * 1000).toISOString(): undefined, // time form finnhub is in unix format
+      datetime: item.datetime
+        ? new Date(item.datetime * 1000).toISOString()
+        : undefined, // time form finnhub is in unix format
     }));
   } else if (category === "stock") {
     // const marketNews = await alpaca.getNews({});
@@ -123,7 +125,7 @@ export const getUSMarketNews = async (
     //   datetime: item.UpdatedAt,
     // }));
 
-    const marketNews = await rest.listNews( 
+    const marketNews = await rest.listNews(
       undefined,
       undefined,
       undefined,
@@ -160,10 +162,18 @@ export const getUSCompanyNews = async (ticker: string) => {
   ticker = ticker.toUpperCase();
   const finnhubClient = getFinnhubClient();
 
+  const fmt = (d: Date): string =>
+    d.toISOString().slice(0, 10).replace(/-/g, "/");
+
+  const today: string = fmt(new Date());
+  const twoDaysAgo: string = fmt(
+    new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+  );
+
   const companyNews = await finnhubClient.companyNews(
     ticker,
-    "2025-10-03", // TODO: reconsider this
-    "2025-10-05"
+    twoDaysAgo, // TODO: reconsider this
+    today
   );
   if (!companyNews.data) {
     return [] as MarketNews[];
@@ -178,11 +188,15 @@ export const getUSCompanyNews = async (ticker: string) => {
     imageUrl: item.image,
     related: item.related,
     source: item.source,
-    datetime: item.datetime ? new Date(item.datetime * 1000).toISOString(): undefined,
+    datetime: item.datetime
+      ? new Date(item.datetime * 1000).toISOString()
+      : undefined,
   }));
 };
 
-export const getChineseNews = async (category: string): Promise<MarketNews[]> => {
+export const getChineseNews = async (
+  category: string
+): Promise<MarketNews[]> => {
   let result = [] as MarketNews[];
   if (category.toLowerCase() === "finance") {
     const news = await marketauxClient.news.getFeed({ countries: "cn" });
@@ -219,15 +233,14 @@ export const getChineseNews = async (category: string): Promise<MarketNews[]> =>
       datetime: new Date(item.ctime + "Z").toISOString() as string, // time from tianapi is 2021-02-04 18:00
     }));
     result = [...tianNews, ...auxNews];
-
   } else if (category === "business") {
     const mediaStackRes = await axios.get<MediastackResponse>(
       `http://api.mediastack.com/v1/news?access_key=${process.env.MEDIASTACK_API_KEY}&categories=business&countries=cn`
     );
 
     const newsList = mediaStackRes.data.data.map((item) => ({
-      id: item.url , 
-      headline: item.title ,
+      id: item.url,
+      headline: item.title,
       summary: item.description,
       category: item.category,
       url: item.url,
