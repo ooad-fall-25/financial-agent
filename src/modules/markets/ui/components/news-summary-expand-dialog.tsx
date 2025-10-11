@@ -22,27 +22,9 @@ interface Props {
 
 export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, summaryId, type }: Props) => {
     const router = useRouter();
-    const languageSetting = useSettingsStore((state) => state.language);
-    const [displayContent, setDisplayContent] = useState(content);
     const trpc = useTRPC();
 
     const [isPending, startTransition] = useTransition()
-
-
-    const translateMutation = useMutation(trpc.library.translate.mutationOptions({
-        onError: (error) => {
-            toast.error(error.message);
-        }
-    }));
-
-
-    const handleTranslation = async () => {
-        const translatedContent = await translateMutation.mutateAsync({
-            content: displayContent,
-            language: languageSetting
-        });
-        setDisplayContent(translatedContent);
-    }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen} defaultOpen={false}>
@@ -50,7 +32,7 @@ export const NewsSummaryExpandDialog = ({ isOpen, setIsOpen, content, summaryId,
             <DialogContent showCloseButton={false} className="sm:max-w-[425px] md:max-w-[800px] lg:max-w-[1200px] w-auto h-auto  max-h-[735px]">
                 <div className="flex flex-col">
                     <ScrollArea className="sm:max-w-[425px] md:max-w-[800px] lg:max-w-[1200px] w-auto h-auto max-h-[635px] text-sm p-4">
-                        <AIResponse>{displayContent}</AIResponse>
+                        <AIResponse>{content}</AIResponse>
                     </ScrollArea>
                     <div className="w-full flex gap-x-4">
                         <Button

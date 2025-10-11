@@ -58,7 +58,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const [category, setCategory] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
-    const [customQueryText, setCustomQueryText] = useState<string | null>(null);
+    const [userMessage, setuserMessage] = useState<string | null>(null);
     const [isEnableCustomQuery, setIsEnableCustomQuery] = useState(false);
 
     const [isPending, startTransition] = useTransition();
@@ -90,25 +90,25 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const handleAskAI = () => {
         newsMutation.mutate({
             language: language || "",
-            providerName: marketType?.toLowerCase() || "",
+            marketType: marketType?.toLowerCase() || "",
             category: category?.toLowerCase() || "",
+            userMessage: userMessage || "",
         })
     }
 
     const handleCustomQueryChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
-        setCustomQueryText(e.target.value);
-        console.log(e.target.value)
+        setuserMessage(e.target.value);
     };
 
     const resetStates = () => {
         setMarketType(null);
         setCategory(null);
         setLanguage(null);
-        setCustomQueryText(null);
+        setuserMessage(null);
         setIsEnableCustomQuery(false);
     }
 
-    const isButtonDisabled = newsMutation.isPending || !marketType || !category || !language || !(!isEnableCustomQuery || customQueryText);
+    const isButtonDisabled = newsMutation.isPending || !marketType || !category || !language || !(!isEnableCustomQuery || userMessage);
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -192,7 +192,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             <Textarea
                                 placeholder="Type your message here."
                                 className="!bg-secondary focus-visible:ring-0 focus-visible:ring-offset-0 "
-                                value={customQueryText || ""}
+                                value={userMessage || ""}
                                 onChange={handleCustomQueryChange}
                             />
                         }
