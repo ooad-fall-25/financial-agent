@@ -38,7 +38,7 @@ const getAccumulatedNewsTool = new DynamicStructuredTool({
     limit?: number;
     ticker?: string;
   }) => {
-    return getAccumulatedNews(marketType, category, limit, ticker);
+    return await getAccumulatedNews(marketType, category, limit, ticker);
   },
 });
 
@@ -101,13 +101,13 @@ export const summaryAgent = async (
 
     if (!summary) {
       console.warn("⚠️ No structured content returned:", response);
-      return "No summary was generated. Please try again.";
+      return "<Error>No summary was generated. Please try again.";
     }
 
     console.log("✅ Summary generated successfully.");
     return summary;
   } catch (error: any) {
     console.error("❌ Summary agent error:", error);
-    return `Error while generating summary: ${error.message}`;
+    return `<Error>Error while generating summary: ${error.message}`;
   }
 };
