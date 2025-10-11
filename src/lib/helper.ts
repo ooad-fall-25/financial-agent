@@ -5,19 +5,28 @@ import { getMarketNews } from "./finnhub";
 import { getAlpacaStockNews } from "./alpaca";
 import { marked } from "marked";
 import puppeteer from "puppeteer";
+import {
+  getChineseNews,
+  getUSCompanyNews,
+  getUSMarketNews,
+  MarketNews,
+} from "./news-summary";
 import { read, utils } from "xlsx";
 import { PDFParse } from "pdf-parse";
-import { getChineseNews, getUSMarketNews, MarketNews } from "./news-summary";
+
 
 //********important**********: dont import this help.ts to client components (the .tsx file)
 
 export const getAccumulatedNews = async (
   marketType: string,
   category: string,
-  limit: number
+  limit?: number,
+  ticker?: string
 ) => {
   let news = [] as MarketNews[];
-  if (marketType === "us") {
+  if (marketType === "us" && category === "company") {
+    news = await getUSCompanyNews(ticker || "AAPL");
+  } else if (marketType === "us") {
     news = await getUSMarketNews(category);
   } else if (marketType === "cn") {
     news = await getChineseNews(category);
@@ -31,6 +40,10 @@ export const getAccumulatedNews = async (
     return timeB - timeA; // descending
   });
 
+  if (!limit) {
+    limit = news.length;
+  }
+
   if (limit === 0 || limit > news.length) {
     limit = news.length;
   }
@@ -38,7 +51,9 @@ export const getAccumulatedNews = async (
   const limitedNews = news.slice(0, limit);
 
   const summaries = limitedNews.map((item, index) => {
-    return `${index + 1}. Headline: ${item.headline}. Summary: ${item.summary}`;
+    return `${index + 1}. Headline: ${item.headline}. Summary: ${
+      item.summary
+    }. Datetime: ${item.datetime}`;
   });
 
   return summaries.join(", ");

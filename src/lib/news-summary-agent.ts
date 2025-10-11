@@ -12,12 +12,18 @@ const getAccumulatedNewsTool = new DynamicStructuredTool({
     category: z
       .string()
       .describe(
-        "News category. For 'us': 'stock', 'general', 'crypto', 'merger'. For 'cn': 'business', 'finance'."
+        "News category. For 'us': 'stock', 'general', 'crypto', 'merger', 'company'. For 'cn': 'business', 'finance'."
       ),
     limit: z
       .number()
+      .optional()
       .default(10)
       .describe("Maximum number of news items to fetch (default 10, 0 = all)."),
+    ticker: z
+      .string()
+      .optional()
+      .default("AAPL")
+      .describe("Company's ticker symbol. Ex: for Apple its 'AAPL'"),
   }),
   description:
     "Fetch financial news articles for a given market and category. Returns raw data for summarization only — not for direct output.",
@@ -25,12 +31,14 @@ const getAccumulatedNewsTool = new DynamicStructuredTool({
     marketType,
     category,
     limit,
+    ticker,
   }: {
     marketType: string;
     category: string;
-    limit: number;
+    limit?: number;
+    ticker?: string;
   }) => {
-    return getAccumulatedNews(marketType, category, limit);
+    return getAccumulatedNews(marketType, category, limit, ticker);
   },
 });
 
@@ -55,7 +63,7 @@ export const summaryAgent = async (
   language: string
 ) => {
   const validCategories: Record<string, string[]> = {
-    us: ["stock", "general", "crypto", "merger"],
+    us: ["stock", "general", "crypto", "merger", "company"],
     cn: ["business", "finance"],
   };
 
@@ -88,7 +96,8 @@ export const summaryAgent = async (
 
   try {
     const response = await agent.invoke({ messages });
-    const summary = response.messages[response.messages.length - 1].content.toString();
+    const summary =
+      response.messages[response.messages.length - 1].content.toString();
 
     if (!summary) {
       console.warn("⚠️ No structured content returned:", response);
