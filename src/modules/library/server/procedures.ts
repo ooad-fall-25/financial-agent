@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { markdownToPDF } from "@/lib/helper";
-import { translateSummary } from "@/lib/langchain";
+import { translateSummary } from "@/lib/news-summary-chain";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";

@@ -22,10 +22,14 @@ interface ItemType {
   name: string;
 }
 
-const finnhubItems = [
+const usItems = [
   {
     type: "general",
     name: "Top",
+  },
+  {
+    type: "stock",
+    name: "Stock",
   },
   {
     type: "crypto",
@@ -41,51 +45,40 @@ const finnhubItems = [
   },
 ];
 
-const polygonItems = [
+const cnItems = [
   {
-    type: "stock",
-    name: "Stock",
+    type: "finance",
+    name: "Finance",
   },
   {
-    type: "company",
-    name: "Company",
+    type: "business",
+    name: "Business",
   },
 ];
 
-const alpacaItems = [
-  {
-    type: "stock-crypto",
-    name: "Stock",
-  },
-  {
-    type: "company",
-    name: "Company",
-  },
-];
+
 
 export const NewsAggregationView = () => {
-  const [provider, setProvider] = useState<string | null>(null);
+  const [marketType, setMarketType] = useState<string | null>(null);
   const [categoryMarketItems, setCategoryMarketItems] =
-    useState<ItemType[]>(finnhubItems);
-  const [activeTab, setActiveTab] = useState<string>(finnhubItems[0].type);
+    useState<ItemType[]>(usItems);
+  const [activeTab, setActiveTab] = useState<string>(usItems[0].type);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [tickerSearchInput, setTickerSearchInput] = useState("");
   const [searchedTicker, setSearchedTicker] = useState("");
 
-  const handleSetProvider = (value: string) => {
+  const handleSetMarketType = (value: string) => {
     setTickerSearchInput("");
     setSearchedTicker("");
-    if (value === "polygon") {
-      setCategoryMarketItems(polygonItems);
-      setActiveTab(polygonItems[0].type);
-    } else if (value === "alpaca") {
-      setCategoryMarketItems(alpacaItems);
-      setActiveTab(alpacaItems[0].type);
-    } else {
-      setCategoryMarketItems(finnhubItems);
-      setActiveTab(finnhubItems[0].type);
+    if (value === "us") {
+      setCategoryMarketItems(usItems);
+      setActiveTab(usItems[0].type);
     }
-    setProvider(value);
+    else {
+      setCategoryMarketItems(cnItems);
+      setActiveTab(cnItems[0].type);
+    }
+    setMarketType(value);
   };
 
   const handleTickerSearch = () => {
@@ -140,23 +133,20 @@ export const NewsAggregationView = () => {
 
             <div className="flex gap-x-4">
               <Select
-                onValueChange={(value) => handleSetProvider(value)}
-                defaultValue="finnhub"
+                onValueChange={(value) => handleSetMarketType(value)}
+                defaultValue="us"
               >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select a provider" />
+                  <SelectValue placeholder="Select a marketType" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Providers</SelectLabel>
-                    <SelectItem value="finnhub" className="cursor-pointer">
-                      FinnHub
+                    <SelectLabel>Market</SelectLabel>
+                    <SelectItem value="us" className="cursor-pointer">
+                      US News
                     </SelectItem>
-                    <SelectItem value="polygon" className="cursor-pointer">
-                      Polygon
-                    </SelectItem>
-                    <SelectItem value="alpaca" className="cursor-pointer">
-                      Alpaca
+                    <SelectItem value="cn" className="cursor-pointer">
+                      Chinese News
                     </SelectItem>
                   </SelectGroup>
                 </SelectContent>
@@ -201,7 +191,7 @@ export const NewsAggregationView = () => {
                   </div>
                   <MarketNewsTable
                     marketCategory={item.type}
-                    provider={provider || ""}
+                    marketType={marketType || ""}
                     ticker={
                       item.type === "company" ? searchedTicker : undefined
                     } // Pass ticker if "company" tab

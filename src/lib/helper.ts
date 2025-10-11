@@ -5,40 +5,55 @@ import { getMarketNews } from "./finnhub";
 import { getAlpacaStockNews } from "./alpaca";
 import { marked } from "marked";
 import puppeteer from "puppeteer";
+import {
+  getChineseNews,
+  getUSCompanyNews,
+  getUSMarketNews,
+  MarketNews,
+} from "./news-summary";
 import { read, utils } from "xlsx";
 import { PDFParse } from "pdf-parse";
 
+
 //********important**********: dont import this help.ts to client components (the .tsx file)
 
-export const getAllFinnhubNewsSummary = async (category: string) => {
-  const newsResponse = await getMarketNews(category);
-  const news = newsResponse.data;
+export const getAccumulatedNews = async (
+  marketType: string,
+  category: string,
+  limit?: number,
+  ticker?: string
+) => {
+  let news = [] as MarketNews[];
+  if (marketType === "us" && category === "company") {
+    news = await getUSCompanyNews(ticker || "AAPL");
+  } else if (marketType === "us") {
+    news = await getUSMarketNews(category);
+  } else if (marketType === "cn") {
+    news = await getChineseNews(category);
+  } else {
+    return "";
+  }
 
-  const summaries = news.map((item, index) => {
-    return `${index + 1}. Headline: ${item.headline}. Summary: ${item.summary}`;
+  news.sort((a, b) => {
+    const timeA = a.datetime ? new Date(a.datetime).getTime() : 0;
+    const timeB = b.datetime ? new Date(b.datetime).getTime() : 0;
+    return timeB - timeA; // descending
   });
 
-  return summaries.join(", ");
-};
+  if (!limit) {
+    limit = news.length;
+  }
 
-export const getAllPolygonNewsSummary = async () => {
-  const newsResponse = await getStockNews();
-  const news = newsResponse.results || [];
+  if (limit === 0 || limit > news.length) {
+    limit = news.length;
+  }
 
-  const summaries = news.map((item, index) => {
-    return `${index + 1}. Title: ${item.title}. Description: ${
-      item.description
-    }`;
-  });
+  const limitedNews = news.slice(0, limit);
 
-  return summaries.join(", ");
-};
-
-export const getAllAlpacaNewsSummary = async () => {
-  const news = await getAlpacaStockNews();
-
-  const summaries = news.map((item, index) => {
-    return `${index + 1}. Headline: ${item.Headline}. Summary: ${item.Summary}`;
+  const summaries = limitedNews.map((item, index) => {
+    return `${index + 1}. Headline: ${item.headline}. Summary: ${
+      item.summary
+    }. Datetime: ${item.datetime}`;
   });
 
   return summaries.join(", ");
@@ -88,8 +103,8 @@ export const markdownToPDF = async (markdown: string) => {
   });
 
   await browser.close();
-  
-  return pdfBuffer; 
+
+  return pdfBuffer;
 };
 
 export const pdfToText = async (content: Buffer) => {

@@ -22,25 +22,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog"
-import { EyeIcon, Loader, LoaderIcon } from "lucide-react"
+import { EyeIcon, LoaderIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Props {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
-    providerName: string;
+    marketType: string;
     url: string;
     category: string;
     headline: string;
     summary: string;
 }
 
-const languages = ["English", "Chinese", "Khmer", "Indonesian"]
+const languages = ["English", "Chinese"]
 
 export const AskAINewsLinkDialog = ({
     isOpen,
     setIsOpen,
-    providerName,
+    marketType,
     url,
     category,
     headline,
@@ -70,7 +71,7 @@ export const AskAINewsLinkDialog = ({
         newsByLink.mutate({
             url: url || "",
             language: language || "",
-            providerName: providerName || "",
+            providerName: marketType || "",
             category: category || "",
             title: headline || "",
         })
@@ -156,7 +157,7 @@ export const AskAINewsLinkDialog = ({
                             }}
                         >
                             {isPending ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <span>View All</span>
                             )}
@@ -172,7 +173,7 @@ export const AskAINewsLinkDialog = ({
                             <>
                                 {newsByLink.isPending ? (
                                     <div className="items-center">
-                                        <Loader className="h-4 w-4 animate-spin" />
+                                        <Spinner className="h-4 w-4" />
                                     </div>
                                 ) : (
                                     <span>Generate</span>

@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/spinner"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -88,9 +89,9 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
                             }}
                         >
                             {isPending ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
-                                <EditIcon />
+                            <EditIcon />
                             )}
                         </Button>
                     </div>
@@ -104,7 +105,7 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
                             onClick={handleDownloadAsPDF}
                         >
                             {isDownloadingPDF ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <DownloadIcon />
                             )}
@@ -120,7 +121,7 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
                             onClick={handleDownloadAsMD}
                         >
                             {isDownloadingMD ? (
-                                <LoaderIcon className="animate-spin" />
+                                <Spinner />
                             ) : (
                                 <FileDownIcon />
                             )}

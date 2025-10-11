@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
 import { ArrowUpIcon, Loader2Icon, XIcon } from "lucide-react";
 import { useDropzone } from "react-dropzone";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Props {
     prompt: string;
@@ -140,7 +141,7 @@ export const MessageForm = ({ onSend, isSending }: Props) => {
                         disabled={isSending}
                         className={cn("size-8 rounded-full", isSending && "bg-muted-foreground border")}
                     >
-                        {isSending ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowUpIcon />}
+                        {isSending ? <Spinner className="size-4" /> : <ArrowUpIcon />}
                     </Button>
                 </div>
             </form>

@@ -23,15 +23,15 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ExpandIcon, FileText, Loader, LoaderIcon } from "lucide-react";
+import { EditIcon, ExpandIcon, FileText, ScanEyeIcon } from "lucide-react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
-import { cn } from "@/lib/utils";
 import { NewsSummaryExpandDialog } from "./news-summary-expand-dialog";
 import { Kbd, KbdKey } from "@/components/ui/kibo-ui/kbd";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Props {
     isOpen: boolean;
@@ -39,32 +39,32 @@ interface Props {
 }
 
 // TODO:consider putting these in db
-const providers = [
+const markets = [
     {
-        name: "Finnhub",
-        category: ["General", "Crypto", "Merger", "Company"],
+        name: "US News",
+        type: "us",
+        category: ["General", "Stock", "Crypto", "Merger", "Company"],
     },
     {
-        name: "Polygon",
-        category: ["Stock", "Company"],
+        name: "Chinese News",
+        type: "cn",
+        category: ["Finance", "Business"],
     },
-    {
-        name: "Alpaca",
-        category: ["Stock", "Company"],
-    }
 ]
 
 const languages = ["English", "Chinese"]
 
 export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
-    const [providerName, setProviderName] = useState<string | null>(null);
+    const [marketType, setMarketType] = useState<string | null>(null);
     const [category, setCategory] = useState<string | null>(null);
     const [language, setLanguage] = useState<string | null>(null);
     const [isExpand, setIsExpand] = useState(false);
-    const [customQueryText, setCustomQueryText] = useState<string | null>(null);
+    const [userMessage, setuserMessage] = useState<string | null>(null);
     const [isEnableCustomQuery, setIsEnableCustomQuery] = useState(false);
 
-    const [isPending, startTransition] = useTransition();
+    const [isViewAllPending, startViewAllTransition] = useTransition();
+    const [isViewEditPending, startViewEditTransition] = useTransition();
+    const [isViewDetailPending, startViewDetailTransition] = useTransition();
 
     const router = useRouter();
 
@@ -93,48 +93,51 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
     const handleAskAI = () => {
         newsMutation.mutate({
             language: language || "",
-            providerName: providerName?.toLowerCase() || "",
+            marketType: marketType?.toLowerCase() || "",
             category: category?.toLowerCase() || "",
+            userMessage: userMessage || "",
         })
     }
 
     const handleCustomQueryChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
-        setCustomQueryText(e.target.value);
-        console.log(e.target.value)
+        setuserMessage(e.target.value);
     };
 
     const resetStates = () => {
-        setProviderName(null);
+        setMarketType(null);
         setCategory(null);
         setLanguage(null);
-        setCustomQueryText(null);
+        setuserMessage(null);
         setIsEnableCustomQuery(false);
     }
 
-    const isButtonDisabled = newsMutation.isPending || !providerName || !category || !language || !(!isEnableCustomQuery || customQueryText);
+    const isButtonDisabled = newsMutation.isPending || !marketType || !category || !language || !(!isEnableCustomQuery || userMessage);
 
     return (
         <Sheet open={isOpen} defaultOpen={isOpen} onOpenChange={handleOpenChange}>
             <SheetContent className="flex flex-col md:max-w-2xl lg:max-w-3xl">
                 <SheetHeader>
-                    <SheetTitle>News Reporter</SheetTitle>
-                    <SheetDescription>
-                        Select the options below and gain more insight on financial news
+                    <SheetTitle className="text-2xl font-semibold">
+                        News Summary
+                    </SheetTitle>
+                    <SheetDescription className="gap-y-1 text-sm text-muted-foreground">
+                        Let AI refine the most important information for you.
+                        Select your preferences below to explore key insights from the market.
                     </SheetDescription>
                 </SheetHeader>
 
                 <div className="flex flex-col gap-y-4">
                     <div className="px-4 gap-y-4 flex justify-between">
-                        <Select value={providerName || ""} onValueChange={(value) => setProviderName(value)}>
+                        <Select value={marketType || ""} onValueChange={(value) => setMarketType(value)}>
                             <div className="flex justify-between">
                                 <SelectTrigger className="w-[150px]">
-                                    <SelectValue placeholder="Provider" />
+                                    <SelectValue placeholder="Market" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectLabel>Providers</SelectLabel>
-                                        {providers.map((item) => (
-                                            <SelectItem key={item.name} value={item.name.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
+                                        <SelectLabel>Markets</SelectLabel>
+                                        {markets.map((item) => (
+                                            <SelectItem key={item.type} value={item.type.toLowerCase()} className="cursor-pointer">{item.name}</SelectItem>
                                         ))}
                                     </SelectGroup>
                                 </SelectContent>
@@ -158,7 +161,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </Select>
 
 
-                        <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!providerName || providerName?.length === 0)}>
+                        <Select value={category || ""} onValueChange={(value) => setCategory(value)} disabled={(!marketType || marketType?.length === 0)}>
                             <div className="flex justify-between">
                                 <SelectTrigger className="w-[150px]" >
                                     <SelectValue placeholder="Category" />
@@ -166,7 +169,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                                 <SelectContent>
                                     <SelectGroup>
                                         <SelectLabel>Category</SelectLabel>
-                                        {providers.find((e) => e.name.toLowerCase() == providerName?.toLowerCase())?.category.map((item) => (
+                                        {markets.find((e) => e.type.toLowerCase() == marketType?.toLowerCase())?.category.map((item) => (
                                             <SelectItem key={item} value={item.toLowerCase()} className="cursor-pointer">{item}</SelectItem>
                                         ))}
                                     </SelectGroup>
@@ -187,12 +190,12 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         </div>
                     </div>
 
-                    <div className="px-4 pb-8 gap-y-4 flex justify-between">
+                    <div className="px-4 gap-y-4 flex justify-between">
                         {isEnableCustomQuery &&
                             <Textarea
                                 placeholder="Type your message here."
                                 className="!bg-secondary focus-visible:ring-0 focus-visible:ring-offset-0 "
-                                value={customQueryText || ""}
+                                value={userMessage || ""}
                                 onChange={handleCustomQueryChange}
                             />
                         }
@@ -202,18 +205,59 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
 
 
-                {isLoading && (<Loader className="mx-auto animate-spin" />)}
+                {isLoading && (<Spinner className="mx-auto" />)}
                 {summary && (
                     <div className="flex items-center justify-between px-12">
-                        <Kbd className="w-fit">
-                            <KbdKey>Latest summary</KbdKey>
-                        </Kbd>
-                        <Button
-                            onClick={() => setIsExpand(!isExpand)}
-                            variant="outline"
-                            className=" !border-none !bg-transparent !shadow-none">
-                            <ExpandIcon />
-                        </Button>
+                        <div>
+                            <Kbd className="w-fit">
+                                <KbdKey>Latest summary</KbdKey>
+                            </Kbd>
+                        </div>
+                        <div>
+                            <Button
+                                size="icon"
+                                variant="action"
+                                className="h-6 w-8 !mr-4"
+                                onClick={() => {
+                                    startViewDetailTransition(() => {
+                                        router.push(`/library/${summary.id}?type=category`)
+                                    })
+                                }}
+                            >
+                                {isViewDetailPending ? (
+                                    <Spinner />
+                                ) : (
+                                    <ScanEyeIcon />
+                                )}
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="action"
+                                className="h-6 w-8 !mr-4"
+                                onClick={() => {
+                                    startViewEditTransition(() => {
+                                        router.push(`/library/${summary.id}/edit?type=category`)
+                                    })
+                                }}
+                            >
+                                {isViewEditPending ? (
+                                    <Spinner />
+                                ) : (
+                                    <EditIcon />
+                                )}
+                            </Button>
+                            <Button
+                                onClick={() => setIsExpand(!isExpand)}
+                                // variant="outline"
+                                // className=" !border-none !bg-transparent !shadow-none"
+                                variant="action"
+                                className="h-6 w-8  "
+                            >
+                                <ExpandIcon />
+                            </Button>
+                        </div>
+
+
                     </div>
 
                 )}
@@ -261,11 +305,11 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                             variant="outline"
                             className="flex-1"
                             onClick={() => {
-                                startTransition(() => router.push(`library?type=category`))
+                                startViewAllTransition(() => router.push(`library?type=category`))
                             }}
                         >
-                            {isPending ? (
-                                <LoaderIcon className="animate-spin" />
+                            {isViewAllPending ? (
+                                <Spinner />
                             ) : (
                                 <span>View all</span>
                             )}
@@ -280,7 +324,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
                         >
                             {newsMutation.isPending ? (
                                 <div className="items-center">
-                                    <Loader className="h-4 w-4 animate-spin" />
+                                    <Spinner className="h-4 w-4" />
                                 </div>
                             ) : (
                                 <span>Generate Summary</span>
