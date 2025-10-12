@@ -1,9 +1,13 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { useTRPC } from "@/trpc/client"; 
+import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+  }).format(date); // We pass the Date object directly
+};
 
 export function LatestNews() {
   const trpc = useTRPC();
@@ -13,54 +17,55 @@ export function LatestNews() {
     isError 
   } = useQuery({
       ...trpc.HomeData.fetchYahooFinanceNews.queryOptions({ limit: 10 }),
-      refetchOnWindowFocus: false, // News doesn't need to be refetched constantly
+      refetchOnWindowFocus: false,
     });
+    
   if (isLoading) {
+    // A simple loading skeleton, inspired by your StockNews component
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">Loading news...</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-16 w-full bg-muted rounded-lg animate-pulse" />
+        ))}
+      </div>
     );
   }
 
   if (isError) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-red-500">Failed to load news.</p>
-        </CardContent>
-      </Card>
+      <div className="p-6 text-center text-red-500 bg-card rounded-lg border">
+        <p>Failed to load news.</p>
+      </div>
     );
   }
   
   if (!latestNews || latestNews.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">No news available.</p>
-        </CardContent>
-      </Card>
+      <div className="p-6 text-center text-muted-foreground bg-card rounded-lg border">
+        <p>No news available.</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
-        {latestNews.map((item) => (
-          // Use item.url for the key as it's guaranteed to be unique
-          <div key={item.link} className="border-b pb-3 last:border-b-0">
-            <a href={item.link} target="_blank" rel="noopener noreferrer" className="font-semibold leading-tight hover:underline cursor-pointer">
-              {item.title} {/* CHANGED from item.headline */}
-            </a>
-            <p className="text-xs text-muted-foreground mt-1">
-              {/* CHANGED to access nested source name and use publishedAt */}
-              {new Date(item.pubDate).toLocaleDateString()}
+    <ul className="space-y-4">
+      {latestNews.map((item) => (
+        <li key={item.title}>
+          <a 
+            href={item.link} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block p-4 bg-card rounded-lg border border-border hover:border-primary transition-colors"
+          >
+            {/* Using a more semantic heading for the title */}
+            <h4 className="font-semibold leading-tight">{item.title}</h4>
+            <p className="text-xs text-muted-foreground mt-2">
+              {/* Using the new date formatting function */}
+              {"Yahoo Finance"} • {formatDate(item.pubDate)}
             </p>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }

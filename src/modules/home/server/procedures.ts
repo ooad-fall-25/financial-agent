@@ -49,6 +49,16 @@ interface YahooArticle {
     title: string | null;
 }
 
+interface MarketauxArticle {
+  uuid: string;
+  title: string;
+  description: string;
+  url: string;
+  imageUrl: string;
+  publishedAt: Date;
+  source: string;
+}
+
 const parseAlphaVantageDate = (dateString: string): string => {
   const year = dateString.substring(0, 4);
   const month = dateString.substring(4, 6);
@@ -211,6 +221,62 @@ export const HomeDataRouter = createTRPCRouter({
         });
       }
     }),
+
+    fetchMarketauxTrendingNews: protectedProcedure
+    .input(
+      z.object({
+        country: z.string().optional(),
+        search: z.string().optional()
+      })
+    )
+    .query(async ({  }): Promise<MarketauxArticle[]> => {
+      const apiKey = process.env.MARKETAUX_API_KEY;
+      const countries = "us"
+      const search = "stock"
+
+      if (!apiKey) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "CRITICAL: Marketaux API key is not configured on the server.",
+        });
+      }
+
+      const params: {
+        api_token: string;
+        countries: string;
+        search: string;
+      } = {
+        api_token: apiKey,
+        countries: countries,
+        search: search 
+      };
+
+      try {
+        const response = await axios.get("https://api.marketaux.com/v1/news/all", {
+          params: params,
+        });
+
+        const articles = response.data.data || [];
+
+        return articles.map((article: any) => ({
+          uuid: article.uuid,
+          title: article.title,
+          description: article.description,
+          url: article.url,
+          imageUrl: article.image_url,
+          publishedAt: new Date(article.published_at), 
+          source: article.source,
+        }));
+
+      } catch (error) {
+        console.error("Error fetching from Marketaux:", isAxiosError(error) ? error.response?.data : error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch news from Marketaux.",
+        });
+      }
+    }),
+
 
   fetchMarketScreener: protectedProcedure
     .input(

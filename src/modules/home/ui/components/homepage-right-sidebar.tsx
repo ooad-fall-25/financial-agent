@@ -28,7 +28,7 @@ export function RightSidebar() {
       {/* Trending Tickers Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Trending Tickers</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Trending Tickers</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -55,7 +55,7 @@ export function RightSidebar() {
       {/* My Portfolio Card */}
       <Card>
         <CardHeader>
-          <CardTitle>My Portfolio</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">My Portfolio</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
