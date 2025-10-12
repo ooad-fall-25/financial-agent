@@ -23,8 +23,10 @@ export const LibraryTable = ({ selectedTab }: Props) => {
         return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} type={selectedTab} />
     } else if (selectedTab === "individual") {
         return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} type={selectedTab} />
+    } else if (selectedTab === "liked") {
+        return <SummaryByTable data = { []} isLoading = { false } type = { selectedTab } />
     } else {
-        return;
+        return; 
     }
 }
 
