@@ -35,6 +35,18 @@ class AlphaVantageAPI {
         }
     }
 
+    public async getNewsAndSentiment(
+        limit: number = 20,
+        sort: string = 'RELEVANCE'
+    ): Promise<any> {
+        const params = {
+            function: 'NEWS_SENTIMENT',
+            limit: limit.toString(),
+            sort: sort
+        };
+        return this.fetchData(params);
+    }
+
     public async getIntradayTimeSeries(
         symbol: string,
         interval: '1min' | '5min' | '15min' | '30min' | '60min' = DEFAULT_INTERVAL,

@@ -1,4 +1,4 @@
-import HomePage from "@/modules/markets/ui/views/homepage-view";
+import HomePage from "@/modules/home/ui/views/homepage-view";
 
 const Page = () => {
     return (

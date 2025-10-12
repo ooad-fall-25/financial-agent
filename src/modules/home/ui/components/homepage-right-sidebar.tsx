@@ -12,6 +12,9 @@ const trendingData = [
     { symbol: 'AAPL', companyName: 'Apple Inc.', price: '208.14', change: '+0.65', percentChange: '+0.31%' },
     { symbol: 'NVDA', companyName: 'NVIDIA Corporation', price: '127.08', change: '+2.11', percentChange: '+1.69%' },
     { symbol: 'GME', companyName: 'GameStop Corp.', price: '23.93', change: '-1.22', percentChange: '-4.85%' },
+    { symbol: 'bruh', companyName: 'GameStop Corp.', price: '23.93', change: '-1.22', percentChange: '-4.85%' },
+    { symbol: 'a', companyName: 'GameStop Corp.', price: '23.93', change: '-1.22', percentChange: '-4.85%' },
+
 ];
 
 const portfolioData = [
