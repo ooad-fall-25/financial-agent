@@ -108,7 +108,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
                                     href={news.url || "#"}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group block overflow-hidden rounded-md" // Added group and overflow-hidden for animation
+                                    className="group block overflow-hidden rounded-md" 
                                 >
                                     <Image
                                         src={news.imageUrl || "/logo.png"}
