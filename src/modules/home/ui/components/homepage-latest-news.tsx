@@ -2,12 +2,7 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-  }).format(date); // We pass the Date object directly
-};
+import Image from 'next/image';
 
 export function LatestNews() {
   const trpc = useTRPC();
@@ -21,11 +16,17 @@ export function LatestNews() {
     });
     
   if (isLoading) {
-    // A simple loading skeleton, inspired by your StockNews component
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 px-2"> 
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-16 w-full bg-muted rounded-lg animate-pulse" />
+          <div key={i} className="flex items-center gap-4 p-4 bg-card rounded-lg border border-border">
+            <div className="w-24 h-20 bg-muted rounded-md animate-pulse" />
+            <div className="flex-1 space-y-3">
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+              <div className="h-3 w-1/2 bg-muted rounded animate-pulse mt-2" />
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -39,33 +40,48 @@ export function LatestNews() {
     );
   }
   
-  if (!latestNews || latestNews.length === 0) {
-    return (
-      <div className="p-6 text-center text-muted-foreground bg-card rounded-lg border">
-        <p>No news available.</p>
-      </div>
-    );
-  }
+  const validNews = latestNews || [];
 
   return (
-    <ul className="space-y-4">
-      {latestNews.map((item) => (
-        <li key={item.title}>
+    <div className="space-y-4 px-2">
+      {validNews
+        .filter(item => item && item.url && item.img) 
+        .map((item) => (
           <a 
-            href={item.link} 
+            key={item.title} 
+            href={item.url} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="block p-4 bg-card rounded-lg border border-border hover:border-primary transition-colors"
+            className="block outline-none focus:outline-none"
           >
-            {/* Using a more semantic heading for the title */}
-            <h4 className="font-semibold leading-tight">{item.title}</h4>
-            <p className="text-xs text-muted-foreground mt-2">
-              {/* Using the new date formatting function */}
-              {"Yahoo Finance"} • {formatDate(item.pubDate)}
-            </p>
+            <div
+              className="group overflow-hidden rounded-lg border-border bg-card p-4
+                         transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary"
+            >
+              {/* --- THIS IS THE MODIFIED LINE --- */}
+              <div className="flex items-center gap-4 transition-transform duration-300 ease-in-out group-hover:scale-[1.03] ml-2">
+                
+                <div className="relative h-20 w-24 flex-shrink-0">
+                  <Image
+                    src={item.img}
+                    alt={item.title}
+                    className="rounded-md object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+                
+                <div className="flex-1">
+                  <h4 className="font-semibold leading-tight">{item.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {item.source} • {item.ago}
+                  </p>
+                </div>
+
+              </div>
+            </div>
           </a>
-        </li>
       ))}
-    </ul>
+    </div>
   );
 }

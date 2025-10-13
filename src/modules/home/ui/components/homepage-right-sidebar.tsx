@@ -71,6 +71,10 @@ export function RightSidebar() {
     const portfolioData: TickerData[] = [
         { symbol: 'GOOGL', companyName: 'Alphabet Inc.', price: 179.22, change: 1.88, percentChange: 1.06 },
         { symbol: 'MSFT', companyName: 'Microsoft Corporation', price: 447.67, change: -2.11, percentChange: -0.47 },
+        { symbol: 'KEVIN', companyName: 'Kevin Borgar Shop', price: 420.69, change: -9.11, percentChange: -0.47 },
+        { symbol: 'BOB', companyName: 'Bobbington', price: 420.69, change: -9.11, percentChange: -0.47 },
+
+
     ];
 
     if (isLoading) {

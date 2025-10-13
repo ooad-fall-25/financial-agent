@@ -43,11 +43,13 @@ interface MarketMovers {
 }
 
 interface YahooArticle {
-    guid: string | null;
-    link: string;
+    url: string;
     pubDate: Date;
-    source: string | null;
-    title: string | null;
+    source: string;
+    title: string;
+    img: string;
+    ago: string;
+    tickers: string[];
 }
 
 interface MarketauxArticle {
@@ -172,7 +174,7 @@ export const HomeDataRouter = createTRPCRouter({
     .input(
       z.object({
         ticker: z.string().optional(), 
-        limit: z.number().optional().default(10),
+        limit: z.number().optional().default(15),
       })
     )
     .query(async ({ input }): Promise<YahooArticle[]> => {
