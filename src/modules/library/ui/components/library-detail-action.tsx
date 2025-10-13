@@ -33,9 +33,11 @@ export const LibraryDetailAction = ({ summaryId, content, setDisplayContent }: P
     const language = useSettingsStore((state) => state.language);
 
     const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
+    const { downloadAsMarkdown: downloadTranslatedContentAsMarkdown, isDownloadingMD: isDownloadTranslatedContentAsMarkdown, downloadAsPDF:downloadTranslatedContentAsPDF, isDownloadingPDF: isDownloadTranslatedContentAsPDF } = useDownload();
 
     const [isPending, startTransition] = useTransition()
     const [isTranslated, setIsTranslated] = useState(false);
+    const [translatedContent, setTranslatedContent] = useState("");
 
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -88,7 +90,16 @@ export const LibraryDetailAction = ({ summaryId, content, setDisplayContent }: P
             language: language,
             content: content,
         })
-        setDisplayContent(translatedContent)
+        setDisplayContent(translatedContent);
+        setTranslatedContent(translatedContent);
+    }
+
+    const handleDownloadTranslatedContentAsMD = () => {
+        downloadTranslatedContentAsMarkdown("note", translatedContent);
+    }
+
+    const handleDownloadTranslatedContentAsPDF = () => {
+        downloadTranslatedContentAsPDF("note", translatedContent);
     }
 
     return (
@@ -164,6 +175,40 @@ export const LibraryDetailAction = ({ summaryId, content, setDisplayContent }: P
                                 <Spinner />
                             ) : (
                                 <LanguagesIcon />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download Translated Content as PDF</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleDownloadTranslatedContentAsPDF}
+                            disabled={!isTranslated}
+                        >
+                            {isDownloadTranslatedContentAsPDF ? (
+                                <Spinner />
+                            ) : (
+                                <DownloadIcon />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download Translated Content as Markdown</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleDownloadTranslatedContentAsMD}
+                            disabled={!isTranslated}
+                        >
+                            {isDownloadTranslatedContentAsMarkdown ? (
+                                <Spinner />
+                            ) : (
+                                <FileDownIcon />
                             )}
                         </Button>
                     </div>

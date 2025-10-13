@@ -72,7 +72,7 @@ export const LibraryDetailView = ({ summaryId }: Props) => {
                                     <NewsDetail news={news} />
                                 </div>
                                 <div>
-                                    <LibraryDetailAction summaryId={news.id} content={displayContent} setDisplayContent={setDisplayContent}/>
+                                    <LibraryDetailAction summaryId={news.id} content={news.aiRepsonse} setDisplayContent={setDisplayContent}/>
                                 </div>
                             </div>
                         </div>
