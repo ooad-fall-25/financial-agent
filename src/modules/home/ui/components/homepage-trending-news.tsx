@@ -20,6 +20,7 @@ export function TrendingNews() {
       refetchOnWindowFocus: false, 
     });
 
+    
   if (isLoading) {
     // ... skeleton code ...
     return <div>Loading...</div>;
@@ -31,7 +32,7 @@ export function TrendingNews() {
 
   const topStory = news[0];
   const subStories = news.slice(1, 3);
-  const topStoryImage = topStory.images.find(img => img.size === 'thumb');
+  const topStoryImage = topStory.images.find(img => img.size === 'large');
   
   return (
     <div className="space-y-6">
@@ -59,7 +60,7 @@ export function TrendingNews() {
       {/* Two Smaller Stories Side-by-Side */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {subStories.map((story) => {
-          const storyImage = story.images.find(img => img.size === 'thumb');
+          const storyImage = story.images.find(img => img.size === 'large');
           return (
             <Card key={story.id}>
               <a href={story.url} target="_blank" rel="noopener noreferrer">

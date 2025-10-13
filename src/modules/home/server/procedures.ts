@@ -109,7 +109,7 @@ export const HomeDataRouter = createTRPCRouter({
   fetchStockNews: protectedProcedure
     .input(
       z.object({
-        limit: z.number().optional().default(10),
+        limit: z.number().optional().default(20),
       })
     )
     .query(async ({ input }): Promise<AlpacaNewsArticle[]> => {
@@ -117,13 +117,12 @@ export const HomeDataRouter = createTRPCRouter({
       try {
         const response = await alpacaApiV1.get("/news", {
           params: {
-            sort: "desc", // Most recent first
-            limit: limit, // Let's limit to 10 articles for a clean UI
-            include_content: false, // We only need the summary
+            sort: "desc", 
+            limit: limit, 
+            include_content: false, 
           },
         });
 
-        // The API returns { "news": [...] }, so we extract the array
         return response.data.news || [];
       } catch (error) {
         console.error(`Error fetching Alpaca news for :`, error);
@@ -156,7 +155,6 @@ export const HomeDataRouter = createTRPCRouter({
           headline: item.title,
           source: item.source,
           url: item.url,
-          // --- UPDATED: Use the helper to return a standard date string ---
           created_at: parseAlphaVantageDate(item.time_published),
           summary: item.summary,
           banner_image: item.banner_image || null,
@@ -173,13 +171,13 @@ export const HomeDataRouter = createTRPCRouter({
   fetchYahooFinanceNews: protectedProcedure
     .input(
       z.object({
-        ticker: z.string().optional(), // Can be undefined for general news
+        ticker: z.string().optional(), 
         limit: z.number().optional().default(10),
       })
     )
     .query(async ({ input }): Promise<YahooArticle[]> => {
       const { ticker, limit } = input;
-      const rapidApiKey = process.env.RAPIDAPI_KEY; // Securely load the key
+      const rapidApiKey = process.env.RAPIDAPI_KEY;
 
       if (!rapidApiKey) {
         throw new TRPCError({
@@ -188,8 +186,6 @@ export const HomeDataRouter = createTRPCRouter({
         });
       }
 
-      // 3. Set up the parameters for the API call.
-      // If a ticker is provided, we use it. Otherwise, we don't send the 'tickers' param to get general news.
       const params: { tickers?: string; type: string } = { type: 'ALL' };
       if (ticker) {
         params.tickers = ticker;
@@ -206,11 +202,7 @@ export const HomeDataRouter = createTRPCRouter({
       };
 
       try {
-        // 4. Make the request using axios, which you already have in the project.
         const response = await axios.request(options);
-
-        // 5. Process the response. The actual articles are usually in `response.data.body`.
-        // We also use .slice() to respect the 'limit' input, as the API itself might not support it.
         const articles = response.data.body || [];
         return articles.slice(0, limit);
 
@@ -348,9 +340,6 @@ fetchMarketMovers: protectedProcedure.query(
           params: { top: 10 },
         });
 
-        // --- MODIFICATION START ---
-
-        // 1. Helper is now an async function to fetch the company name.
         const transformAndEnrichMover = async (mover: any): Promise<ScreenerStock> => {
           const companyData = await getCompanyNameFromFinnhub(mover.symbol);
           const companyName = companyData? companyData : mover.symbol; 
@@ -364,15 +353,11 @@ fetchMarketMovers: protectedProcedure.query(
           };
         };
 
-        // 2. Map over the raw gainers/losers arrays to create arrays of promises.
         const gainersPromises = response.data.gainers?.map(transformAndEnrichMover) || [];
         const losersPromises = response.data.losers?.map(transformAndEnrichMover) || [];
 
-        // 3. Use Promise.all to wait for all lookups to complete for both lists.
         const gainers = await Promise.all(gainersPromises);
         const losers = await Promise.all(losersPromises);
-
-        // --- MODIFICATION END ---
 
         return { gainers, losers };
         
