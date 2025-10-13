@@ -1,13 +1,16 @@
 "use client";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
 import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { NewsDetail } from "../components/news-detail";
 import { LibraryDetailAction } from "../components/library-detail-action";
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useSettingsStore } from "@/stores/settings-store";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 
 
@@ -18,10 +21,16 @@ interface Props {
 export const LibraryDetailView = ({ summaryId }: Props) => {
     const searchParams = useSearchParams();
     const type = searchParams.get("type") ?? "category";
+    const [displayContent, setDisplayContent] = useState<string>("");
 
     const trpc = useTRPC();
     const { data: news } = useSuspenseQuery(trpc.library.getOne.queryOptions({ summaryId: summaryId }))
 
+    useEffect(() => {
+        if (displayContent.length == 0) {
+            setDisplayContent(news.aiRepsonse);
+        }
+    }, [news])
 
     return (
 
@@ -51,7 +60,7 @@ export const LibraryDetailView = ({ summaryId }: Props) => {
                                 </div>
                                 <div className="p-8">
                                     <AIResponse>
-                                        {news.aiRepsonse}
+                                        {displayContent}
                                     </AIResponse>
                                 </div>
                             </div>
@@ -63,7 +72,7 @@ export const LibraryDetailView = ({ summaryId }: Props) => {
                                     <NewsDetail news={news} />
                                 </div>
                                 <div>
-                                    <LibraryDetailAction summaryId={news.id} content={news.aiRepsonse} />
+                                    <LibraryDetailAction summaryId={news.id} content={displayContent} setDisplayContent={setDisplayContent}/>
                                 </div>
                             </div>
                         </div>
