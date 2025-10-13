@@ -32,6 +32,7 @@ export const LibraryDetailAction = ({ summaryId, content, setDisplayContent }: P
 
     const language = useSettingsStore((state) => state.language);
 
+    // not sure if we can reuse it, so i import twice, to avoid loading state overlapping 
     const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
     const { downloadAsMarkdown: downloadTranslatedContentAsMarkdown, isDownloadingMD: isDownloadTranslatedContentAsMarkdown, downloadAsPDF:downloadTranslatedContentAsPDF, isDownloadingPDF: isDownloadTranslatedContentAsPDF } = useDownload();
 
@@ -86,6 +87,7 @@ export const LibraryDetailAction = ({ summaryId, content, setDisplayContent }: P
     }
 
     const handleTranslate = async () => {
+        toast.info("Translating... This may take a moment.")
         const translatedContent = await translateMutation.mutateAsync({
             language: language,
             content: content,
