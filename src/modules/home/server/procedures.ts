@@ -69,7 +69,6 @@ const parseAlphaVantageDate = (dateString: string): string => {
   const hour = dateString.substring(9, 11);
   const minute = dateString.substring(11, 13);
   const second = dateString.substring(13, 15);
-  // Construct a standard ISO 8601 formatted string, which is universally parsable
   return `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
 };
 
@@ -79,7 +78,7 @@ interface AVNewsArticle {
   headline: string;
   source: string;
   url: string;
-  created_at: string; // Will now be a standard ISO string
+  created_at: string; 
   summary: string;
   banner_image: string | null;
 }

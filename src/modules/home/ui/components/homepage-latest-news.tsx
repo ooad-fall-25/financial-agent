@@ -11,7 +11,7 @@ export function LatestNews() {
     isLoading, 
     isError 
   } = useQuery({
-      ...trpc.HomeData.fetchYahooFinanceNews.queryOptions({ limit: 10 }),
+      ...trpc.HomeData.fetchYahooFinanceNews.queryOptions({ limit: 20 }),
       refetchOnWindowFocus: false,
     });
     
@@ -45,6 +45,7 @@ export function LatestNews() {
   return (
     <div className="space-y-4 px-2">
       {validNews
+        .slice(5)
         .filter(item => item && item.url && item.img) 
         .map((item) => (
           <a 
