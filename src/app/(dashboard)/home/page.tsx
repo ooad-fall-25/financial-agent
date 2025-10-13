@@ -1,7 +1,9 @@
+import HomePage from "@/modules/home/ui/views/homepage-view";
+
 const Page = () => {
     return (
         <div>
-            home
+            <HomePage />
         </div>
     )
 }

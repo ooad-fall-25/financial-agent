@@ -262,3 +262,7 @@ body {
 .lucide {
   stroke-width: 2.5px;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
