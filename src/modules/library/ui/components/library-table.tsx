@@ -23,8 +23,10 @@ export const LibraryTable = ({ selectedTab }: Props) => {
         return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} type={selectedTab} />
     } else if (selectedTab === "individual") {
         return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} type={selectedTab} />
+    } else if (selectedTab === "liked") {
+        return <SummaryByTable data = { []} isLoading = { false } type = { selectedTab } />
     } else {
-        return;
+        return; 
     }
 }
 
@@ -58,7 +60,7 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
     }, [data]);
 
     return (
-        <div className="w-full h-full flex flex-col">
+        <div className=" h-full flex flex-col min-h-0">
             <div className="p-4 flex items-center justify-start gap-x-4">
                 <div className="flex items-center relative w-full max-w-xs">
                     <div className="absolute left-4 flex items-center justify-center gap-x-2 ">
@@ -86,55 +88,62 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                 <div className="col-span-2">Date</div>
             </div>
 
-            {isLoading ? (
-                <div className="my-8">
-                    <Spinner className="mx-auto bg-none" />
-                </div>
-            ) : (
-                <div>
-                    {data.length != 0 ? (
-                        <div>
-                            <div className="flex-1 overflow-y-auto">
-                                <div className="divide-y divide-border text-xs font-normal border-b border-border">
-                                    {filteredNews.map((item) => (
-                                        <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-16 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
-                                            <div className="col-span-10">
-                                                <div className="font-medium leading-tight truncate">
-                                                    <p>{item.headline}</p>
-                                                </div>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <div className="text-muted-foreground leading-relaxed">
-                                                    {item.category}
-                                                </div>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <div className="text-muted-foreground leading-relaxed">
-                                                    {item.language}
-                                                </div>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <div className="text-muted-foreground truncate">
-                                                    {format(item.createdAt, "HH:mm 'on' MMM dd, yyyy")}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+            <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="h-full min-h-0">
 
-                            </div>
+
+                    {isLoading ? (
+                        <div className="my-8">
+                            <Spinner className="mx-auto bg-none" />
                         </div>
                     ) : (
-                        <div className="flex-1 gap-y-4 items-center justify-center flex flex-col">
-                            <TablePropertiesIcon />
-                            <div className="gap-y-2 flex flex-col items-center">
-                                <span className="text-sm">The summary will be loaded here</span>
-                                <span className="text-xs text-muted-foreground">Generate one</span>
-                            </div>
+                        <div>
+                            {data.length != 0 ? (
+                                <div className="h-full min-h-0 pb-20">
+
+                                    <div className="divide-y divide-border text-xs font-normal border-b border-border">
+                                        {filteredNews.map((item) => (
+                                            <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-16 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
+                                                <div className="col-span-10">
+                                                    <div className="font-medium leading-tight truncate">
+                                                        <p>{item.headline}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <div className="text-muted-foreground leading-relaxed">
+                                                        {item.category}
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <div className="text-muted-foreground leading-relaxed">
+                                                        {item.language}
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <div className="text-muted-foreground truncate">
+                                                        {format(item.createdAt, "HH:mm 'on' MMM dd, yyyy")}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                            ) : (
+                                <div className="flex-1 gap-y-4 items-center justify-center flex flex-col">
+                                    <TablePropertiesIcon />
+                                    <div className="gap-y-2 flex flex-col items-center">
+                                        <span className="text-sm">The summary will be loaded here</span>
+                                        <span className="text-xs text-muted-foreground">Generate one</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
-            )}
+            </div>
+
+
 
         </div>
     )
