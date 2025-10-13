@@ -18,6 +18,7 @@ import { isAxiosError } from "axios";
 
 interface ScreenerStock {
   symbol: string;
+  companyName: string; 
   price: number;
   change: number;
   percentChange: number;
@@ -278,22 +279,20 @@ export const HomeDataRouter = createTRPCRouter({
     }),
 
 
-  fetchMarketScreener: protectedProcedure
+fetchMarketScreener: protectedProcedure
     .input(
       z.object({
-        // This input is now simpler, or could be removed if it only ever does one thing
         screenerType: z.literal("most_actives"),
       })
     )
     .query(async ({ input }): Promise<ScreenerStock[]> => {
-      const { screenerType } = input; // This will always be 'most_actives'
+      const { screenerType } = input;
 
       try {
-        // No switch statement needed
         const activesResponse = await alpacaApiV1.get(
           "/screener/stocks/most-actives",
           {
-            params: { by: "volume", top: 5 },
+            params: { by: "volume", top: 7 },
           }
         );
         const activeSymbols =
@@ -308,15 +307,28 @@ export const HomeDataRouter = createTRPCRouter({
         });
         const snapshots = snapshotsResponse.data;
 
-        return activeSymbols.map((symbol: string) => {
+        const enrichedStocksPromises = activeSymbols.map(async (symbol: string) => {
           const snapshot = snapshots[symbol];
           const price = snapshot?.latestTrade?.p ?? snapshot?.dailyBar?.c ?? 0;
           const prevDayClose = snapshot?.prevDailyBar?.c ?? 0;
           const change = price - prevDayClose;
           const percentChange =
             prevDayClose !== 0 ? (change / prevDayClose) * 100 : 0;
-          return { symbol, price, change, percentChange };
+          const companyData = await getCompanyNameFromFinnhub(symbol);
+          const companyName = companyData? companyData.companyName : symbol; 
+
+          return { 
+            symbol, 
+            companyName, 
+            price, 
+            change, 
+            percentChange 
+          };
         });
+
+        const enrichedStocks = await Promise.all(enrichedStocksPromises);
+        return enrichedStocks;
+
       } catch (error) {
         console.error(
           `Error fetching Alpaca screener for ${screenerType}:`,
@@ -329,26 +341,41 @@ export const HomeDataRouter = createTRPCRouter({
       }
     }),
 
-  fetchMarketMovers: protectedProcedure.query(
+fetchMarketMovers: protectedProcedure.query(
     async (): Promise<MarketMovers> => {
       try {
         const response = await alpacaApiV1.get("/screener/stocks/movers", {
           params: { top: 10 },
         });
 
-        // Helper to transform the data into our consistent ScreenerStock shape
-        const transformMover = (mover: any): ScreenerStock => ({
-          symbol: mover.symbol,
-          price: mover.price,
-          change: mover.change,
-          percentChange: mover.percent_change,
-        });
+        // --- MODIFICATION START ---
 
-        // Safely get and transform the gainers and losers arrays
-        const gainers = response.data.gainers?.map(transformMover) || [];
-        const losers = response.data.losers?.map(transformMover) || [];
+        // 1. Helper is now an async function to fetch the company name.
+        const transformAndEnrichMover = async (mover: any): Promise<ScreenerStock> => {
+          const companyData = await getCompanyNameFromFinnhub(mover.symbol);
+          const companyName = companyData? companyData : mover.symbol; 
+
+          return {
+            symbol: mover.symbol,
+            companyName: companyName, 
+            price: mover.price,
+            change: mover.change,
+            percentChange: mover.percent_change,
+          };
+        };
+
+        // 2. Map over the raw gainers/losers arrays to create arrays of promises.
+        const gainersPromises = response.data.gainers?.map(transformAndEnrichMover) || [];
+        const losersPromises = response.data.losers?.map(transformAndEnrichMover) || [];
+
+        // 3. Use Promise.all to wait for all lookups to complete for both lists.
+        const gainers = await Promise.all(gainersPromises);
+        const losers = await Promise.all(losersPromises);
+
+        // --- MODIFICATION END ---
 
         return { gainers, losers };
+        
       } catch (error) {
         console.error(`Error fetching Alpaca market movers:`, error);
         throw new TRPCError({
@@ -359,5 +386,3 @@ export const HomeDataRouter = createTRPCRouter({
     }
   )
 });
-
-
