@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import React, { useState, useEffect } from 'react';
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { usePrevious } from '@/lib/use-previous';
 import Link from 'next/link'; 
 
@@ -16,6 +16,11 @@ interface TickerData {
     price: number;
     change: number;
     percentChange: number;
+}
+
+interface CleanCompanyInfo {
+    ticker: string;
+    name: string;
 }
 
 const AnimatedTickerItem = ({ item }: { item: TickerData }) => {
@@ -60,24 +65,85 @@ const AnimatedTickerItem = ({ item }: { item: TickerData }) => {
 export function RightSidebar() {
     const trpc = useTRPC();
     const { 
-        data: activesData, 
-        isLoading, 
-        isError 
+        data: trendingSymbols, 
+        isLoading: isSymbolsLoading, 
+        isError: isSymbolsError 
     } = useQuery({
-        ...trpc.HomeData.fetchMarketScreener.queryOptions({ screenerType: 'most_actives' }),
+        ...trpc.HomeData.fetchYahooTrendingTicker.queryOptions({}),
         refetchInterval: 60000,
     });
+    
+    const symbols: string[] = trendingSymbols?.body ?? [];
+    const alpacaCompatibleTickers = symbols.filter(ticker => !ticker.includes('.') && !ticker.includes('-'));
+    const symbolsFinal = alpacaCompatibleTickers.slice(0,10)
+
+
+    const { 
+        data: snapshotQueries, 
+        isLoading: isSnapshotLoading, 
+        isError: isSnapshotError 
+    } = useQuery({
+        ...trpc.HomeData.fetchMarketDataByTickers.queryOptions({tickers: symbolsFinal}),
+        refetchInterval: false,
+        refetchOnReconnect: false,
+    });
+
+    const snapshotQueriesFinal = snapshotQueries ?? [];
+
+
+    const {
+        data: companyNameData,
+        isLoading: isNameLoading,
+        isError: isNameError,
+    } = useQuery({
+        ...trpc.HomeData.fetchCompanyNames.queryOptions({tickers: symbolsFinal}),
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+    });
+
+    const companyNameDataFinal = companyNameData ?? []
+
+        const cleanCompanyData: CleanCompanyInfo[] = companyNameDataFinal.map(company => {
+        const companyName = typeof company.name === 'string'
+            ? company.name 
+            : company.name.companyName;
+
+        return {
+            ticker: company.ticker,
+            name: companyName
+        };
+    });
+
+
+    const activesData: TickerData[] = cleanCompanyData.map((company, index) => {
+
+        const snapshot = snapshotQueriesFinal[index];
+        const currentPrice = snapshot.dailyBar.c;
+        const previousClose = snapshot.prevDailyBar.c;
+        const change = currentPrice - previousClose;
+        const percentChange = previousClose !== 0 ? (change / previousClose) * 100 : 0;
+        
+        
+        const combinedObject: TickerData = {
+            symbol: company.ticker,
+            companyName: company.name,
+            price: currentPrice,
+            change: change,
+            percentChange: percentChange,
+        };
+    
+    return combinedObject;
+});
+
 
     const portfolioData: TickerData[] = [
         { symbol: 'GOOGL', companyName: 'Alphabet Inc.', price: 179.22, change: 1.88, percentChange: 1.06 },
         { symbol: 'MSFT', companyName: 'Microsoft Corporation', price: 447.67, change: -2.11, percentChange: -0.47 },
         { symbol: 'KEVIN', companyName: 'Kevin Borgar Shop', price: 420.69, change: -9.11, percentChange: -0.47 },
         { symbol: 'BOB', companyName: 'Bobbington', price: 420.69, change: -9.11, percentChange: -0.47 },
-
-
     ];
 
-    if (isLoading) {
+    if (isNameLoading || isSnapshotLoading || isSymbolsLoading) {
         return (
             <div className="space-y-4">
                 {[...Array(10)].map((_, i) => (
@@ -87,10 +153,10 @@ export function RightSidebar() {
         );
     }
 
-    if (isError) {
+    if (isNameError || isSnapshotError || isSymbolsError) {
         return (
             <div className="p-6 text-center text-red-500 bg-card rounded-lg border">
-                <p>Failed to load data.</p>
+                <p>Failed to load ticker data.</p>
             </div>
         );
     }
@@ -98,14 +164,13 @@ export function RightSidebar() {
     if (!activesData || activesData.length === 0) {
         return (
             <div className="p-6 text-center text-muted-foreground bg-card rounded-lg border">
-                <p>No data available.</p>
+                <p>No trending data available.</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-8">
-            {/* Trending Tickers Card */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center">Trending Tickers</CardTitle>
@@ -119,7 +184,6 @@ export function RightSidebar() {
                 </CardContent>
             </Card>
       
-            {/* My Portfolio Card */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center">My Portfolio</CardTitle>

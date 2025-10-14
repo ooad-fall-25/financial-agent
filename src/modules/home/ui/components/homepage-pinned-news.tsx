@@ -10,7 +10,6 @@ const pinnedNewsData = [
   { id: 14, title: 'Emerging Markets Show Surprising Growth in Q3', source: 'Financial Times', time: '18h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
   { id: 15, title: 'Crude Oil Prices Fluctuate After OPEC+ Announcement', source: 'Associated Press', time: '5h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
   { id: 16, title: 'Is the Housing Market Finally Cooling Down?', source: 'Forbes', time: '1d ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 17, title: 'Major Automaker Unveils Ambitious Electric Vehicle Strategy', source: 'MarketWatch', time: '22h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' }
 ];
 
 export function PinnedNews() {

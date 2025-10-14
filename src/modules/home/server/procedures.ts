@@ -52,39 +52,15 @@ interface YahooArticle {
     tickers: string[];
 }
 
-interface MarketauxArticle {
-  uuid: string;
-  title: string;
-  description: string;
-  url: string;
-  imageUrl: string;
-  publishedAt: Date;
-  source: string;
+interface AlpacaSnapshot {
+  latestTrade: { p: number; t: string };
+  dailyBar: { o: number; h: number; l: number; c: number; v: number };
+  prevDailyBar: { o: number; h: number; l: number; c: number; v: number };
 }
 
-const parseAlphaVantageDate = (dateString: string): string => {
-  const year = dateString.substring(0, 4);
-  const month = dateString.substring(4, 6);
-  const day = dateString.substring(6, 8);
-  const hour = dateString.substring(9, 11);
-  const minute = dateString.substring(11, 13);
-  const second = dateString.substring(13, 15);
-  return `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
-};
-
-
-interface AVNewsArticle {
-  id: string;
-  headline: string;
-  source: string;
-  url: string;
-  created_at: string; 
-  summary: string;
-  banner_image: string | null;
+interface YahooTrendingTickerResponse {
+  body: string[];
 }
-
-const alphaVantage = new AlphaVantageAPI(process.env.ALPHAVANTAGE_API_KEY!);
-
 
 export const HomeDataRouter = createTRPCRouter({
   fetchCompanyName: protectedProcedure
@@ -94,7 +70,6 @@ export const HomeDataRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      // Call the corrected function from your finnhub library
       const companyData = await getCompanyNameFromFinnhub(input.ticker);
 
       if (!companyData) {
@@ -105,6 +80,26 @@ export const HomeDataRouter = createTRPCRouter({
       }
 
       return companyData;
+    }),
+
+  fetchCompanyNames: protectedProcedure
+    .input(z.object({ tickers: z.array(z.string()) }))
+    .query(async ({ input }) => {
+        const companyDataPromises = input.tickers.map(async (ticker) => {
+            const name = await getCompanyNameFromFinnhub(ticker);
+            return { ticker, name: name ?? 'N/A' }; 
+        });
+
+        const companyData = await Promise.all(companyDataPromises);
+
+        if (!companyData) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Company name not found for tickers`,
+          });
+        }
+        
+        return companyData;
     }),
 
   fetchStockNews: protectedProcedure
@@ -130,41 +125,6 @@ export const HomeDataRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to fetch news`,
-        });
-      }
-    }),
-
-    fetchAVStockNews: protectedProcedure
-    .input(
-      z.object({
-        limit: z.number().optional().default(20),
-        sort: z.string().optional().default('RELEVANCE')
-      })
-    )
-    .query(async ({ input }): Promise<AVNewsArticle[]> => {
-      try {
-        const response = await alphaVantage.getNewsAndSentiment(
-          input.limit
-        );
-
-        if (!response || !response.feed) {
-          return [];
-        }
-
-        return response.feed.map((item: any) => ({
-          id: item.url + item.time_published,
-          headline: item.title,
-          source: item.source,
-          url: item.url,
-          created_at: parseAlphaVantageDate(item.time_published),
-          summary: item.summary,
-          banner_image: item.banner_image || null,
-        }));
-      } catch (error) {
-        console.error("Error fetching Alpha Vantage news:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch news from Alpha Vantage.",
         });
       }
     }),
@@ -216,60 +176,125 @@ export const HomeDataRouter = createTRPCRouter({
       }
     }),
 
-    fetchMarketauxTrendingNews: protectedProcedure
+    fetchYahooTrendingTicker: protectedProcedure
     .input(
       z.object({
-        country: z.string().optional(),
-        search: z.string().optional()
       })
     )
-    .query(async ({  }): Promise<MarketauxArticle[]> => {
-      const apiKey = process.env.MARKETAUX_API_KEY;
-      const countries = "us"
-      const search = "stock"
+    .query(async ({ input }): Promise<YahooTrendingTickerResponse> => {
+      const rapidApiKey = process.env.RAPIDAPI_KEY;
+      const limit = 10
 
-      if (!apiKey) {
+      if (!rapidApiKey) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "CRITICAL: Marketaux API key is not configured on the server.",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'CRITICAL: RapidAPI key is not configured on the server.',
         });
       }
 
-      const params: {
-        api_token: string;
-        countries: string;
-        search: string;
-      } = {
-        api_token: apiKey,
-        countries: countries,
-        search: search 
+      const options = {
+        method: 'GET',
+        url: 'https://yahoo-finance15.p.rapidapi.com/api/yahoo/tr/trending',
+        headers: {
+          'x-rapidapi-key': rapidApiKey,
+          'x-rapidapi-host': 'yahoo-finance15.p.rapidapi.com',
+        },
       };
 
       try {
-        const response = await axios.get("https://api.marketaux.com/v1/news/all", {
-          params: params,
-        });
-
-        const articles = response.data.data || [];
-
-        return articles.map((article: any) => ({
-          uuid: article.uuid,
-          title: article.title,
-          description: article.description,
-          url: article.url,
-          imageUrl: article.image_url,
-          publishedAt: new Date(article.published_at), 
-          source: article.source,
-        }));
+        const response = await axios.request(options);
+        const tickers = response.data.body || [];
+        const finalTickers = tickers.slice(0, limit)
+        console.log(finalTickers)
+        return  { body: finalTickers || [] };
 
       } catch (error) {
-        console.error("Error fetching from Marketaux:", isAxiosError(error) ? error.response?.data : error);
+        console.error("Error fetching from RapidAPI (Yahoo Finance):", error);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch news from Marketaux.",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch news from Yahoo Finance.',
         });
       }
     }),
+
+    fetchStockSnapshot: protectedProcedure
+      .input(z.object({ 
+        ticker: z.string()
+      }))
+      .query(async ({ input }): Promise<AlpacaSnapshot> => {
+        const { ticker } = input;
+  
+        const requestParams = {
+          symbols: ticker,
+          feed: "delayed_sip",
+        };
+  
+        try {
+          const response = await alpacaApiV2.get("/stocks/snapshots", {
+            params: requestParams,
+          });
+      
+          const snapshotData = response.data[ticker];
+  
+          if (!snapshotData || !snapshotData.prevDailyBar) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `Snapshot data not found or incomplete for ${ticker}.`,
+            });
+          }
+  
+          return snapshotData;
+        } catch (error) {
+  
+          if (isAxiosError(error)) {
+            console.error("[TRPC CRITICAL ERROR] Axios error details:", {
+              status: error.response?.status,
+              data: error.response?.data,
+              config: error.config, 
+            });
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Failed to fetch snapshot for ${ticker}.`,
+              cause: error.response?.data,
+            });
+          }
+  
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "An unknown error occurred while fetching snapshot.",
+          });
+        }
+      }),
+
+   fetchMarketDataByTickers: protectedProcedure
+     .input(z.object({ 
+      tickers: z.array(z.string()) 
+    }))
+     .query(async ({ input }): Promise<AlpacaSnapshot[]> => {
+       const { tickers } = input;
+       if (tickers.length === 0) 
+        return [];
+ 
+       try {
+        console.log(tickers)
+         const snapshotsResponse = await alpacaApiV2.get("/stocks/snapshots", {
+           params: { symbols: tickers.join(","), feed: "delayed_sip" },
+         });
+         const snapshots = snapshotsResponse.data;
+ 
+         return tickers.map((ticker) => snapshots[ticker]).filter(Boolean);
+       } catch (error) {
+         console.error(
+           `Error fetching batch snapshots for ${tickers.join(",")}:`,
+           error
+         );
+         throw new TRPCError({
+           code: "INTERNAL_SERVER_ERROR",
+           message: "Failed to fetch market data from Alpaca.",
+         });
+       }
+     }),
+
 
 
 fetchMarketScreener: protectedProcedure
