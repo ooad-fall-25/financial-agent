@@ -14,23 +14,32 @@ import { Button } from "@/components/ui/button"
 import { useDownload } from "@/hooks/use-download"
 import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { DownloadIcon, EditIcon, FileDownIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
+import { DownloadIcon, EditIcon, FileDownIcon, LanguagesIcon, LoaderIcon, TrashIcon, WrenchIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
+import { useSettingsStore } from "@/stores/settings-store"
 
 interface Props {
     summaryId: string;
     content: string;
+    setDisplayContent: (content: string) => void;
 }
 
-export const LibraryDetailAction = ({ summaryId, content }: Props) => {
+export const LibraryDetailAction = ({ summaryId, content, setDisplayContent }: Props) => {
     const searchParams = useSearchParams();
     const type = searchParams.get("type") ?? "category";
 
+    const language = useSettingsStore((state) => state.language);
+
+    // not sure if we can reuse it, so i import twice, to avoid loading state overlapping 
     const { downloadAsMarkdown, isDownloadingMD, downloadAsPDF, isDownloadingPDF } = useDownload();
+    const { downloadAsMarkdown: downloadTranslatedContentAsMarkdown, isDownloadingMD: isDownloadTranslatedContentAsMarkdown, downloadAsPDF:downloadTranslatedContentAsPDF, isDownloadingPDF: isDownloadTranslatedContentAsPDF } = useDownload();
 
     const [isPending, startTransition] = useTransition()
+    const [isTranslated, setIsTranslated] = useState(false);
+    const [translatedContent, setTranslatedContent] = useState("");
+
     const router = useRouter();
     const queryClient = useQueryClient();
     const trpc = useTRPC();
@@ -53,6 +62,16 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
         }
     }));
 
+    const translateMutation = useMutation(trpc.library.translate.mutationOptions({
+        onSuccess: (data) => {
+            toast.success("Summary Translated Successfully")
+            setIsTranslated(true);
+        },
+        onError: (error) => {
+            toast.error(error.message.toString());
+        }
+    }));
+
     const handleDelete = async (summaryId: string) => {
         const deletedData = await mutation.mutateAsync({
             summaryId: summaryId,
@@ -67,6 +86,23 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
         downloadAsPDF("note", content);
     }
 
+    const handleTranslate = async () => {
+        toast.info("Translating... This may take a moment.")
+        const translatedContent = await translateMutation.mutateAsync({
+            language: language,
+            content: content,
+        })
+        setDisplayContent(translatedContent);
+        setTranslatedContent(translatedContent);
+    }
+
+    const handleDownloadTranslatedContentAsMD = () => {
+        downloadTranslatedContentAsMarkdown("note", translatedContent);
+    }
+
+    const handleDownloadTranslatedContentAsPDF = () => {
+        downloadTranslatedContentAsPDF("note", translatedContent);
+    }
 
     return (
         <div className="w-full h-ful">
@@ -91,7 +127,7 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
                             {isPending ? (
                                 <Spinner />
                             ) : (
-                            <EditIcon />
+                                <EditIcon />
                             )}
                         </Button>
                     </div>
@@ -128,6 +164,56 @@ export const LibraryDetailAction = ({ summaryId, content }: Props) => {
                         </Button>
                     </div>
 
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Translate</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleTranslate}
+                            disabled={isTranslated}
+                        >
+                            {translateMutation.isPending ? (
+                                <Spinner />
+                            ) : (
+                                <LanguagesIcon />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download Translated Content as PDF</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleDownloadTranslatedContentAsPDF}
+                            disabled={!isTranslated}
+                        >
+                            {isDownloadTranslatedContentAsPDF ? (
+                                <Spinner />
+                            ) : (
+                                <DownloadIcon />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-x-4 justify-between">
+                        <span>Download Translated Content as Markdown</span>
+                        <Button
+                            size="icon"
+                            variant="action"
+                            className="h-6 w-8  "
+                            onClick={handleDownloadTranslatedContentAsMD}
+                            disabled={!isTranslated}
+                        >
+                            {isDownloadTranslatedContentAsMarkdown ? (
+                                <Spinner />
+                            ) : (
+                                <FileDownIcon />
+                            )}
+                        </Button>
+                    </div>
 
 
                     <div className="flex items-center gap-x-4 justify-between">
