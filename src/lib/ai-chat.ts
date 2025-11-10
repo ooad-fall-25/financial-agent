@@ -4,6 +4,7 @@ import {
   AIMessage,
   SystemMessage,
   BaseMessage,
+  ToolMessage,
 } from "@langchain/core/messages";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -90,12 +91,12 @@ const financialNewsTool = new DynamicStructuredTool({
  * Invokes the ReAct agent with the user's prompt and chat history.
  * @param currentMessage The user's current message.
  * @param history The chat history.
- * @returns The AI's response as a string.
+ * @returns An object containing the AI's final response and its thought process.
  */
 export const invokeReActAgent = async (
   currentMessage: string,
   history: { role: string; content: string }[]
-): Promise<string> => {
+): Promise<{ finalResponse: string; thoughts: string | null }> => {
   const tools = [financialNewsTool];
 
   const agentExecutor = createReactAgent({
@@ -128,8 +129,28 @@ export const invokeReActAgent = async (
     messages: agentMessages,
   });
 
+  const intermediateSteps = result.messages.slice(0, -1);
+  let thoughts = "";
+
+  intermediateSteps.forEach((message) => {
+    if (message instanceof AIMessage && message.tool_calls) {
+      thoughts += "Tool Call:\n";
+      message.tool_calls.forEach((toolCall) => {
+        thoughts += `- Function: ${toolCall.name}\n`;
+        thoughts += `- Arguments: ${JSON.stringify(toolCall.args, null, 2)}\n`;
+      });
+      thoughts += "\n";
+    } else if (message instanceof ToolMessage) {
+      thoughts += "Tool Observation:\n";
+      thoughts += `${message.content}\n\n`;
+    }
+  });
+
   const lastMessage = result.messages[result.messages.length - 1];
-  return lastMessage.content.toString();
+  return {
+    finalResponse: lastMessage.content.toString(),
+    thoughts: thoughts.trim() || null,
+  };
 };
 
 /**

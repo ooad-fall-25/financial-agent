@@ -97,11 +97,14 @@ export const chatRouter = createTRPCRouter({
         );
 
         let aiResponseContent: string;
+        let thoughts: string | null = null;
 
         // 3. Route the request based on the decision
         if (routingDecision === "ReAct") {
           // Call the ReAct agent
-          aiResponseContent = await invokeReActAgent(input.prompt, history);
+          const agentResult = await invokeReActAgent(input.prompt, history);
+          aiResponseContent = agentResult.finalResponse;
+          thoughts = agentResult.thoughts;
         } else {
           // Use the direct LLM call for simple queries
           const aiResponse = await createAIChatCompletion(
@@ -123,6 +126,7 @@ export const chatRouter = createTRPCRouter({
               userId: ctx.auth.userId,
               role: "assistant",
               content: aiResponseContent,
+              thoughts: thoughts,
               conversationId: conversationId,
             },
           ],
