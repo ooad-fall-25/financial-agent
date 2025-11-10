@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { AIResponse } from "@/components/ui/kibo-ui/ai/response";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,6 +63,7 @@ interface AssistantMessageProps {
   content: string;
   createdAt: Date;
   aiModelId: string | null;
+  thoughts?: string | null;
   isLoading?: boolean;
 }
 
@@ -70,6 +71,7 @@ export const AssistantMessage = ({
   content,
   createdAt,
   aiModelId,
+  thoughts,
   isLoading,
 }: AssistantMessageProps) => {
   if (isLoading) {
@@ -92,6 +94,19 @@ export const AssistantMessage = ({
       <div className="flex flex-col gap-y-4 px-4">
         <AIResponse className="text-sm space-y-4">{content}</AIResponse>
       </div>
+      {thoughts && (
+        <details className="mt-2 mx-4 bg-muted/50 rounded-lg border">
+          <summary className="cursor-pointer text-sm font-medium text-muted-foreground p-2 flex items-center gap-2">
+            <BrainCircuit className="h-4 w-4" />
+            Show Thoughts
+          </summary>
+          <div className="p-2 border-t">
+            <pre className="text-xs whitespace-pre-wrap font-mono bg-transparent p-2 rounded-md">
+              <code>{thoughts}</code>
+            </pre>
+          </div>
+        </details>
+      )}
       <div className="flex items-center gap-2 mt-2 px-4">
         <CopyButton
           text={content}
@@ -107,6 +122,7 @@ interface Props {
   role: string;
   createdAt: Date;
   aiModelId: string | null;
+  thoughts?: string | null;
   className?: string;
   isLoading?: boolean;
 }
@@ -116,6 +132,7 @@ export const MessageCard = ({
   role,
   createdAt,
   aiModelId,
+  thoughts,
   className,
   isLoading,
 }: Props) => {
@@ -126,6 +143,7 @@ export const MessageCard = ({
           content={content}
           createdAt={createdAt}
           aiModelId={aiModelId}
+          thoughts={thoughts}
           isLoading={isLoading}
         />
       </div>

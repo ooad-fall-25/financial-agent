@@ -114,6 +114,7 @@ export const MessagesContainer = ({
           role: "user",
           content: newMessage.prompt,
           createdAt: new Date(),
+          thoughts: null,
         };
         const optimisticAssistantMessage = {
           id: `optimistic-assistant-${Date.now()}`,
@@ -121,6 +122,7 @@ export const MessagesContainer = ({
           content: "",
           createdAt: new Date(),
           isLoading: true, // This will trigger the spinner in MessageCard
+          thoughts: null,
         };
 
         const oldHistory = Array.isArray(oldData) ? oldData : [];
@@ -256,6 +258,7 @@ export const MessagesContainer = ({
               aiModelId=""
               createdAt={new Date(message.createdAt)} // Ensure createdAt is a Date object
               isLoading={message.isLoading}
+              thoughts={message.thoughts}
             />
           ))}
           <div ref={bottomRef} />
