@@ -163,7 +163,7 @@ export const getUSCompanyNews = async (ticker: string) => {
   const finnhubClient = getFinnhubClient();
 
   const fmt = (d: Date): string =>
-    d.toISOString().slice(0, 10).replace(/-/g, "/");
+    d.toISOString().slice(0, 10).replace(/-/g, "-");
 
   const today: string = fmt(new Date());
   const twoDaysAgo: string = fmt(
