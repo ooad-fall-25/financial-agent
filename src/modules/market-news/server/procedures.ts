@@ -14,7 +14,7 @@ import {
 } from "@/lib/news-summary";
 import { summaryAgent } from "@/lib/news-summary-agent";
 
-export const marketsRouter = createTRPCRouter({
+export const marketNewsRouter = createTRPCRouter({
   createAINewsSummary: protectedProcedure
     .input(
       z.object({
