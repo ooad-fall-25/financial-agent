@@ -1,4 +1,4 @@
-import { NewsAggregationView } from "@/modules/markets/ui/views/news-aggregation-view";
+import { NewsAggregationView } from "@/modules/market-news/ui/views/news-aggregation-view";
 
 const Page = () => {
     return (
