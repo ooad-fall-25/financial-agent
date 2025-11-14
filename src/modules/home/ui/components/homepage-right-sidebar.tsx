@@ -74,8 +74,8 @@ export function RightSidebar() {
     });
     
     const symbols: string[] = trendingSymbols?.body ?? [];
-    const alpacaCompatibleTickers = symbols.filter(ticker => !ticker.includes('.') && !ticker.includes('-'));
-    const symbolsFinal = alpacaCompatibleTickers.slice(0,10)
+    const alpacaCompatibleTickers = symbols.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^'));
+    const symbolsFinal = alpacaCompatibleTickers.slice(0, 10) 
 
 
     const { 
@@ -84,7 +84,6 @@ export function RightSidebar() {
         isError: isSnapshotError 
     } = useQuery({
         ...trpc.HomeData.fetchMarketDataByTickers.queryOptions({tickers: symbolsFinal}),
-        refetchInterval: false,
         refetchOnReconnect: false,
     });
 
@@ -97,7 +96,6 @@ export function RightSidebar() {
         isError: isNameError,
     } = useQuery({
         ...trpc.HomeData.fetchCompanyNames.queryOptions({tickers: symbolsFinal}),
-        refetchOnWindowFocus: false,
         refetchOnReconnect: false,
     });
 

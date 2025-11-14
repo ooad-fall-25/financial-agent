@@ -205,7 +205,6 @@ export const HomeDataRouter = createTRPCRouter({
         const response = await axios.request(options);
         const tickers = response.data.body || [];
         const finalTickers = tickers.slice(0, limit)
-        console.log(finalTickers)
         return  { body: finalTickers || [] };
 
       } catch (error) {
