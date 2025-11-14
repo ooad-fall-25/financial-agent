@@ -54,10 +54,10 @@ export const AskAINewsLinkDialog = ({
 
     const queryClient = useQueryClient();
     const trpc = useTRPC();
-    const newsByLink = useMutation(trpc.marketssssss.createAINewsSummaryByLink.mutationOptions(
+    const newsByLink = useMutation(trpc.marketNews.createAINewsSummaryByLink.mutationOptions(
         {
             onSuccess: (data) => {
-                queryClient.invalidateQueries(trpc.marketssssss.getAINewsSummaryByLink.queryOptions())
+                queryClient.invalidateQueries(trpc.marketNews.getAINewsSummaryByLink.queryOptions())
             },
             onError: (error) => {
                 toast.error(error.message)
@@ -65,7 +65,7 @@ export const AskAINewsLinkDialog = ({
         }
     ));
 
-    const { data: content } = useQuery(trpc.marketssssss.getAINewsSummaryByLink.queryOptions());
+    const { data: content } = useQuery(trpc.marketNews.getAINewsSummaryByLink.queryOptions());
 
     const handleNewsSubmit = () => {
         newsByLink.mutate({

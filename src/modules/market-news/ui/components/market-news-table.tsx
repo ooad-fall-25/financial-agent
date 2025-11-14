@@ -63,12 +63,12 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
     const [marketNews, setMarketNews] = useState<MarketNews[]>();
 
 
-    const { data: News, isLoading } = useQuery(trpc.marketssssss.getMarketNews.queryOptions({
+    const { data: News, isLoading } = useQuery(trpc.marketNews.getMarketNews.queryOptions({
         category: marketCategory, marketType: marketType
     },
     ))
 
-    const { data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketssssss.getUSCompanyNews.queryOptions({
+    const { data: USCompanyNews, isLoading: isCompanyLoading } = useQuery(trpc.marketNews.getUSCompanyNews.queryOptions({
         ticker: ticker || ""
     },
         {
@@ -108,7 +108,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
                                     href={news.url || "#"}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group block overflow-hidden rounded-md" 
+                                    className="group block overflow-hidden rounded-md"
                                 >
                                     <Image
                                         src={news.imageUrl || "/logo.png"}

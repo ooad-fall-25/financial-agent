@@ -78,9 +78,9 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
 
     const queryClient = useQueryClient();
     const trpc = useTRPC();
-    const newsMutation = useMutation(trpc.marketssssss.createAINewsSummary.mutationOptions({
+    const newsMutation = useMutation(trpc.marketNews.createAINewsSummary.mutationOptions({
         onSuccess: (data) => {
-            queryClient.invalidateQueries(trpc.marketssssss.getAINewsSummary.queryOptions());
+            queryClient.invalidateQueries(trpc.marketNews.getAINewsSummary.queryOptions());
             resetStates();
         },
         onError: (error) => {
@@ -88,7 +88,7 @@ export const AskAINewsSheet = ({ isOpen, setIsOpen }: Props) => {
         }
     }));
 
-    const { data: summary, isLoading } = useQuery(trpc.marketssssss.getAINewsSummary.queryOptions())
+    const { data: summary, isLoading } = useQuery(trpc.marketNews.getAINewsSummary.queryOptions())
 
     const handleAskAI = () => {
         newsMutation.mutate({

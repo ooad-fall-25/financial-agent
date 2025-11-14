@@ -1,4 +1,4 @@
-import SettingsPage from '@/modules/markets/ui/views/settings-page-view';
+import SettingsPage from '@/modules/market-news/ui/views/settings-page-view';
 
 const Page = () => {
     return (
