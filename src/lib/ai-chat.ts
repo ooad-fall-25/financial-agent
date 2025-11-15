@@ -10,7 +10,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
 import { getAccumulatedNews } from "./helper";
-import { getStockBars } from "./alpaca";
+import { getStockBars, getCryptoBars } from "./alpaca";
 
 const deepseekClient = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -116,6 +116,34 @@ const getStockBarsTool = new DynamicStructuredTool({
   },
 });
 
+const getCryptoBarsTool = new DynamicStructuredTool({
+  name: "get_crypto_bars",
+  description: "Fetches historical market data (bars) for a specific cryptocurrency ticker. Use this to get price history, open, high, low, close, and volume data for cryptocurrencies.",
+  schema: z.object({
+    ticker: z.string().describe("The cryptocurrency ticker symbol, e.g., 'BTC/USD' for Bitcoin."),
+    range: z.enum(["1d", "5d", "1mo", "6mo", "ytd", "1y", "5y", "max"]).describe("The time range for the data, e.g., '1y' for one year."),
+    interval: z.enum(["1Min", "5Min", "15Min", "1H", "1D"]).describe("The time interval between data points (bars), e.g., '1D' for daily bars."),
+  }),
+  func: async ({ ticker, range, interval }: { ticker: string; range: string; interval: string }) => {
+    console.log("AI is using 'get_crypto_bars' tool with params:", {
+      ticker,
+      range,
+      interval,
+    });
+    try {
+      const bars = await getCryptoBars(ticker, range, interval);
+      if (bars.length === 0) {
+        return `No crypto bar data found for ticker '${ticker}' with the specified parameters.`;
+      }
+      // Return the data as a JSON string for the AI to process
+      return JSON.stringify(bars);
+    } catch (error) {
+      console.error("Error executing getCryptoBarsTool:", error);
+      return `An error occurred while fetching crypto data for ${ticker}.`;
+    }
+  },
+});
+
 
 /**
  * Invokes the ReAct agent with the user's prompt and chat history.
@@ -127,7 +155,7 @@ export const invokeReActAgent = async (
   currentMessage: string,
   history: { role: string; content: string }[]
 ): Promise<{ finalResponse: string; thoughts: string | null }> => {
-  const tools = [financialNewsTool, getStockBarsTool];
+  const tools = [financialNewsTool, getStockBarsTool, getCryptoBarsTool];
 
   const agentExecutor = createReactAgent({
     llm: deepseekClient,
