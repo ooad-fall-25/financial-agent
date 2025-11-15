@@ -10,6 +10,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
 import { getAccumulatedNews } from "./helper";
+import { getStockBars, getCryptoBars } from "./alpaca";
 
 const deepseekClient = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -87,6 +88,63 @@ const financialNewsTool = new DynamicStructuredTool({
   },
 });
 
+const getStockBarsTool = new DynamicStructuredTool({
+  name: "get_stock_bars",
+  description: "Fetches historical market data (bars) for a specific stock ticker. Use this to get price history, open, high, low, close, and volume data.",
+  schema: z.object({
+    ticker: z.string().describe("The stock ticker symbol, e.g., 'AAPL' for Apple."),
+    range: z.enum(["1d", "5d", "1mo", "6mo", "ytd", "1y", "5y", "max"]).describe("The time range for the data, e.g., '1y' for one year."),
+    interval: z.enum(["1Min", "5Min", "15Min", "1H", "1D"]).describe("The time interval between data points (bars), e.g., '1D' for daily bars."),
+  }),
+  func: async ({ ticker, range, interval }: { ticker: string; range: string; interval: string }) => {
+    console.log("AI is using 'get_stock_bars' tool with params:", {
+      ticker,
+      range,
+      interval,
+    });
+    try {
+      const bars = await getStockBars(ticker, range, interval);
+      if (bars.length === 0) {
+        return `No stock bar data found for ticker '${ticker}' with the specified parameters.`;
+      }
+      // Return the data as a JSON string for the AI to process
+      return JSON.stringify(bars);
+    } catch (error) {
+      console.error("Error executing getStockBarsTool:", error);
+      return `An error occurred while fetching stock data for ${ticker}.`;
+    }
+  },
+});
+
+const getCryptoBarsTool = new DynamicStructuredTool({
+  name: "get_crypto_bars",
+  description: "Fetches historical market data (bars) for a specific cryptocurrency ticker. Use this to get price history, open, high, low, close, and volume data for cryptocurrencies.",
+  schema: z.object({
+    ticker: z.string().describe("The cryptocurrency ticker symbol, e.g., 'BTC/USD' for Bitcoin."),
+    range: z.enum(["1d", "5d", "1mo", "6mo", "ytd", "1y", "5y", "max"]).describe("The time range for the data, e.g., '1y' for one year."),
+    interval: z.enum(["1Min", "5Min", "15Min", "1H", "1D"]).describe("The time interval between data points (bars), e.g., '1D' for daily bars."),
+  }),
+  func: async ({ ticker, range, interval }: { ticker: string; range: string; interval: string }) => {
+    console.log("AI is using 'get_crypto_bars' tool with params:", {
+      ticker,
+      range,
+      interval,
+    });
+    try {
+      const bars = await getCryptoBars(ticker, range, interval);
+      if (bars.length === 0) {
+        return `No crypto bar data found for ticker '${ticker}' with the specified parameters.`;
+      }
+      // Return the data as a JSON string for the AI to process
+      return JSON.stringify(bars);
+    } catch (error) {
+      console.error("Error executing getCryptoBarsTool:", error);
+      return `An error occurred while fetching crypto data for ${ticker}.`;
+    }
+  },
+});
+
+
 /**
  * Invokes the ReAct agent with the user's prompt and chat history.
  * @param currentMessage The user's current message.
@@ -97,7 +155,7 @@ export const invokeReActAgent = async (
   currentMessage: string,
   history: { role: string; content: string }[]
 ): Promise<{ finalResponse: string; thoughts: string | null }> => {
-  const tools = [financialNewsTool];
+  const tools = [financialNewsTool, getStockBarsTool, getCryptoBarsTool];
 
   const agentExecutor = createReactAgent({
     llm: deepseekClient,
@@ -167,7 +225,7 @@ export const getRoutingDecision = async (
     `You are a router. Your purpose is to decide whether a user's query should be handled by a simple, direct LLM call or a more complex ReAct agent that can use tools.
     - Consider the ENTIRE conversation history to understand the context. A short message like "what about Microsoft?" might require a tool if the previous topic was about company news.
     - If the query is a straightforward question, a request for explanation, a simple instruction, or a conversational turn unrelated to tool usage, respond with "Direct LLM Call".
-    - If the query requires accessing external information (like fetching news), performing calculations, or taking actions, even if it's a follow-up question, respond with "ReAct".
+    - If the query requires accessing external information (like fetching news or stock prices), performing calculations, or taking actions, even if it's a follow-up question, respond with "ReAct".
     - Respond with ONLY "Direct LLM Call" or "ReAct".`
   );
 
