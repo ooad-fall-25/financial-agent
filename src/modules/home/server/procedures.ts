@@ -186,13 +186,11 @@ export const HomeDataRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const pinnedNews = await prisma.pinnedNews.create({
         data: {
-          // The userId comes from the authenticated user's session context
           userId: ctx.auth.userId,
-          // The rest of the data comes from the validated input
           title: input.title,
           source: input.source,
           url: input.url,
-          time: input.time, // Convert the string from input into a Date object for Prisma
+          time: input.time, 
         },
       });
       if (!pinnedNews) {

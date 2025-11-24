@@ -1,19 +1,48 @@
-import { Card, CardContent } from "@/components/ui/card";
-import Link from 'next/link'; // Import the Link component
+"use client"
 
-const pinnedNewsData = [
-  { id: 9, title: 'Why Treasury Bonds Are Attracting Renewed Interest', source: 'Bloomberg', time: '15h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 10, title: 'Understanding the Latest Earnings Reports', source: 'The Motley Fool', time: '1d ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 11, title: 'Federal Reserve Hints at Future Interest Rate Adjustments', source: 'The Wall Street Journal', time: '8h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 12, title: 'Tech Stocks Experience Volatility Amid New Regulations', source: 'Reuters', time: '12h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 13, title: 'Global Supply Chain Disruptions Continue to Impact Retail Sector', source: 'CNBC', time: '2h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 14, title: 'Emerging Markets Show Surprising Growth in Q3', source: 'Financial Times', time: '18h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 15, title: 'Crude Oil Prices Fluctuate After OPEC+ Announcement', source: 'Associated Press', time: '5h ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-  { id: 16, title: 'Is the Housing Market Finally Cooling Down?', source: 'Forbes', time: '1d ago', url: 'https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg' },
-];
+import { Card, CardContent } from "@/components/ui/card";
+import { useTRPC } from "@/trpc/client";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { Loader2, X } from "lucide-react";
+import Link from 'next/link'; 
 
 export function PinnedNews() {
-  if (!pinnedNewsData || pinnedNewsData.length === 0) {
+  const trpc = useTRPC();
+  const query = useQueryClient();
+
+  const { 
+    data: pinnedNewsData, 
+    isLoading,
+    isError
+  } = useQuery({
+    ...trpc.HomeData.getAllPinnedNews.queryOptions(),
+    refetchOnWindowFocus: false,
+  });
+
+  const unpinMutation = useMutation({
+    ...trpc.HomeData.unpinNews.mutationOptions(),
+    onSuccess: () => {
+      query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+    },
+  });
+
+  const handleUnpin = (e: React.MouseEvent, newsId: string) => {
+    e.preventDefault(); 
+    e.stopPropagation();
+    unpinMutation.mutate({ newsId });
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError || !pinnedNewsData || pinnedNewsData.length === 0) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -30,7 +59,7 @@ export function PinnedNews() {
           <Link
             key={item.id}
             href={item.url}
-            className="block outline-none focus:outline-none" 
+            className="block relative group outline-none focus:outline-none" 
           >
             <div
               className="group overflow-hidden rounded-lg p-3
@@ -42,6 +71,13 @@ export function PinnedNews() {
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">{item.source} • {item.time}</p>
               </div>
+              <button
+                onClick={(e) => handleUnpin(e, item.id)}
+                className="absolute top-1/2 -translate-y-10 right-0 p-1.5 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 outline-none hover:bg-muted"
+                aria-label="Unpin news"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </Link>
         ))}
