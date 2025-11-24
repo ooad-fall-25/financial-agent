@@ -5,40 +5,67 @@ import { ChatDeepSeek } from "@langchain/deepseek";
 import { IMPROVED_SUMMARIZE_NEWS_BY_CATEGORY } from "./constants";
 import { getAccumulatedNews } from "./helper";
 
-const getAccumulatedNewsTool = new DynamicStructuredTool({
-  name: "get_all_news",
+const financialNewsTool = new DynamicStructuredTool({
+  name: "get_financial_news",
+  description:
+    "Fetches financial news for a given market and category. For US-based companies like Google or Microsoft, always use the 'us' marketType. Use this for any questions about market updates or company-specific news.",
   schema: z.object({
-    marketType: z.enum(["us", "cn"]).describe("Market type: 'us' or 'cn'."),
+    marketType: z
+      .enum(["us", "cn"])
+      .describe("The market to fetch news from: 'us' or 'cn'."),
     category: z
-      .string()
+      .enum([
+        "stock",
+        "general",
+        "crypto",
+        "merger",
+        "company",
+        "business",
+        "finance",
+      ])
       .describe(
-        "News category. For 'us': 'stock', 'general', 'crypto', 'merger', 'company'. For 'cn': 'business', 'finance'."
+        "The news category. For 'us' market, use one of ['stock', 'general', 'crypto', 'merger', 'company']. For 'cn' market, use one of ['business', 'finance']."
+      ),
+    ticker: z
+      .string()
+      .optional()
+      .describe(
+        "The company's ticker symbol (e.g., 'AAPL'). Required when the category is 'company'."
       ),
     limit: z
       .number()
       .optional()
-      .default(10)
-      .describe("Maximum number of news items to fetch (default 10, 0 = all)."),
-    ticker: z
-      .string()
-      .optional()
-      .default("AAPL")
-      .describe("Company's ticker symbol. Ex: for Apple its 'AAPL'"),
+      .describe("The maximum number of news articles to return."),
   }),
-  description:
-    "Fetch financial news articles for a given market and category. Returns raw data for summarization only — not for direct output.",
   func: async ({
     marketType,
     category,
-    limit,
     ticker,
+    limit,
   }: {
-    marketType: string;
+    marketType: "us" | "cn";
     category: string;
-    limit?: number;
     ticker?: string;
+    limit?: number;
   }) => {
-    return await getAccumulatedNews(marketType, category, limit, ticker);
+    // Log the parameters the AI used for the tool call
+    console.log("AI is using 'get_financial_news' tool with params:", {
+      marketType,
+      category,
+      ticker,
+      limit,
+    });
+
+    if (category === "company" && !ticker) {
+      return "A ticker symbol is required when the category is 'company'.";
+    }
+    const news = await getAccumulatedNews(marketType, category, limit, ticker);
+    console.log("Fetched News Result:", news); // Log the result
+    return (
+      news ||
+      `No news found for market '${marketType}', category '${category}'` +
+        (ticker ? `, and ticker '${ticker}'.` : ".")
+    );
   },
 });
 
@@ -48,7 +75,7 @@ const deepseekClient = new ChatDeepSeek({
   streamUsage: false,
 });
 
-const tools = [getAccumulatedNewsTool];
+const tools = [financialNewsTool];
 
 const agent = createReactAgent({
   llm: deepseekClient.bindTools(tools, { parallel_tool_calls: false }),
@@ -82,15 +109,18 @@ export const summaryAgent = async (
     {
       role: "system",
       content:
-        IMPROVED_SUMMARIZE_NEWS_BY_CATEGORY +
-        `For Context:
-- Market Type: ${marketType}
-- Category: ${category}
-- Language: ${language || "English"}`,
+        IMPROVED_SUMMARIZE_NEWS_BY_CATEGORY
     },
     {
       role: "user",
-      content: message?.trim() || "Summarize these financial news.",
+      content: (message?.trim() + 
+      `For Context: below are explicitly filled, compare this to the message, if it doesnt alight, follow the user message. if the message doesnt specify, follow this context.
+          - Market Type: ${marketType}
+          - Category: ${category}
+          - Language: ${language || "English"}
+          
+          ` )
+      || "\nSummarize these financial news.",
     },
   ];
 
