@@ -63,24 +63,166 @@ interface YahooTrendingTickerResponse {
 }
 
 export const HomeDataRouter = createTRPCRouter({
-  fetchCompanyName: protectedProcedure
+  // fetchCompanyName: protectedProcedure
+  //   .input(
+  //     z.object({
+  //       ticker: z.string(),
+  //     })
+  //   )
+  //   .query(async ({ input }) => {
+  //     const companyData = await getCompanyNameFromFinnhub(input.ticker);
+
+  //     if (!companyData) {
+  //       throw new TRPCError({
+  //         code: "NOT_FOUND",
+  //         message: `Company name not found for ticker: ${input.ticker}`,
+  //       });
+  //     }
+
+  //     return companyData;
+  //   }),
+
+  // fetchStockNews: protectedProcedure
+  //   .input(
+  //     z.object({
+  //       limit: z.number().optional().default(20),
+  //     })
+  //   )
+  //   .query(async ({ input }): Promise<AlpacaNewsArticle[]> => {
+  //     const { limit } = input;
+  //     try {
+  //       const response = await alpacaApiV1.get("/news", {
+  //         params: {
+  //           sort: "desc", 
+  //           limit: limit, 
+  //           include_content: false, 
+  //         },
+  //       });
+
+  //       return response.data.news || [];
+  //     } catch (error) {
+  //       console.error(`Error fetching Alpaca news for :`, error);
+  //       throw new TRPCError({
+  //         code: "INTERNAL_SERVER_ERROR",
+  //         message: `Failed to fetch news`,
+  //       });
+  //     }
+  //   }),
+
+  // fetchStockSnapshot: protectedProcedure
+  //   .input(z.object({ 
+  //     ticker: z.string()
+  //   }))
+  //   .query(async ({ input }): Promise<AlpacaSnapshot> => {
+  //     const { ticker } = input;
+
+  //     const requestParams = {
+  //       symbols: ticker,
+  //       feed: "delayed_sip",
+  //     };
+
+  //     try {
+  //       const response = await alpacaApiV2.get("/stocks/snapshots", {
+  //         params: requestParams,
+  //       });
+    
+  //       const snapshotData = response.data[ticker];
+
+  //       if (!snapshotData || !snapshotData.prevDailyBar) {
+  //         throw new TRPCError({
+  //           code: "NOT_FOUND",
+  //           message: `Snapshot data not found or incomplete for ${ticker}.`,
+  //         });
+  //       }
+
+  //       return snapshotData;
+  //     } catch (error) {
+
+  //       if (isAxiosError(error)) {
+  //         console.error("[TRPC CRITICAL ERROR] Axios error details:", {
+  //           status: error.response?.status,
+  //           data: error.response?.data,
+  //           config: error.config, 
+  //         });
+  //         throw new TRPCError({
+  //           code: "INTERNAL_SERVER_ERROR",
+  //           message: `Failed to fetch snapshot for ${ticker}.`,
+  //           cause: error.response?.data,
+  //         });
+  //       }
+
+  //       throw new TRPCError({
+  //         code: "INTERNAL_SERVER_ERROR",
+  //         message: "An unknown error occurred while fetching snapshot.",
+  //       });
+  //     }
+  //   }),
+
+  
+  getAllPinnedNews: protectedProcedure.query(async ({ ctx }) => {
+    const data = await prisma.pinnedNews.findMany({
+    where: {
+      userId: ctx.auth.userId,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    });
+    if (!data) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+    }
+    return data;
+  }),
+
+  pinNews: protectedProcedure 
     .input(
       z.object({
-        ticker: z.string(),
+        title: z.string(),
+        source: z.string(),
+        url: z.string(),
+        time: z.string(),
       })
     )
-    .query(async ({ input }) => {
-      const companyData = await getCompanyNameFromFinnhub(input.ticker);
+    .mutation(async ({ input, ctx }) => {
+      const pinnedNews = await prisma.pinnedNews.create({
+        data: {
+          // The userId comes from the authenticated user's session context
+          userId: ctx.auth.userId,
+          // The rest of the data comes from the validated input
+          title: input.title,
+          source: input.source,
+          url: input.url,
+          time: input.time, // Convert the string from input into a Date object for Prisma
+        },
+      });
+      if (!pinnedNews) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No News found" });
+      }
+      return pinnedNews;
+    }),
 
-      if (!companyData) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Company name not found for ticker: ${input.ticker}`,
-        });
+
+  unpinNews: protectedProcedure 
+    .input(
+      z.object({
+        newsId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { count } = await prisma.pinnedNews.deleteMany({
+        where: {
+          userId: ctx.auth.userId,
+          id: input.newsId,
+        },
+      });
+
+      if (count === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Pinned news item not found or you do not have permission to delete it." });
       }
 
-      return companyData;
+      return { success: true };
     }),
+
 
   fetchCompanyNames: protectedProcedure
     .input(z.object({ tickers: z.array(z.string()) }))
@@ -100,33 +242,6 @@ export const HomeDataRouter = createTRPCRouter({
         }
         
         return companyData;
-    }),
-
-  fetchStockNews: protectedProcedure
-    .input(
-      z.object({
-        limit: z.number().optional().default(20),
-      })
-    )
-    .query(async ({ input }): Promise<AlpacaNewsArticle[]> => {
-      const { limit } = input;
-      try {
-        const response = await alpacaApiV1.get("/news", {
-          params: {
-            sort: "desc", 
-            limit: limit, 
-            include_content: false, 
-          },
-        });
-
-        return response.data.news || [];
-      } catch (error) {
-        console.error(`Error fetching Alpaca news for :`, error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to fetch news`,
-        });
-      }
     }),
 
   fetchYahooFinanceNews: protectedProcedure
@@ -176,7 +291,7 @@ export const HomeDataRouter = createTRPCRouter({
       }
     }),
 
-    fetchYahooTrendingTicker: protectedProcedure
+  fetchYahooTrendingTicker: protectedProcedure
     .input(
       z.object({
       })
@@ -216,55 +331,6 @@ export const HomeDataRouter = createTRPCRouter({
       }
     }),
 
-    fetchStockSnapshot: protectedProcedure
-      .input(z.object({ 
-        ticker: z.string()
-      }))
-      .query(async ({ input }): Promise<AlpacaSnapshot> => {
-        const { ticker } = input;
-  
-        const requestParams = {
-          symbols: ticker,
-          feed: "delayed_sip",
-        };
-  
-        try {
-          const response = await alpacaApiV2.get("/stocks/snapshots", {
-            params: requestParams,
-          });
-      
-          const snapshotData = response.data[ticker];
-  
-          if (!snapshotData || !snapshotData.prevDailyBar) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: `Snapshot data not found or incomplete for ${ticker}.`,
-            });
-          }
-  
-          return snapshotData;
-        } catch (error) {
-  
-          if (isAxiosError(error)) {
-            console.error("[TRPC CRITICAL ERROR] Axios error details:", {
-              status: error.response?.status,
-              data: error.response?.data,
-              config: error.config, 
-            });
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: `Failed to fetch snapshot for ${ticker}.`,
-              cause: error.response?.data,
-            });
-          }
-  
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "An unknown error occurred while fetching snapshot.",
-          });
-        }
-      }),
-
    fetchMarketDataByTickers: protectedProcedure
      .input(z.object({ 
       tickers: z.array(z.string()) 
@@ -293,8 +359,6 @@ export const HomeDataRouter = createTRPCRouter({
          });
        }
      }),
-
-
 
 fetchMarketScreener: protectedProcedure
     .input(
