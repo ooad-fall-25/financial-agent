@@ -78,3 +78,16 @@ model Media {
   reportId String
   report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 }
+
+model PinnedNews {
+  id     String   @id @default(uuid())
+  userId String   
+  title  String
+  source String   
+  url    String   
+  time   String 
+
+  createdAt DateTime @default(now()) 
+
+  @@unique([userId, url]) // Ensures a user cannot pin the same URL twice
+}

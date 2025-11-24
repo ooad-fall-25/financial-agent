@@ -1,92 +1,3 @@
-// "use client";
-
-// import {
-//   Card,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card";
-// import { useTRPC } from "@/trpc/client";
-// import { useQuery } from "@tanstack/react-query";
-
-// export function TrendingNews() {
-//   const trpc = useTRPC();
-//   const { 
-//     data: news, 
-//     isLoading, 
-//     isError 
-//   } = useQuery({
-//       ...trpc.HomeData.fetchStockNews.queryOptions({}),
-//       refetchOnWindowFocus: false, 
-//     });
-
-    
-//   if (isLoading) {
-//     // ... skeleton code ...
-//     return <div>Loading...</div>;
-//   }
-
-//   if (isError || !news || news.length < 3) {
-//     return <Card className="p-4"><p className="text-red-500">Could not load trending news.</p></Card>;
-//   }
-
-//   const topStory = news[0];
-//   const subStories = news.slice(1, 3);
-//   const topStoryImage = topStory.images.find(img => img.size === 'large');
-  
-//   return (
-//     <div className="space-y-6">
-//       {/* Top Story with Big Picture */}
-//       <Card>
-//         <a href={topStory.url} target="_blank" rel="noopener noreferrer">
-//           {/* FIXED: Added 'overflow-hidden' to the parent div to clip the image */}
-//           <div className="relative w-full aspect-video bg-muted rounded-t-lg overflow-hidden">
-//             {topStoryImage && (
-//                <img 
-//                   src={topStoryImage.url} 
-//                   alt={topStory.headline} 
-//                   // The image itself no longer needs rounded corners, as the parent clips it
-//                   className="w-full h-full object-cover"
-//                />
-//             )}
-//           </div>
-//           <CardHeader className="pt-4">
-//             <CardTitle className="text-2xl hover:underline text-center">{topStory.headline}</CardTitle>
-//             <CardDescription className="text-center pt-2">{topStory.source} • {new Date(topStory.created_at).toLocaleDateString()}</CardDescription>
-//           </CardHeader>
-//         </a>
-//       </Card>
-
-//       {/* Two Smaller Stories Side-by-Side */}
-//       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-//         {subStories.map((story) => {
-//           const storyImage = story.images.find(img => img.size === 'large');
-//           return (
-//             <Card key={story.id}>
-//               <a href={story.url} target="_blank" rel="noopener noreferrer">
-//                 {/* FIXED: Also added 'overflow-hidden' here for consistency */}
-//                 <div className="relative w-full aspect-video bg-muted rounded-t-lg overflow-hidden">
-//                   {storyImage && (
-//                       <img 
-//                         src={storyImage.url} 
-//                         alt={story.headline} 
-//                         className="w-full h-full object-cover"
-//                       />
-//                   )}
-//                 </div>
-//                 <CardHeader className="pt-4">
-//                   <CardTitle className="text-md leading-tight hover:underline">{story.headline}</CardTitle>
-//                   <CardDescription className="text-xs pt-2">{story.source} • {new Date(story.created_at).toLocaleDateString()}</CardDescription>
-//                 </CardHeader>
-//               </a>
-//             </Card>
-//           );
-//         })}
-//       </div>
-//     </div>
-//   );
-// }
-
 "use client";
 
 import {
@@ -96,11 +7,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import Image from 'next/image'; // Switched to Next.js Image for better performance
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { Star } from "lucide-react";
+import Image from 'next/image';
+import { useMemo } from "react";
 
 export function TrendingNews() {
   const trpc = useTRPC();
+  const query = useQueryClient();
   const { 
     data: news, 
     isLoading, 
@@ -108,11 +22,55 @@ export function TrendingNews() {
   } = useQuery({
       ...trpc.HomeData.fetchYahooFinanceNews.queryOptions({ limit: 3 }),
       refetchOnWindowFocus: false, 
-    });
+  });
 
+  const { data: pinnedNews } = useQuery({
+    ...trpc.HomeData.getAllPinnedNews.queryOptions(),
+    refetchOnWindowFocus: false,
+  });
+
+  const pinnedNewsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (pinnedNews) {
+      for (const item of pinnedNews) {
+        map.set(item.url, item.id);
+      }
+    }
+    return map;
+  }, [pinnedNews]);
+
+  const pinMutation = useMutation({
+    ...trpc.HomeData.pinNews.mutationOptions(),
+    onSuccess: () => {
+      query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+    },
+  });
+
+  const unpinMutation = useMutation({
+    ...trpc.HomeData.unpinNews.mutationOptions(),
+    onSuccess: () => {
+      query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+    },
+  });
+
+  const handlePinToggle = (e: React.MouseEvent, story: any) => {
+    e.preventDefault(); // Prevents navigating to the article URL
+    e.stopPropagation(); // Stops event from bubbling up
+
+    const pinnedItemId = pinnedNewsMap.get(story.url);
+    if (pinnedItemId) {
+      unpinMutation.mutate({ newsId: pinnedItemId });
+    } else {
+      pinMutation.mutate({
+        title: story.title,
+        source: story.source,
+        url: story.url,
+        time: story.ago, 
+      });
+    }
+  };
     
   if (isLoading) {
-    // A simple loading placeholder
     return <div>Loading Trending News...</div>;
   }
 
@@ -124,6 +82,19 @@ export function TrendingNews() {
 
   const topStory = validNews[0];
   const subStories = validNews.slice(1, 3);
+
+  const PinButton = ({ story }: { story: any }) => {
+    const isPinned = pinnedNewsMap.has(story.url);
+    return (
+      <button
+        onClick={(e) => handlePinToggle(e, story)}
+        className="p-1 rounded-full hover:bg-muted-foreground/20 transition-colors"
+        aria-label={isPinned ? "Unpin news" : "Pin news"}
+      >
+        <Star className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+      </button>
+    );
+  };
   
   return (
     <div className="space-y-6">
@@ -146,7 +117,12 @@ export function TrendingNews() {
           </div>
           <CardHeader className="pt-4">
             <CardTitle className="text-2xl text-center">{topStory.title}</CardTitle>
-            <CardDescription className="text-center pt-2">{topStory.source} • {topStory.ago}</CardDescription>
+            <CardDescription className="text-center pt-2">
+              <div className="text-sm text-muted-foreground text-center pt-2 flex items-center justify-center gap-2">
+                <span>{topStory.source} • {topStory.ago}</span>
+                <PinButton story={topStory} />
+              </div>
+            </CardDescription>
           </CardHeader>
         </Card>
       </a>
@@ -173,7 +149,10 @@ export function TrendingNews() {
               </div>
               <CardHeader className="pt-4">
                 <CardTitle className="text-md leading-tight">{story.title}</CardTitle>
-                <CardDescription className="text-xs pt-2">{story.source} • {story.ago}</CardDescription>
+                <div className="text-xs text-muted-foreground pt-2 flex items-center gap-2">
+                  <span>{story.source} • {story.ago}</span>
+                  <PinButton story={story} />
+                </div>
               </CardHeader>
             </Card>
           </a>

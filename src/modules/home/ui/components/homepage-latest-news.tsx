@@ -1,11 +1,14 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Image from 'next/image';
+import { useMemo } from "react";
+import { Star } from "lucide-react";
 
 export function LatestNews() {
   const trpc = useTRPC();
+  const query = useQueryClient();
   const { 
     data: latestNews, 
     isLoading, 
@@ -13,7 +16,53 @@ export function LatestNews() {
   } = useQuery({
       ...trpc.HomeData.fetchYahooFinanceNews.queryOptions({ limit: 20 }),
       refetchOnWindowFocus: false,
-    });
+  });
+
+  const { data: pinnedNews } = useQuery({
+    ...trpc.HomeData.getAllPinnedNews.queryOptions(),
+    refetchOnWindowFocus: false,
+  });
+
+  const pinnedNewsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (pinnedNews) {
+      for (const item of pinnedNews) {
+        map.set(item.url, item.id);
+      }
+    }
+    return map;
+  }, [pinnedNews]);
+
+  const pinMutation = useMutation({
+    ...trpc.HomeData.pinNews.mutationOptions(),
+    onSuccess: () => {
+      query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+    },
+  });
+
+  const unpinMutation = useMutation({
+    ...trpc.HomeData.unpinNews.mutationOptions(),
+    onSuccess: () => {
+      query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+    },
+  });
+
+  const handlePinToggle = (e: React.MouseEvent, item: any) => {
+    e.preventDefault(); 
+    e.stopPropagation();
+
+    const pinnedItemId = pinnedNewsMap.get(item.url);
+    if (pinnedItemId) {
+      unpinMutation.mutate({ newsId: pinnedItemId });
+    } else {
+      pinMutation.mutate({
+        title: item.title,
+        source: item.source,
+        url: item.url,
+        time: item.ago, 
+      });
+    }
+  };
     
   if (isLoading) {
     return (
@@ -47,7 +96,9 @@ export function LatestNews() {
       {validNews
         .slice(5)
         .filter(item => item && item.url && item.img) 
-        .map((item) => (
+        .map((item) => {
+          const isPinned = pinnedNewsMap.has(item.url);
+          return (
           <a 
             key={item.title} 
             href={item.url} 
@@ -77,12 +128,20 @@ export function LatestNews() {
                   <p className="text-xs text-muted-foreground mt-2">
                     {item.source} • {item.ago}
                   </p>
+                    <button
+                        onClick={(e) => handlePinToggle(e, item)}
+                        className="p-1 mt-1.5 rounded-full hover:bg-muted-foreground/20 transition-colors"
+                        aria-label={isPinned ? "Unpin news" : "Pin news"}
+                    >
+                      <Star className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+                    </button>
                 </div>
 
               </div>
             </div>
           </a>
-      ))}
+        )})
+      }
     </div>
   );
 }
