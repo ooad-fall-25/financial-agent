@@ -49,45 +49,37 @@ model Message {
 
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-}
-
-model Report {
-  id                   String @id @default(uuid())
-  userId               String
-  extractedFileContent String
-  inputText            String
-  contentType          String
-  aiResponse           String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  medias Media[] // for now, multiple files are allowed and generated into one report 
+  medias         Media[]
 }
 
 model Media {
-  id          String @id @default(uuid())
-  bucket      String
-  key         String
-  contentType String
-  size        BigInt
+  id        String @id @default(uuid())
+  userId    String
+  fileName  String
+  mimeType  String
+  sizeBytes BigInt
+
+  extractedContext String
+
+  s3Bucket String
+  s3Key    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reportId String
-  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }
 
 model PinnedNews {
-  id     String   @id @default(uuid())
-  userId String   
+  id     String @id @default(uuid())
+  userId String
   title  String
-  source String   
-  url    String   
-  time   String 
+  source String
+  url    String
+  time   String
 
-  createdAt DateTime @default(now()) 
+  createdAt DateTime @default(now())
 
   @@unique([userId, url]) // Ensures a user cannot pin the same URL twice
 }
