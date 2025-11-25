@@ -5,6 +5,8 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
 import Link from 'next/link'; 
+import { toast } from "sonner";
+
 
 export function PinnedNews() {
   const trpc = useTRPC();
@@ -23,6 +25,7 @@ export function PinnedNews() {
     ...trpc.HomeData.unpinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News unpinned");
     },
   });
 

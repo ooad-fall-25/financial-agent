@@ -11,6 +11,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { MarketNews } from "@/lib/news-summary";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 interface Props {
     marketCategory: string;
@@ -86,6 +87,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
         ...trpc.HomeData.pinNews.mutationOptions(),
         onSuccess: () => {
             query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+            toast.success("News pinned successfully");
         },
     });
 
@@ -93,6 +95,7 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
         ...trpc.HomeData.unpinNews.mutationOptions(),
         onSuccess: () => {
             query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+            toast.success("News unpinned");
         },
     });
 
@@ -135,6 +138,11 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
         if (existingPin) {
             unpinMutation.mutate({ newsId: existingPin.id });
         } else {
+
+            if (pinnedNewsData && pinnedNewsData.length >= 10) {
+                toast.error("Maximum pin limit (10) reached.");
+                return; 
+            }
 
             let timeString = formatRelativeTime(news.datetime);
 

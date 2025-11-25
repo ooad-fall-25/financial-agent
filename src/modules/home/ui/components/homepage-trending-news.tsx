@@ -11,6 +11,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Pin } from "lucide-react";
 import Image from 'next/image';
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 export function TrendingNews() {
   const trpc = useTRPC();
@@ -43,6 +44,7 @@ export function TrendingNews() {
     ...trpc.HomeData.pinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News pinned successfully");
     },
   });
 
@@ -50,6 +52,7 @@ export function TrendingNews() {
     ...trpc.HomeData.unpinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News unpinned");
     },
   });
 
@@ -61,6 +64,11 @@ export function TrendingNews() {
     if (pinnedItemId) {
       unpinMutation.mutate({ newsId: pinnedItemId });
     } else {
+      
+      if (pinnedNewsMap && pinnedNewsMap.size >= 10) {
+          toast.error("Maximum pin limit (10) reached.");
+          return; 
+      }
       pinMutation.mutate({
         title: story.title,
         source: story.source,
