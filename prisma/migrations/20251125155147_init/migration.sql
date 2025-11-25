@@ -40,29 +40,18 @@ CREATE TABLE "public"."Message" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Report" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "extractedFileContent" TEXT NOT NULL,
-    "inputText" TEXT NOT NULL,
-    "contentType" TEXT NOT NULL,
-    "aiResponse" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "public"."Media" (
     "id" TEXT NOT NULL,
-    "bucket" TEXT NOT NULL,
-    "key" TEXT NOT NULL,
-    "contentType" TEXT NOT NULL,
-    "size" BIGINT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "fileName" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "sizeBytes" BIGINT NOT NULL,
+    "extractedContext" TEXT NOT NULL,
+    "s3Bucket" TEXT NOT NULL,
+    "s3Key" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "reportId" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
 
     CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
 );
@@ -87,4 +76,4 @@ CREATE UNIQUE INDEX "PinnedNews_userId_url_key" ON "public"."PinnedNews"("userId
 ALTER TABLE "public"."Message" ADD CONSTRAINT "Message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Media" ADD CONSTRAINT "Media_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "public"."Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."Media" ADD CONSTRAINT "Media_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "public"."Message"("id") ON DELETE CASCADE ON UPDATE CASCADE;
