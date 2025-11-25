@@ -19,7 +19,7 @@ CREATE TABLE "public"."NewsSummary" (
 CREATE TABLE "public"."Conversation" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "title" TEXT NOT NULL DEFAULT 'New Conversation',
+    "title" TEXT NOT NULL DEFAULT 'New Chat',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -32,6 +32,7 @@ CREATE TABLE "public"."Message" (
     "userId" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "thoughts" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "conversationId" TEXT NOT NULL,
 
@@ -65,6 +66,22 @@ CREATE TABLE "public"."Media" (
 
     CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateTable
+CREATE TABLE "public"."PinnedNews" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "time" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PinnedNews_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PinnedNews_userId_url_key" ON "public"."PinnedNews"("userId", "url");
 
 -- AddForeignKey
 ALTER TABLE "public"."Message" ADD CONSTRAINT "Message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
