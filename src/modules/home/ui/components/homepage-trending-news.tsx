@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Pin } from "lucide-react";
 import Image from 'next/image';
 import { useMemo } from "react";
 
@@ -54,8 +54,8 @@ export function TrendingNews() {
   });
 
   const handlePinToggle = (e: React.MouseEvent, story: any) => {
-    e.preventDefault(); // Prevents navigating to the article URL
-    e.stopPropagation(); // Stops event from bubbling up
+    e.preventDefault(); 
+    e.stopPropagation(); 
 
     const pinnedItemId = pinnedNewsMap.get(story.url);
     if (pinnedItemId) {
@@ -88,10 +88,10 @@ export function TrendingNews() {
     return (
       <button
         onClick={(e) => handlePinToggle(e, story)}
-        className="p-1 rounded-full hover:bg-muted-foreground/20 transition-colors"
+        className="p-1 rounded-full hover:bg-muted-foreground/20 transition-colors hover:scale-110"
         aria-label={isPinned ? "Unpin news" : "Pin news"}
       >
-        <Star className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+        <Pin className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
       </button>
     );
   };

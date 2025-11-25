@@ -4,7 +4,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Image from 'next/image';
 import { useMemo } from "react";
-import { Star } from "lucide-react";
+import { Pin } from "lucide-react";
 
 export function LatestNews() {
   const trpc = useTRPC();
@@ -133,7 +133,7 @@ export function LatestNews() {
                         className="p-1 mt-1.5 rounded-full hover:bg-muted-foreground/20 transition-colors"
                         aria-label={isPinned ? "Unpin news" : "Pin news"}
                     >
-                      <Star className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+                      <Pin className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
                     </button>
                 </div>
 
