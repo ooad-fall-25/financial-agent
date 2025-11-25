@@ -44,7 +44,6 @@ model Message {
   userId    String
   role      String // "user" or "assistant"
   content   String
-  thoughts  String?
   createdAt DateTime @default(now())
 
   conversationId String
