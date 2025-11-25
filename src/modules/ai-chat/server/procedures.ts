@@ -102,7 +102,7 @@ export const chatRouter = createTRPCRouter({
         // 3. Route the request based on the decision
         if (routingDecision === "ReAct") {
           // Call the ReAct agent
-          const agentResult = await invokeReActAgent(input.prompt, history);
+          const agentResult = await invokeReActAgent(input.prompt, history, ctx.auth.userId);
           aiResponseContent = agentResult.finalResponse;
           thoughts = agentResult.thoughts;
         } else {

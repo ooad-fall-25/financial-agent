@@ -11,6 +11,7 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
 import { getAccumulatedNews } from "./helper";
 import { getStockBars, getCryptoBars } from "./alpaca";
+import { prisma } from "./db";
 
 const deepseekClient = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -144,6 +145,61 @@ const getCryptoBarsTool = new DynamicStructuredTool({
   },
 });
 
+const createPinnedNewsTool = (userId: string) => {
+  return new DynamicStructuredTool({
+    name: "get_pinned_news",
+    description:
+      "Retrieves and analyzes the user's pinned news articles. Use this when the user asks about their saved/pinned news, wants to analyze trends in their pinned articles, or asks questions like 'what are my pinned news about?' or 'analyze my saved articles'. This tool fetches all news articles the user has pinned for later reference.",
+    schema: z.object({
+      limit: z
+        .number()
+        .optional()
+        .describe("Optional limit on the number of pinned news articles to retrieve. If not specified, returns all pinned news."),
+    }),
+    func: async ({ limit }: { limit?: number }) => {
+      console.log("AI is using 'get_pinned_news' tool with params:", {
+        userId,
+        limit,
+      });
+
+      try {
+        const pinnedNews = await prisma.pinnedNews.findMany({
+          where: {
+            userId: userId,
+          },
+          take: limit,
+          select: {
+            title: true,
+            url: true,
+            source: true,
+            time: true,
+          },
+        });
+
+        if (pinnedNews.length === 0) {
+          return "You have no pinned news articles at the moment. You can pin news articles to save them for later analysis.";
+        }
+
+        // Format the pinned news for better AI understanding
+        const formattedNews = pinnedNews.map((news, index) => ({
+          title: news.title,
+          source: news.source,
+          url: news.url,
+          time: news.time
+        }));
+
+        return JSON.stringify({
+          totalPinned: pinnedNews.length,
+          articles: formattedNews,
+        }, null, 2);
+      } catch (error) {
+        console.error("Error executing getPinnedNewsTool:", error);
+        return "An error occurred while fetching your pinned news articles.";
+      }
+    },
+  });
+};
+
 
 /**
  * Invokes the ReAct agent with the user's prompt and chat history.
@@ -153,9 +209,11 @@ const getCryptoBarsTool = new DynamicStructuredTool({
  */
 export const invokeReActAgent = async (
   currentMessage: string,
-  history: { role: string; content: string }[]
+  history: { role: string; content: string }[],
+  userId: string
 ): Promise<{ finalResponse: string; thoughts: string | null }> => {
-  const tools = [financialNewsTool, getStockBarsTool, getCryptoBarsTool];
+  const getPinnedNewsTool = createPinnedNewsTool(userId);
+  const tools = [financialNewsTool, getStockBarsTool, getCryptoBarsTool, getPinnedNewsTool];
 
   const agentExecutor = createReactAgent({
     llm: deepseekClient,
@@ -174,6 +232,7 @@ export const invokeReActAgent = async (
     new SystemMessage(
       "You are a helpful financial assistant. Your primary function is to provide accurate and timely financial information by leveraging the tools at your disposal." +
         "For any user query that requires accessing external, real-time, or specific data (such as company news, stock prices, financial reports, etc.), you MUST use the appropriate tool from your available toolkit." +
+        "When users ask about their 'pinned news', 'saved articles', or want to analyze their saved content, use the get_pinned_news tool." +
         "Carefully analyze the user's request to determine which tool, if any, is suitable for the task." +
         "Pay close attention to the conversation history. If the user's latest message is a follow-up, consider the context to see if a tool is needed again." +
         "If you do not have a tool that can fulfill the user's request, or if a tool returns no information, you MUST inform the user that you do not have the capability to provide that specific data. Do not, under any circumstances, invent or hallucinate information." +
