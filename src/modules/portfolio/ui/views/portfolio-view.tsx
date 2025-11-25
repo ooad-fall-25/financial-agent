@@ -1,8 +1,8 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HoldingsFeature } from "../components/holdings-feature";
-import { WatchlistFeature } from "../components/watchlist-feature";
+import { HoldingsSection } from "../components/holdings-section";
+import { WatchlistSection } from "../components/watchlist-section";
 
 export default function PortfolioView() {
   return (
@@ -19,14 +19,12 @@ export default function PortfolioView() {
           </TabsList>
         </div>
 
-        {/* The Tabs only mount the "Smart" Feature Components */}
-        
         <TabsContent value="holdings">
-          <HoldingsFeature />
+          <HoldingsSection />
         </TabsContent>
 
         <TabsContent value="watchlist">
-          <WatchlistFeature />
+          <WatchlistSection />
         </TabsContent>
       </Tabs>
     </div>
