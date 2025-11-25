@@ -15,6 +15,7 @@ import {
 } from "@/lib/alpaca"; 
 import AlphaVantageAPI from "@/lib/alphavantage"
 import { isAxiosError } from "axios";
+import { parseRelativeTime } from "@/lib/time";
 
 interface ScreenerStock {
   symbol: string;
@@ -181,16 +182,21 @@ export const HomeDataRouter = createTRPCRouter({
         source: z.string(),
         url: z.string(),
         time: z.string(),
+        summary: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // Convert the relative time string to an actual Date
+      const publishedAt = parseRelativeTime(input.time);
+      
       const pinnedNews = await prisma.pinnedNews.create({
         data: {
           userId: ctx.auth.userId,
           title: input.title,
           source: input.source,
           url: input.url,
-          time: input.time, 
+          publishedAt: publishedAt, 
+          summary: input.summary
         },
       });
       if (!pinnedNews) {

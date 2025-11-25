@@ -4,7 +4,9 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Image from 'next/image';
 import { useMemo } from "react";
-import { Star } from "lucide-react";
+import { Pin } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export function LatestNews() {
   const trpc = useTRPC();
@@ -37,6 +39,7 @@ export function LatestNews() {
     ...trpc.HomeData.pinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News pinned successfully");
     },
   });
 
@@ -44,6 +47,7 @@ export function LatestNews() {
     ...trpc.HomeData.unpinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News unpinned");
     },
   });
 
@@ -55,11 +59,17 @@ export function LatestNews() {
     if (pinnedItemId) {
       unpinMutation.mutate({ newsId: pinnedItemId });
     } else {
+      
+      if (pinnedNewsMap && pinnedNewsMap.size >= 10) {
+        toast.error("Maximum pin limit (10) reached.");
+        return; 
+      }
       pinMutation.mutate({
         title: item.title,
         source: item.source,
         url: item.url,
         time: item.ago, 
+        summary: ""
       });
     }
   };
@@ -128,13 +138,15 @@ export function LatestNews() {
                   <p className="text-xs text-muted-foreground mt-2">
                     {item.source} • {item.ago}
                   </p>
-                    <button
+                    <Button
                         onClick={(e) => handlePinToggle(e, item)}
-                        className="p-1 mt-1.5 rounded-full hover:bg-muted-foreground/20 transition-colors"
-                        aria-label={isPinned ? "Unpin news" : "Pin news"}
+                        variant="ghost"
+                        className="hover:bg-transparent hover:scale-110 transition-all duration-300 ease-out group h-8 w-8 p-0"
+                        size="icon"
+                        title={isPinned ? "Unpin news" : "Pin news"}
                     >
-                      <Star className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
-                    </button>
+                      <Pin className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+                    </Button>
                 </div>
 
               </div>

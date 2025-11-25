@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Pin } from "lucide-react";
 import Image from 'next/image';
 import { useMemo } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export function TrendingNews() {
   const trpc = useTRPC();
@@ -43,6 +45,7 @@ export function TrendingNews() {
     ...trpc.HomeData.pinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News pinned successfully");
     },
   });
 
@@ -50,22 +53,29 @@ export function TrendingNews() {
     ...trpc.HomeData.unpinNews.mutationOptions(),
     onSuccess: () => {
       query.invalidateQueries(trpc.HomeData.getAllPinnedNews.queryOptions());
+      toast.success("News unpinned");
     },
   });
 
   const handlePinToggle = (e: React.MouseEvent, story: any) => {
-    e.preventDefault(); // Prevents navigating to the article URL
-    e.stopPropagation(); // Stops event from bubbling up
+    e.preventDefault(); 
+    e.stopPropagation(); 
 
     const pinnedItemId = pinnedNewsMap.get(story.url);
     if (pinnedItemId) {
       unpinMutation.mutate({ newsId: pinnedItemId });
     } else {
+      
+      if (pinnedNewsMap && pinnedNewsMap.size >= 10) {
+          toast.error("Maximum pin limit (10) reached.");
+          return; 
+      }
       pinMutation.mutate({
         title: story.title,
         source: story.source,
         url: story.url,
         time: story.ago, 
+        summary: ""
       });
     }
   };
@@ -86,13 +96,15 @@ export function TrendingNews() {
   const PinButton = ({ story }: { story: any }) => {
     const isPinned = pinnedNewsMap.has(story.url);
     return (
-      <button
+      <Button
         onClick={(e) => handlePinToggle(e, story)}
-        className="p-1 rounded-full hover:bg-muted-foreground/20 transition-colors"
-        aria-label={isPinned ? "Unpin news" : "Pin news"}
+        variant="ghost"
+        className="hover:bg-transparent hover:scale-110 transition-all duration-300 ease-out group h-8 w-8 p-0"
+        size="icon"
+        title={isPinned ? "Unpin news" : "Pin news"}
       >
-        <Star className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
-      </button>
+        <Pin className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+      </Button>
     );
   };
   
