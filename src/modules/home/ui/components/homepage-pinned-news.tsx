@@ -6,7 +6,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
 import Link from 'next/link'; 
 import { toast } from "sonner";
-
+import { getRelativeTime } from "@/lib/time";
 
 export function PinnedNews() {
   const trpc = useTRPC();
@@ -58,32 +58,38 @@ export function PinnedNews() {
   return (
     <Card>
       <CardContent className="p-4 space-y-2">
-        {pinnedNewsData.map((item) => (
-          <Link
-            key={item.id}
-            href={item.url}
-            className="block relative group outline-none focus:outline-none" 
-          >
-            <div
-              className="group overflow-hidden rounded-lg p-3
-                         transition-all duration-300 ease-in-out hover:bg-muted/50"
+        {pinnedNewsData.map((item) => {
+          const relativeTime = getRelativeTime(new Date(item.publishedAt));
+          
+          return (
+            <Link
+              key={item.id}
+              href={item.url}
+              className="block relative group outline-none focus:outline-none" 
             >
-              <div className="transition-transform duration-300 ease-in-out group-hover:scale-[1.03]">
-                <h3 className="font-semibold leading-tight">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">{item.source} • {item.time}</p>
-              </div>
-              <button
-                onClick={(e) => handleUnpin(e, item.id)}
-                className="absolute top-1/2 -translate-y-10 right-0 p-1.5 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 outline-none hover:bg-muted"
-                aria-label="Unpin news"
+              <div
+                className="group overflow-hidden rounded-lg p-3
+                           transition-all duration-300 ease-in-out hover:bg-muted/50"
               >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </Link>
-        ))}
+                <div className="transition-transform duration-300 ease-in-out group-hover:scale-[1.03]">
+                  <h3 className="font-semibold leading-tight">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {item.source} • {relativeTime}
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => handleUnpin(e, item.id)}
+                  className="absolute top-1/2 -translate-y-10 right-0 p-1.5 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 outline-none hover:bg-muted"
+                  aria-label="Unpin news"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </Link>
+          );
+        })}
       </CardContent>
     </Card>
   );

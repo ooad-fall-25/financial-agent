@@ -12,6 +12,7 @@ import { Pin } from "lucide-react";
 import Image from 'next/image';
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export function TrendingNews() {
   const trpc = useTRPC();
@@ -74,6 +75,7 @@ export function TrendingNews() {
         source: story.source,
         url: story.url,
         time: story.ago, 
+        summary: ""
       });
     }
   };
@@ -94,13 +96,15 @@ export function TrendingNews() {
   const PinButton = ({ story }: { story: any }) => {
     const isPinned = pinnedNewsMap.has(story.url);
     return (
-      <button
+      <Button
         onClick={(e) => handlePinToggle(e, story)}
-        className="p-1 rounded-full hover:bg-muted-foreground/20 transition-colors hover:scale-110"
-        aria-label={isPinned ? "Unpin news" : "Pin news"}
+        variant="ghost"
+        className="hover:bg-transparent hover:scale-110 transition-all duration-300 ease-out group h-8 w-8 p-0"
+        size="icon"
+        title={isPinned ? "Unpin news" : "Pin news"}
       >
         <Pin className={`h-4 w-4 ${isPinned ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
-      </button>
+      </Button>
     );
   };
   

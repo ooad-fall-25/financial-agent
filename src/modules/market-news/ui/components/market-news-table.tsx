@@ -150,7 +150,8 @@ const NewsTable = ({ marketCategory, openDialog, ticker, marketType }: NewsProps
                 title: news.headline || "No Title",
                 url: news.url || "#",
                 source: news.source || "Unknown Source",
-                time: timeString 
+                time: timeString,
+                summary: news.summary || ""
             });
         }
     };

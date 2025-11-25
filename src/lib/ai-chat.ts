@@ -172,7 +172,8 @@ const createPinnedNewsTool = (userId: string) => {
             title: true,
             url: true,
             source: true,
-            time: true,
+            publishedAt: true,
+            summary: true
           },
         });
 
@@ -185,7 +186,8 @@ const createPinnedNewsTool = (userId: string) => {
           title: news.title,
           source: news.source,
           url: news.url,
-          time: news.time
+          time: news.publishedAt,
+          summary: news.summary
         }));
 
         return JSON.stringify({

@@ -77,7 +77,8 @@ model PinnedNews {
   title  String
   source String
   url    String
-  time   String
+  publishedAt  DateTime
+  summary String
 
   createdAt DateTime @default(now())
 
