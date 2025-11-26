@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai-chat";
 import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
+import { getPreSignedURL } from "@/lib/file-upload";
 
 export const chatRouter = createTRPCRouter({
   getConversations: protectedProcedure.query(async ({ ctx }) => {
@@ -254,4 +255,25 @@ export const chatRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  getPreSignedUrl: protectedProcedure
+  .input(
+    z.object({
+      fileName: z.string(),
+    })
+  )
+  .query( async ({input , ctx}) => {
+    if (!ctx.auth.userId) {
+      throw new TRPCError({code: "FORBIDDEN", message: "No user found"})
+    } 
+
+    const preSignedUrl = await getPreSignedURL(input.fileName); 
+
+    if (!preSignedUrl) {
+      throw new TRPCError({code: "NOT_FOUND", message: "No pre-signed url generated"}); 
+    }
+
+    return preSignedUrl;
+  })
+  ,
 });
