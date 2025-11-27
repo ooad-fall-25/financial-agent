@@ -257,7 +257,7 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  getPreSignedUrl: protectedProcedure
+  createPreSignedUrl: protectedProcedure
   .input(
     z.object({
       fileName: z.string(), 
