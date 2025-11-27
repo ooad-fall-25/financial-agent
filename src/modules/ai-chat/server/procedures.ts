@@ -9,6 +9,7 @@ import {
 import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
 import { getPreSignedURL } from "@/lib/file-upload";
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
 
 export const chatRouter = createTRPCRouter({
   getConversations: protectedProcedure.query(async ({ ctx }) => {
@@ -259,7 +260,10 @@ export const chatRouter = createTRPCRouter({
   getPreSignedUrl: protectedProcedure
   .input(
     z.object({
+      file: z.instanceof(File), 
       fileName: z.string(),
+      fileType: z.string(), 
+      fileSize: z.number(), 
     })
   )
   .query( async ({input , ctx}) => {
@@ -267,7 +271,16 @@ export const chatRouter = createTRPCRouter({
       throw new TRPCError({code: "FORBIDDEN", message: "No user found"})
     } 
 
-    const preSignedUrl = await getPreSignedURL(input.fileName); 
+    
+    if (!ACCEPTED_FILE_TYPES.includes(input.fileType)) {
+      throw new TRPCError({code: "FORBIDDEN", message: "The file type is not accepted"})
+    }
+
+    if (input.fileSize > MAX_FILE_SIZE_BYTES) {
+      throw new TRPCError({code: "FORBIDDEN", message: "Each file size cannot exceed 1 MB"})
+    }
+
+    const preSignedUrl = await getPreSignedURL(input.file, input.fileName, input.fileType, input.fileSize, ctx.auth.userId); 
 
     if (!preSignedUrl) {
       throw new TRPCError({code: "NOT_FOUND", message: "No pre-signed url generated"}); 

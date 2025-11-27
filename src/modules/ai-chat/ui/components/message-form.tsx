@@ -11,6 +11,8 @@ import { Form, FormField } from "@/components/ui/form";
 import { ArrowUpIcon, Loader2Icon, XIcon } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { Spinner } from "@/components/ui/spinner";
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
+import { toast } from "sonner";
 
 interface Props {
     prompt: string;
@@ -28,6 +30,12 @@ const formSchema = z.object({
         .array(
             z.instanceof(File, { message: "Must be a valid file" })
         )
+        .refine((files) =>
+            files.every((file) => file.size <= MAX_FILE_SIZE_BYTES)
+            , "Max file size is 1 MB")
+        .refine((files) =>
+            files.every((file) => ACCEPTED_FILE_TYPES.includes(file.type))
+            , "Only pdf and excel files are accepted")
         .max(10, { message: "You can upload up to 10 files" })
         .optional()
 })
@@ -48,7 +56,30 @@ export const MessageForm = ({ onSend, isSending }: Props) => {
 
     const onDrop = useCallback(
         (acceptedFiles: File[]) => {
-            form.setValue("files", [...(form.getValues("files") ?? []), ...acceptedFiles]);
+            const current = form.getValues("files") ?? [];
+
+            if (current.length + acceptedFiles.length > 10) {
+                console.warn("Too many files")
+                toast.error("Can only upload 10 at a time")
+                return
+            }
+
+            const valid = acceptedFiles.filter(file =>
+                file.size <= MAX_FILE_SIZE_BYTES && ACCEPTED_FILE_TYPES.includes(file.type)
+            )
+
+            const invalid = acceptedFiles.filter(file => !valid.includes(file))
+
+            if (invalid.length > 0) {
+                const rejectedFiles = invalid.map(f => f.name)
+                console.warn("File size cannot exceed 1MB & Accepted Files: PDF and Excel", rejectedFiles)
+                
+                    toast.error("File size cannot exceed 1MB & Accepted Files: PDF and Excel")
+                
+
+            }
+
+            form.setValue("files", [...current, ...valid], { shouldValidate: true });
         },
         [form]
     );
@@ -58,6 +89,10 @@ export const MessageForm = ({ onSend, isSending }: Props) => {
         multiple: true,
         noClick: true,
         noKeyboard: true,
+        accept: ACCEPTED_FILE_TYPES.reduce((acc, type) => {
+            acc[type] = [];
+            return acc;
+        }, {} as Record<string, string[]>)
     });
 
     return (
