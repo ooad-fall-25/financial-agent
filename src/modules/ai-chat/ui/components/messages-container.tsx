@@ -54,7 +54,7 @@ export const MessagesContainer = ({
     enabled: !!activeConversationId, // Enable if we have a local ID
   });
 
-  const getPreSignedUrl = useMutation(trpc.chat.getPreSignedUrl.mutationOptions())
+  const createPreSignedUrl = useMutation(trpc.chat.createPreSignedUrl.mutationOptions())
 
   const currentConversation = conversations?.find(
     (convo) => convo.id === activeConversationId
@@ -194,7 +194,7 @@ export const MessagesContainer = ({
           .map(b => b.toString(16).padStart(2, "0")).join("");
 
         
-        const url = await getPreSignedUrl.mutateAsync({
+        const url = await createPreSignedUrl.mutateAsync({
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
