@@ -208,6 +208,10 @@ export const MessagesContainer = ({
           headers: { "Content-Type": file.type }
         });
 
+        if (res.ok) {
+          toast.info("file uploaded", { description : file.name })
+        }
+
         console.log("Uploaded:", file.name, res.ok);
       } catch (err) {
         console.error("Upload failed for", file.name, err);
