@@ -54,6 +54,8 @@ export const MessagesContainer = ({
     enabled: !!activeConversationId, // Enable if we have a local ID
   });
 
+  const getPreSignedUrl = useMutation(trpc.chat.getPreSignedUrl.mutationOptions())
+
   const currentConversation = conversations?.find(
     (convo) => convo.id === activeConversationId
   );
@@ -177,6 +179,38 @@ export const MessagesContainer = ({
 
       } catch (error) {
         console.error("Error in handleSend:", error);
+      }
+    }
+
+    if (!files?.length) return;
+
+    for (const file of files) {
+      try {
+        
+        // checksum
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+        const hashHex = Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, "0")).join("");
+
+        
+        const url = await getPreSignedUrl.mutateAsync({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          checkSum: hashHex,
+        });
+
+        
+        const res = await fetch(url, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type }
+        });
+
+        console.log("Uploaded:", file.name, res.ok);
+      } catch (err) {
+        console.error("Upload failed for", file.name, err);
       }
     }
   };

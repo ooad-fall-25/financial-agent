@@ -260,13 +260,14 @@ export const chatRouter = createTRPCRouter({
   getPreSignedUrl: protectedProcedure
   .input(
     z.object({
-      file: z.instanceof(File), 
-      fileName: z.string(),
-      fileType: z.string(), 
+      fileName: z.string(), 
+      fileType: z.string(),
       fileSize: z.number(), 
+      checkSum: z.string(),
     })
   )
-  .query( async ({input , ctx}) => {
+  .mutation( async ({input , ctx}) => {
+
     if (!ctx.auth.userId) {
       throw new TRPCError({code: "FORBIDDEN", message: "No user found"})
     } 
@@ -280,7 +281,7 @@ export const chatRouter = createTRPCRouter({
       throw new TRPCError({code: "FORBIDDEN", message: "Each file size cannot exceed 1 MB"})
     }
 
-    const preSignedUrl = await getPreSignedURL(input.file, input.fileName, input.fileType, input.fileSize, ctx.auth.userId); 
+    const preSignedUrl = await getPreSignedURL(input.fileName, input.fileType, input.fileSize, ctx.auth.userId, input.checkSum); 
 
     if (!preSignedUrl) {
       throw new TRPCError({code: "NOT_FOUND", message: "No pre-signed url generated"}); 
