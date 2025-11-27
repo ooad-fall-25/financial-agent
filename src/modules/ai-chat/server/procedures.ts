@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
 import { getPreSignedURL } from "@/lib/file-upload";
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
+import { pdfToText, xlsxToText } from "@/lib/helper";
 
 export const chatRouter = createTRPCRouter({
   getConversations: protectedProcedure.query(async ({ ctx }) => {
@@ -290,4 +291,25 @@ export const chatRouter = createTRPCRouter({
     return preSignedUrl;
   })
   ,
+
+  extractText: protectedProcedure
+  .input (z.object({
+    buffer: z.instanceof(Buffer), 
+    type: z.enum(["pdf", "xlsx"]),
+  }))
+  .mutation(async ({ input } ) => {
+    let content = ""; 
+    if (input.type === "pdf") {
+      content =await pdfToText(input.buffer); 
+    } 
+    else if (input.type === "xlsx") {
+      content = xlsxToText(input.buffer); 
+    } 
+    else{
+      throw new TRPCError({code: "BAD_REQUEST", message:"file type not accepted"})
+    }
+
+    return content; 
+
+  })
 });

@@ -126,5 +126,5 @@ export const xlsxToText = (content: Buffer) => {
     const data: any[] = utils.sheet_to_json(sheet, {header:1});
     const textData = data.map(row => row.join('\t')).join('\n');
   
-    console.log(textData);
+    return textData; 
 };
