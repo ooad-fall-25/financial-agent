@@ -79,8 +79,7 @@ export const chatRouter = createTRPCRouter({
           }
         }
 
-        // Create only the user message
-        const userMessage = await prisma.message.create({
+        const createdUserMessage = await prisma.message.create({
           data: {
             userId: ctx.auth.userId,
             role: "user",
@@ -89,38 +88,34 @@ export const chatRouter = createTRPCRouter({
           },
         });
 
-        await prisma.conversation.update({
-          where: {
-            id: conversationId,
-          },
-          data: {
-            updatedAt: new Date(),
-          },
-        });
+        let fullPrompt = input.prompt; 
+        if (input.fileInfoList.length != 0) {
+          fullPrompt += "\r\n uploaded files content:\n"
+          for (const file of input.fileInfoList) {
+            const media = await prisma.media.create({
+              data: {
+                userId: ctx.auth.userId,
+                fileName: file.fileName,
+                mimeType: file.fileType,
+                sizeBytes: file.fileSize,
+                s3Key: file.s3Key,
+                s3Bucket: process.env.AWS_BUCKET_NAME!,
+                extractedContext: file.content,
+                messageId: createdUserMessage.id,
+              },
+            });
 
-        return {
-          conversationId: conversationId,
-          userMessage: userMessage,
-        };
-      } catch (error) {
-        console.error("Failed to create user message:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create user message",
-        });
-      }
-    }),
+            const fileContext = `
+              File name: ${file.fileName}:
+                content: 
+                  ${file.content}
 
-  // Step 2 - Generate and store AI response
-  createAIResponse: protectedProcedure
-    .input(
-      z.object({
-        prompt: z.string(),
-        conversationId: z.string(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      try {
+            `
+            fullPrompt += fileContext; 
+            console.log("mediaaaaaa", media);
+          }
+        }
+
         const history = await prisma.message.findMany({
           where: {
             conversationId: input.conversationId,
@@ -136,11 +131,11 @@ export const chatRouter = createTRPCRouter({
           take: 10,
         });
 
-        // Get the routing decision
-        const routingDecision = await getRoutingDecision(input.prompt, history);
+        // 1. Get the routing decision, now with history
+        const routingDecision = await getRoutingDecision(fullPrompt, history);
 
         console.log(
-          `Routing decision for prompt "${input.prompt}": ${routingDecision}`
+          `Routing decision for prompt "${fullPrompt}": ${routingDecision}`
         );
 
         let aiResponseContent: string;
@@ -150,43 +145,19 @@ export const chatRouter = createTRPCRouter({
         if (routingDecision === "ReAct") {
           // Call the ReAct agent
           const agentResult = await invokeReActAgent(
-            input.prompt,
+            fullPrompt,
             history,
             ctx.auth.userId
           );
           aiResponseContent = agentResult.finalResponse;
           thoughts = agentResult.thoughts;
         } else {
-          const aiResponse = await createAIChatCompletion(input.prompt, history);
+          // Use the direct LLM call for simple queries
+          const aiResponse = await createAIChatCompletion(
+            fullPrompt,
+            history
+          );
           aiResponseContent = aiResponse.content.toString();
-        }
-
-        const createdUserMessage = await prisma.message.create({
-          data: {
-            userId: ctx.auth.userId,
-            role: "user",
-            content: input.prompt,
-            conversationId: conversationId,
-          },
-        });
-
-        if (input.fileInfoList.length != 0) {
-          for (const file of input.fileInfoList) {
-            const media = await prisma.media.create({
-              data: {
-                userId: ctx.auth.userId,
-                fileName: file.fileName,
-                mimeType: file.fileType,
-                sizeBytes: file.fileSize,
-                s3Key: file.s3Key,
-                s3Bucket: process.env.AWS_BUCKET_NAME!,
-                extractedContext: file.content,
-                messageId: createdUserMessage.id,
-              },
-            });
-
-            console.log("mediaaaaaa", media);
-          }
         }
 
         const createdAssistentMessage = await prisma.message.create({
