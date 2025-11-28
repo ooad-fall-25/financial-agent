@@ -49,8 +49,11 @@ model Message {
 
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
   medias         Media[]
 }
+
+
 
 model Media {
   id        String @id @default(uuid())
@@ -83,4 +86,26 @@ model PinnedNews {
   createdAt DateTime @default(now())
 
   @@unique([userId, url]) // Ensures a user cannot pin the same URL twice
+}
+
+model Holding {
+  id        String   @id @default(uuid())
+  userId    String
+  symbol    String
+  quantity  Float
+  avgCost   Float    // User's average purchase price
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // distinct identifier to prevent duplicate rows for the same stock per user
+  @@unique([userId, symbol]) 
+}
+
+model WatchlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  symbol    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, symbol])
 }
