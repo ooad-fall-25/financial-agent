@@ -84,6 +84,7 @@ model PinnedNews {
   summary String
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, url]) // Ensures a user cannot pin the same URL twice
 }
@@ -106,6 +107,7 @@ model WatchlistItem {
   userId    String
   symbol    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, symbol])
 }
