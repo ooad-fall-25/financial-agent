@@ -318,16 +318,17 @@ export const chatRouter = createTRPCRouter({
   extractText: protectedProcedure
     .input(
       z.object({
-        buffer: z.instanceof(Buffer),
+        buffer: z.string(),
         type: z.enum(["pdf", "xlsx"]),
       })
     )
     .mutation(async ({ input }) => {
       let content = "";
+      const buffer = Buffer.from(input.buffer, "base64");
       if (input.type === "pdf") {
-        content = await pdfToText(input.buffer);
+        content = await pdfToText(buffer);
       } else if (input.type === "xlsx") {
-        content = xlsxToText(input.buffer);
+        content = xlsxToText(buffer);
       } else {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -335,7 +336,7 @@ export const chatRouter = createTRPCRouter({
         });
       }
 
-      return content;
+      return {content: content};
     }),
 
   createMedia: protectedProcedure

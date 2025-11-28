@@ -12,8 +12,9 @@ import {
   MarketNews,
 } from "./news-summary";
 import { read, utils } from "xlsx";
+import { getPath } from 'pdf-parse/worker'; // must import this before PDFParse
 import { PDFParse } from "pdf-parse";
-
+PDFParse.setWorker(getPath());
 
 //********important**********: dont import this help.ts to client components (the .tsx file)
 
@@ -107,11 +108,22 @@ export const markdownToPDF = async (markdown: string) => {
   return pdfBuffer;
 };
 
+// export const pdfToText = async (content: Buffer) => {
+//     const parser = new PDFParse({ data: content });
+//     const result = await parser.getText();
+//     console.log(result.text);
+//     return result.text;
+// };
+
 export const pdfToText = async (content: Buffer) => {
-    const parser = new PDFParse({ data: content });
-    const result = await parser.getText();
-    console.log(result.text);
-    return result.text;
+  
+  // PDFParse.setWorker(getData());
+  const uint8 = new Uint8Array(content);
+
+  const parser = new PDFParse({data: uint8});
+
+  const result = await parser.getText();
+  return result.text;
 };
 
 export const xlsxToText = (content: Buffer) => {  

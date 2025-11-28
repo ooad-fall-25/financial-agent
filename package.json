@@ -81,7 +81,7 @@
     "next-themes": "^0.4.6",
     "node-fetch": "^2.7.0",
     "node-fetch-commonjs": "^3.3.2",
-    "pdf-parse": "^2.2.6",
+    "pdf-parse": "^2.4.5",
     "postprocessing": "^6.37.8",
     "puppeteer": "^24.22.0",
     "radix-ui": "^1.4.3",
