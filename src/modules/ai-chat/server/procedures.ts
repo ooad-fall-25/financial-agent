@@ -11,6 +11,7 @@ import { TRPCError } from "@trpc/server";
 import { getPreSignedURL } from "@/lib/file-upload";
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
 import { pdfToText, xlsxToText } from "@/lib/helper";
+import { FileInfoSchema } from "../types";
 
 export const chatRouter = createTRPCRouter({
   getConversations: protectedProcedure.query(async ({ ctx }) => {
@@ -46,6 +47,7 @@ export const chatRouter = createTRPCRouter({
       z.object({
         prompt: z.string(),
         conversationId: z.string().optional(),
+        fileInfoList: z.array(FileInfoSchema),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -146,6 +148,7 @@ export const chatRouter = createTRPCRouter({
 
         // Route the request based on the decision
         if (routingDecision === "ReAct") {
+          // Call the ReAct agent
           const agentResult = await invokeReActAgent(
             input.prompt,
             history,
@@ -161,21 +164,40 @@ export const chatRouter = createTRPCRouter({
         const createdUserMessage = await prisma.message.create({
           data: {
             userId: ctx.auth.userId,
-              role: "user",
-              content: input.prompt,
-              conversationId: conversationId,
+            role: "user",
+            content: input.prompt,
+            conversationId: conversationId,
+          },
+        });
+
+        if (input.fileInfoList.length != 0) {
+          for (const file of input.fileInfoList) {
+            const media = await prisma.media.create({
+              data: {
+                userId: ctx.auth.userId,
+                fileName: file.fileName,
+                mimeType: file.fileType,
+                sizeBytes: file.fileSize,
+                s3Key: file.s3Key,
+                s3Bucket: process.env.AWS_BUCKET_NAME!,
+                extractedContext: file.content,
+                messageId: createdUserMessage.id,
+              },
+            });
+
+            console.log("mediaaaaaa", media);
           }
-        })
+        }
 
         const createdAssistentMessage = await prisma.message.create({
           data: {
             userId: ctx.auth.userId,
-              role: "assistant",
-              content: aiResponseContent,
-              thoughts: thoughts,
-              conversationId: conversationId,
-          }
-        })
+            role: "assistant",
+            content: aiResponseContent,
+            thoughts: thoughts,
+            conversationId: conversationId,
+          },
+        });
 
         await prisma.conversation.update({
           where: {
@@ -188,7 +210,7 @@ export const chatRouter = createTRPCRouter({
 
         return {
           createdUserMessage: createdUserMessage,
-          createdAssistentMessage:createdAssistentMessage,
+          createdAssistentMessage: createdAssistentMessage,
           user: input.prompt,
           assistant: aiResponseContent,
           conversationId: conversationId,
@@ -336,32 +358,6 @@ export const chatRouter = createTRPCRouter({
         });
       }
 
-      return {content: content};
-    }),
-
-  createMedia: protectedProcedure
-    .input(
-      z.object({
-        fileName: z.string(),
-        fileType: z.string(),
-        fileSize: z.number(),
-        s3Key: z.string(),
-        content: z.string(), 
-        messageId: z.string(), 
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      const media = await prisma.media.create({
-        data: {
-          userId: ctx.auth.userId,
-          fileName: input.fileName, 
-          mimeType: input.fileType, 
-          sizeBytes: input.fileSize, 
-          s3Key: input.s3Key,
-          s3Bucket: process.env.AWS_BUCKET_NAME!,
-          extractedContext: input.content,
-          messageId: input.messageId,
-        }
-      })
+      return { content: content };
     }),
 });
