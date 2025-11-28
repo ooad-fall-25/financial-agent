@@ -63,14 +63,46 @@ CREATE TABLE "public"."PinnedNews" (
     "title" TEXT NOT NULL,
     "source" TEXT NOT NULL,
     "url" TEXT NOT NULL,
-    "time" TEXT NOT NULL,
+    "publishedAt" TIMESTAMP(3) NOT NULL,
+    "summary" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "PinnedNews_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."Holding" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "symbol" TEXT NOT NULL,
+    "quantity" DOUBLE PRECISION NOT NULL,
+    "avgCost" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Holding_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."WatchlistItem" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "symbol" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WatchlistItem_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "PinnedNews_userId_url_key" ON "public"."PinnedNews"("userId", "url");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Holding_userId_symbol_key" ON "public"."Holding"("userId", "symbol");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WatchlistItem_userId_symbol_key" ON "public"."WatchlistItem"("userId", "symbol");
 
 -- AddForeignKey
 ALTER TABLE "public"."Message" ADD CONSTRAINT "Message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "public"."Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
