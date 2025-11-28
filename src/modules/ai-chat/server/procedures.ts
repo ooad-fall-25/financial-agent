@@ -158,16 +158,24 @@ export const chatRouter = createTRPCRouter({
           aiResponseContent = aiResponse.content.toString();
         }
 
-        // Create the assistant message
-        const assistantMessage = await prisma.message.create({
+        const createdUserMessage = await prisma.message.create({
           data: {
             userId: ctx.auth.userId,
-            role: "assistant",
-            content: aiResponseContent,
-            thoughts: thoughts,
-            conversationId: input.conversationId,
-          },
-        });
+              role: "user",
+              content: input.prompt,
+              conversationId: conversationId,
+          }
+        })
+
+        const createdAssistentMessage = await prisma.message.create({
+          data: {
+            userId: ctx.auth.userId,
+              role: "assistant",
+              content: aiResponseContent,
+              thoughts: thoughts,
+              conversationId: conversationId,
+          }
+        })
 
         await prisma.conversation.update({
           where: {
@@ -179,7 +187,11 @@ export const chatRouter = createTRPCRouter({
         });
 
         return {
-          assistantMessage: assistantMessage,
+          createdUserMessage: createdUserMessage,
+          createdAssistentMessage:createdAssistentMessage,
+          user: input.prompt,
+          assistant: aiResponseContent,
+          conversationId: conversationId,
         };
       } catch (error) {
         console.error("Failed to create AI response:", error);
@@ -259,57 +271,96 @@ export const chatRouter = createTRPCRouter({
     }),
 
   createPreSignedUrl: protectedProcedure
-  .input(
-    z.object({
-      fileName: z.string(), 
-      fileType: z.string(),
-      fileSize: z.number(), 
-      checkSum: z.string(),
-    })
-  )
-  .mutation( async ({input , ctx}) => {
+    .input(
+      z.object({
+        fileName: z.string(),
+        fileType: z.string(),
+        fileSize: z.number(),
+        checkSum: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.auth.userId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "No user found" });
+      }
 
-    if (!ctx.auth.userId) {
-      throw new TRPCError({code: "FORBIDDEN", message: "No user found"})
-    } 
+      if (!ACCEPTED_FILE_TYPES.includes(input.fileType)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "The file type is not accepted",
+        });
+      }
 
-    
-    if (!ACCEPTED_FILE_TYPES.includes(input.fileType)) {
-      throw new TRPCError({code: "FORBIDDEN", message: "The file type is not accepted"})
-    }
+      if (input.fileSize > MAX_FILE_SIZE_BYTES) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Each file size cannot exceed 1 MB",
+        });
+      }
 
-    if (input.fileSize > MAX_FILE_SIZE_BYTES) {
-      throw new TRPCError({code: "FORBIDDEN", message: "Each file size cannot exceed 1 MB"})
-    }
+      const preSignedUrl = await getPreSignedURL(
+        input.fileName,
+        input.fileType,
+        input.fileSize,
+        ctx.auth.userId,
+        input.checkSum
+      );
 
-    const preSignedUrl = await getPreSignedURL(input.fileName, input.fileType, input.fileSize, ctx.auth.userId, input.checkSum); 
+      if (!preSignedUrl) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No pre-signed url generated",
+        });
+      }
 
-    if (!preSignedUrl) {
-      throw new TRPCError({code: "NOT_FOUND", message: "No pre-signed url generated"}); 
-    }
-
-    return preSignedUrl;
-  })
-  ,
-
+      return preSignedUrl;
+    }),
   extractText: protectedProcedure
-  .input (z.object({
-    buffer: z.instanceof(Buffer), 
-    type: z.enum(["pdf", "xlsx"]),
-  }))
-  .mutation(async ({ input } ) => {
-    let content = ""; 
-    if (input.type === "pdf") {
-      content =await pdfToText(input.buffer); 
-    } 
-    else if (input.type === "xlsx") {
-      content = xlsxToText(input.buffer); 
-    } 
-    else{
-      throw new TRPCError({code: "BAD_REQUEST", message:"file type not accepted"})
-    }
+    .input(
+      z.object({
+        buffer: z.instanceof(Buffer),
+        type: z.enum(["pdf", "xlsx"]),
+      })
+    )
+    .mutation(async ({ input }) => {
+      let content = "";
+      if (input.type === "pdf") {
+        content = await pdfToText(input.buffer);
+      } else if (input.type === "xlsx") {
+        content = xlsxToText(input.buffer);
+      } else {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "file type not accepted",
+        });
+      }
 
-    return content; 
+      return content;
+    }),
 
-  })
+  createMedia: protectedProcedure
+    .input(
+      z.object({
+        fileName: z.string(),
+        fileType: z.string(),
+        fileSize: z.number(),
+        s3Key: z.string(),
+        content: z.string(), 
+        messageId: z.string(), 
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const media = await prisma.media.create({
+        data: {
+          userId: ctx.auth.userId,
+          fileName: input.fileName, 
+          mimeType: input.fileType, 
+          sizeBytes: input.fileSize, 
+          s3Key: input.s3Key,
+          s3Bucket: process.env.AWS_BUCKET_NAME!,
+          extractedContext: input.content,
+          messageId: input.messageId,
+        }
+      })
+    }),
 });
