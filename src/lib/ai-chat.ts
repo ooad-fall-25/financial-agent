@@ -145,6 +145,144 @@ const getCryptoBarsTool = new DynamicStructuredTool({
   },
 });
 
+const createWatchlistTool = (userId: string) => {
+  return new DynamicStructuredTool({
+    name: "get_watchlist",
+    description:
+      "Retrieves the user's stock watchlist. Use this when the user asks about their watchlist, " +
+      "wants to see what stocks they're tracking, or asks questions like 'what's in my watchlist?' " +
+      "or 'show me my watched stocks'. This tool fetches all stocks the user is monitoring.",
+    schema: z.object({
+      limit: z
+        .number()
+        .optional()
+        .describe("Optional limit on the number of watchlist items to retrieve. If not specified, returns all items."),
+    }),
+    func: async ({ limit }: { limit?: number }) => {
+      console.log("AI is using 'get_watchlist' tool with params:", {
+        userId,
+        limit,
+      });
+
+      try {
+        const watchlistItems = await prisma.watchlistItem.findMany({
+          where: {
+            userId: userId,
+          },
+          take: limit,
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+            symbol: true,
+            createdAt: true,
+          },
+        });
+
+        if (watchlistItems.length === 0) {
+          return "Your watchlist is currently empty. You can add stocks to your watchlist to track them.";
+        }
+
+        // Format the watchlist for better AI understanding
+        const formattedWatchlist = watchlistItems.map((item) => ({
+          symbol: item.symbol,
+          addedOn: item.createdAt,
+        }));
+
+        return JSON.stringify({
+          totalWatchlistItems: watchlistItems.length,
+          stocks: formattedWatchlist,
+        }, null, 2);
+      } catch (error) {
+        console.error("Error executing getWatchlistTool:", error);
+        return "An error occurred while fetching your watchlist.";
+      }
+    },
+  });
+};
+
+const createHoldingsTool = (userId: string) => {
+  return new DynamicStructuredTool({
+    name: "get_holdings",
+    description:
+      "Retrieves the user's stock holdings/portfolio. Use this when the user asks about their portfolio, " +
+      "holdings, investments, or asks questions like 'what stocks do I own?', 'show me my portfolio', " +
+      "'what are my holdings?', or 'how much stock do I have?'. This tool fetches all stocks the user owns " +
+      "along with quantity and average cost information.",
+    schema: z.object({
+      limit: z
+        .number()
+        .optional()
+        .describe("Optional limit on the number of holdings to retrieve. If not specified, returns all holdings."),
+      symbol: z
+        .string()
+        .optional()
+        .describe("Optional stock symbol to filter holdings. If provided, returns only the holding for that specific stock."),
+    }),
+    func: async ({ limit, symbol }: { limit?: number; symbol?: string }) => {
+      console.log("AI is using 'get_holdings' tool with params:", {
+        userId,
+        limit,
+        symbol,
+      });
+
+      try {
+        const holdings = await prisma.holding.findMany({
+          where: {
+            userId: userId,
+            ...(symbol && { symbol: symbol.toUpperCase() }),
+          },
+          take: limit,
+          orderBy: {
+            updatedAt: "desc",
+          },
+          select: {
+            id: true,
+            symbol: true,
+            quantity: true,
+            avgCost: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        if (holdings.length === 0) {
+          if (symbol) {
+            return `You don't have any holdings for ${symbol}. Your portfolio doesn't include this stock.`;
+          }
+          return "Your portfolio is currently empty. You don't have any stock holdings recorded.";
+        }
+
+        // Format the holdings for better AI understanding
+        const formattedHoldings = holdings.map((holding) => ({
+          symbol: holding.symbol,
+          quantity: holding.quantity,
+          averageCost: holding.avgCost,
+          totalValue: holding.quantity * holding.avgCost,
+          firstPurchased: holding.createdAt,
+          lastUpdated: holding.updatedAt,
+        }));
+
+        // Calculate portfolio summary
+        const totalPortfolioValue = formattedHoldings.reduce(
+          (sum, holding) => sum + holding.totalValue,
+          0
+        );
+
+        return JSON.stringify({
+          totalHoldings: holdings.length,
+          totalPortfolioValue: totalPortfolioValue.toFixed(2),
+          holdings: formattedHoldings,
+        }, null, 2);
+      } catch (error) {
+        console.error("Error executing getHoldingsTool:", error);
+        return "An error occurred while fetching your holdings.";
+      }
+    },
+  });
+};
+
 const createPinnedNewsTool = (userId: string) => {
   return new DynamicStructuredTool({
     name: "get_pinned_news",
@@ -215,7 +353,16 @@ export const invokeReActAgent = async (
   userId: string
 ): Promise<{ finalResponse: string; thoughts: string | null }> => {
   const getPinnedNewsTool = createPinnedNewsTool(userId);
-  const tools = [financialNewsTool, getStockBarsTool, getCryptoBarsTool, getPinnedNewsTool];
+  const getWatchlistTool = createWatchlistTool(userId);
+  const getHoldingsTool = createHoldingsTool(userId);
+  const tools = [
+    financialNewsTool, 
+    getStockBarsTool, 
+    getCryptoBarsTool, 
+    getPinnedNewsTool, 
+    getWatchlistTool,
+    getHoldingsTool
+  ];
 
   const agentExecutor = createReactAgent({
     llm: deepseekClient,
@@ -235,6 +382,8 @@ export const invokeReActAgent = async (
       "You are a helpful financial assistant. Your primary function is to provide accurate and timely financial information by leveraging the tools at your disposal." +
         "For any user query that requires accessing external, real-time, or specific data (such as company news, stock prices, financial reports, etc.), you MUST use the appropriate tool from your available toolkit." +
         "When users ask about their 'pinned news', 'saved articles', or want to analyze their saved content, use the get_pinned_news tool." +
+        "When users ask about their 'watchlist' or 'stocks they're tracking', use the get_watchlist tool." +
+        "When users ask about their 'portfolio', 'holdings', or 'stocks they own', use the get_holdings tool." +
         "Carefully analyze the user's request to determine which tool, if any, is suitable for the task." +
         "Pay close attention to the conversation history. If the user's latest message is a follow-up, consider the context to see if a tool is needed again." +
         "If you do not have a tool that can fulfill the user's request, or if a tool returns no information, you MUST inform the user that you do not have the capability to provide that specific data. Do not, under any circumstances, invent or hallucinate information." +
