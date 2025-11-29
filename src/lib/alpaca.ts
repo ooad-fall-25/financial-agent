@@ -101,7 +101,7 @@ export const getStockBars = async (ticker: string, range: string, interval: stri
   const start = getStartDateFromRange(range);
   try {
     const response = await alpacaApiV2.get(`/stocks/${ticker}/bars`, {
-      params: { timeframe: interval, start: start.toISOString(), limit: 10000, adjustment: "raw", feed: "sip", sort: "asc" },
+      params: { timeframe: interval, start: start.toISOString(), limit: 10000, adjustment: "raw", feed: "iex", sort: "asc" },
     });
     return response.data.bars || [];
   } catch (error) {
@@ -142,7 +142,7 @@ const fetchLongTermBars = async (symbol: string): Promise<HistoricalBar[]> => {
 
 export const getStockSnapshot = async (ticker: string): Promise<AlpacaSnapshot> => {
   try {
-    const response = await alpacaApiV2.get("/stocks/snapshots", { params: { symbols: ticker, feed: "delayed_sip" } });
+    const response = await alpacaApiV2.get("/stocks/snapshots", { params: { symbols: ticker, feed: "iex" } });
     const snapshotData = response.data[ticker];
     if (!snapshotData || !snapshotData.prevDailyBar) {
       throw new Error(`Snapshot data not found or incomplete for ${ticker}.`);
@@ -172,7 +172,7 @@ export const getMarketDataForTickers = async (tickers: string[]): Promise<Alpaca
     if (tickers.length === 0) return [];
     try {
         const response = await alpacaApiV2.get("/stocks/snapshots", {
-            params: { symbols: tickers.join(","), feed: "delayed_sip" },
+            params: { symbols: tickers.join(","), feed: "iex" },
         });
         const snapshotsBySymbol = response.data;
         return tickers
@@ -196,16 +196,28 @@ export const getMarketDataForTickers = async (tickers: string[]): Promise<Alpaca
 // --- Finnhub & Symbol Services ---
 
 export const findSymbols = async (query: string) => {
-    if (query.length < 1) return { result: [] };
-    const searchResults = await searchSymbols(query);
-    if (!searchResults?.result?.length) return { result: [] };
-
-    const upperCaseQuery = query.toUpperCase();
-    const exactMatch = searchResults.result.find(stock => stock.symbol === upperCaseQuery);
-    if (exactMatch) return { result: [exactMatch] };
-    
-    const filtered = searchResults.result.filter(stock => stock.symbol && !stock.symbol.includes(".") && stock.type === "Common Stock");
-    return { result: filtered.slice(0, 5) };
+  if (query.length < 1) return { result: [] };
+  
+  const searchResults = await searchSymbols(query);
+  if (!searchResults?.result?.length) return { result: [] };
+  
+  const upperCaseQuery = query.toUpperCase();
+  
+  // First, check for exact symbol match
+  const exactMatch = searchResults.result.find(stock => stock.symbol === upperCaseQuery);
+  if (exactMatch) return { result: [exactMatch] };
+  
+  // Then filter for relevant results that match the query
+  const filtered = searchResults.result.filter(stock => 
+    stock.symbol && 
+    !stock.symbol.includes(".") && 
+    stock.type === "Common Stock" &&
+    // Add this: check if symbol or description contains the query
+    (stock.symbol.toUpperCase().includes(upperCaseQuery) || 
+     stock.description?.toUpperCase().includes(upperCaseQuery))
+  );
+  
+  return { result: filtered.slice(0, 5) };
 };
 
 
@@ -254,7 +266,7 @@ export const getCompetitorsData = async (ticker: string): Promise<CompetitorData
     if (peerTickers.length === 0) peerTickers.push(ticker);
 
     const [snapshotsResponse, profileResults] = await Promise.all([
-        alpacaApiV2.get("/stocks/snapshots", { params: { symbols: peerTickers.join(","), feed: "delayed_sip" } }),
+        alpacaApiV2.get("/stocks/snapshots", { params: { symbols: peerTickers.join(","), feed: "iex" } }),
         Promise.all(peerTickers.map(peer => getFinnhubClient().companyProfile2(peer)))
     ]);
     
@@ -294,7 +306,7 @@ export const getSparklineData = async (tickers: string[]): Promise<Record<string
                 start: startDate,
                 adjustment: "raw",
                 limit: 1000,
-                feed: "sip" // It's good practice to be explicit with the data feed
+                feed: "iex" // It's good practice to be explicit with the data feed
             },
         }).catch(error => {
             // Add error handling to prevent one failed ticker from breaking the whole process

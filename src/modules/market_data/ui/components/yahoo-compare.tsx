@@ -83,6 +83,15 @@ export const CompareComponent = ({ Ticker }: Props) => {
     return <p className="text-muted-foreground">Could not load competitor data.</p>;
   }
 
+  // FIX: Deduplicate competitors by ticker
+  const uniqueCompetitors = competitors.reduce((acc: CompetitorData[], competitor) => {
+    // Only add if ticker doesn't already exist
+    if (!acc.find(c => c.ticker === competitor.ticker)) {
+      acc.push(competitor);
+    }
+    return acc;
+  }, []);
+
   return (
     <div>
       <h3 className="text-xl font-bold">Compare To: {Ticker}</h3>
@@ -90,7 +99,7 @@ export const CompareComponent = ({ Ticker }: Props) => {
         Select to analyze similar companies using key performance metrics.
       </p>
       <div className="flex gap-4 mt-4 pb-4 overflow-x-auto">
-        {competitors.map((competitor) => (
+        {uniqueCompetitors.map((competitor) => (
           <CompetitorCard 
             key={competitor.ticker} 
             data={competitor}
