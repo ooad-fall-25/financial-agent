@@ -10,6 +10,7 @@ import { Heart, HeartCrack, SearchIcon, TablePropertiesIcon } from "lucide-react
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { MediaTable } from "./media-table";
 interface Props {
     selectedTab: string;
 }
@@ -27,8 +28,10 @@ export const LibraryTable = ({ selectedTab }: Props) => {
         return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} type={selectedTab} />
     } else if (selectedTab === "liked") {
         return <SummaryByTable data={newsByLinked || []} isLoading={isLikedLoading} type={selectedTab} />
+    } else if (selectedTab === "media"){
+        return <MediaTable />;
     } else {
-        return;
+        return 
     }
 }
 

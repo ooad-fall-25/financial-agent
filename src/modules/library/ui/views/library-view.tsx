@@ -22,6 +22,10 @@ const tabItems = [
     {
         type: "liked",
         name: "Liked"
+    },
+    {
+        type: "media",
+        name: "Media"
     }
 ]
 
