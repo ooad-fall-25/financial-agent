@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner"; // Ensure you have this component
+import { FilePreview } from "./file-preview";
 
 interface CopyProps {
   text: string;
@@ -43,14 +44,28 @@ const CopyButton = ({ text, className }: CopyProps) => {
 
 interface UserMessageProps {
   content: string;
+  files?: File[];
 }
 
-const UserMessage = ({ content }: UserMessageProps) => {
+const UserMessage = ({ content, files }: UserMessageProps) => {
+  const [isShow, setIsShow] = useState(false);
   return (
     <div className={cn("flex flex-col items-end pb-4 pr-2 pl-10 group")}>
       <Card className="rounded-lg bg-secondary p-3 shadow-none border-none max-w-[80%] break-words text-sm">
         {content}
       </Card>
+      {files && files.map((file, index) => (
+        <div key={index}>
+          <Button
+            variant="action"
+            onClick={() => setIsShow(true)}
+          >
+            Show
+          </Button>
+          {isShow && <FilePreview file={file} />}
+        </div>
+      ))}
+
       <CopyButton
         text={content}
         className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground"
@@ -125,6 +140,7 @@ interface Props {
   thoughts?: string | null;
   className?: string;
   isLoading?: boolean;
+  files?: File[];
 }
 
 export const MessageCard = ({
@@ -135,6 +151,7 @@ export const MessageCard = ({
   thoughts,
   className,
   isLoading,
+  files,
 }: Props) => {
   if (role === "assistant") {
     return (
@@ -151,7 +168,7 @@ export const MessageCard = ({
   }
   return (
     <div className={cn(className)}>
-      <UserMessage content={content} />
+      <UserMessage content={content} files={files} />
     </div>
   );
 };
