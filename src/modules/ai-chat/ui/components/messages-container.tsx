@@ -282,7 +282,7 @@ export const MessagesContainer = ({ conversationId }: MessagesContainerProps) =>
             <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => router.push("/agent")}
+                onClick={handleCreateNewChat}
                 className="hidden sm:flex"
             >
               <PlusCircle className="h-4 w-4 mr-2" />
