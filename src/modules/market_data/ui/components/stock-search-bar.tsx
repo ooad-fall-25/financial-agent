@@ -6,8 +6,6 @@ import { useTRPC } from "@/trpc/client";
 import { useDebounce } from "@/lib/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 
-// --- 1. UPDATE THE PROPS INTERFACE ---
-// It now requires an 'activeTab' to know its context.
 interface StockSearchBarProps {
   onSelect: (ticker: string) => void;
   activeTab: "stocks" | "crypto";
@@ -34,9 +32,9 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
     let finalTicker = ticker.toUpperCase();
     
     if (activeTab === 'crypto') {
-      if (!finalTicker.includes('/')) {
-        finalTicker = `${finalTicker}/USD`;
-      }
+      // Remove /USD if it exists, then add it back
+      finalTicker = finalTicker.replace('/USD', '');
+      finalTicker = `${finalTicker}/USD`;
     }
     
     onSelect(finalTicker);
@@ -48,10 +46,29 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
     if (event.key === "Enter" && query) {
       event.preventDefault();
       
-      // FIX: Check if what the user typed matches any results
       const upperQuery = query.toUpperCase();
       
-      // First check for exact symbol match
+      // FIX: For crypto tab, prioritize crypto-related matches
+      if (activeTab === 'crypto') {
+        // First, check if user typed a crypto symbol directly (e.g., "DOGE", "BTC")
+        const cryptoSymbols = ['BTC', 'ETH', 'DOGE', 'XRP', 'SOL', 'USDC', 'USDT'];
+        if (cryptoSymbols.includes(upperQuery)) {
+          processAndSelectTicker(upperQuery);
+          return;
+        }
+        
+        // Check if any result matches common crypto symbols
+        const cryptoMatch = searchResults?.result?.find(
+          (stock) => cryptoSymbols.includes(stock.symbol?.toUpperCase() || '')
+        );
+        
+        if (cryptoMatch) {
+          processAndSelectTicker(cryptoMatch.symbol!);
+          return;
+        }
+      }
+      
+      // For stocks or if no crypto match found, use the original logic
       const exactMatch = searchResults?.result?.find(
         (stock) => stock.symbol?.toUpperCase() === upperQuery
       );
@@ -61,15 +78,11 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
         return;
       }
       
-      // If no exact match, check if there's at least one result
-      // and use the first result (most relevant)
       if (searchResults?.result && searchResults.result.length > 0) {
         processAndSelectTicker(searchResults.result[0].symbol!);
         return;
       }
       
-      // If no results at all, don't navigate
-      // Optionally show an error message to the user
       console.log("No valid ticker found for:", query);
     }
   };
