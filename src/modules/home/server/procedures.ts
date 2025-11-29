@@ -1,20 +1,14 @@
 import z from "zod";
-import https from 'https';
 
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import axios from "axios"; 
 import { prisma } from "@/lib/db";
-import {
-    getCompanyNameFromFinnhub, 
-    getFinnhubClient
-} from "@/lib/finnhub";
+import { getCompanyNameFromFinnhub } from "@/lib/finnhub";
 import { 
     alpacaApiV2, 
     alpacaApiV1
 } from "@/lib/alpaca"; 
-import AlphaVantageAPI from "@/lib/alphavantage"
-import { isAxiosError } from "axios";
 import { parseRelativeTime } from "@/lib/time";
 
 interface ScreenerStock {
@@ -23,19 +17,6 @@ interface ScreenerStock {
   price: number;
   change: number;
   percentChange: number;
-}
-
-interface AlpacaNewsArticle {
-  id: number;
-  headline: string;
-  summary: string;
-  author: string;
-  created_at: string;
-  updated_at: string;
-  source: string;
-  url: string;
-  symbols: string[];
-  images: { size: "thumb" | "small" | "large"; url: string }[];
 }
 
 interface MarketMovers {
@@ -221,7 +202,7 @@ export const HomeDataRouter = createTRPCRouter({
     )
     .query(async ({ input }): Promise<YahooTrendingTickerResponse> => {
       const rapidApiKey = process.env.RAPIDAPI_KEY;
-      const limit = 15
+      const limit = 25
 
       if (!rapidApiKey) {
         throw new TRPCError({

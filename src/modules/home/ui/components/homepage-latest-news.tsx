@@ -102,7 +102,7 @@ export function LatestNews() {
   const validNews = latestNews || [];
 
   return (
-    <div className="space-y-4 px-2">
+    <div className="space-y-4 px-2 pb-16">
       {validNews
         .slice(5)
         .filter(item => item && item.url && item.img) 

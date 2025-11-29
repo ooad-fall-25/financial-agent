@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import React, { useState, useEffect } from 'react';
 import { useTRPC } from "@/trpc/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { usePrevious } from '@/lib/use-previous';
 import Link from 'next/link'; 
 
@@ -16,11 +16,6 @@ interface TickerData {
     price: number;
     change: number;
     percentChange: number;
-}
-
-interface CleanCompanyInfo {
-    ticker: string;
-    name: string;
 }
 
 interface AlpacaSnapshot {
@@ -88,7 +83,7 @@ export function RightSidebar() {
     });
 
     const trendingSymbolsRaw: string[] = trendingSymbols?.body ?? [];
-    const trendingSymbolsFinal = trendingSymbolsRaw.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^')).slice(0, 10);
+    const trendingSymbolsFinal = trendingSymbolsRaw.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^')).slice(0, 5);
     
     const watchlistSymbols = userWatchlist?.map(item => item.symbol) ?? [];
     const watchlistSymbolsFinal = watchlistSymbols.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^'));
@@ -177,7 +172,7 @@ export function RightSidebar() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-16">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center">Trending Tickers</CardTitle>
@@ -197,7 +192,7 @@ export function RightSidebar() {
       
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl font-bold text-center">My Portfolio</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-center">My Watchlist</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {portfolioData.length > 0 ? (
