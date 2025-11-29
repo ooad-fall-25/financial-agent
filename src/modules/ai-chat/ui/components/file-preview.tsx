@@ -72,7 +72,7 @@ export const FilePreview = ({ file }: Props) => {
 
   if (isPDF && fileUrl) {
     return (
-      <div className="w-full h-screen overflow-auto border p-2 bg-gray-100 flex justify-center">
+      <div className="w-full h-screen overflow-auto border  bg-accent flex justify-center">
         <Document
           file={fileUrl}
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
@@ -100,7 +100,7 @@ export const FilePreview = ({ file }: Props) => {
     return (
       <div className="overflow-auto max-h-screen border mt-2">
         <table className="border-collapse w-full text-sm">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+          <thead className="bg-accent sticky top-0 z-10">
             <tr>
               {excelHeaders.map((header) => (
                 <th key={header} className="border p-2 text-left font-semibold">
@@ -111,7 +111,7 @@ export const FilePreview = ({ file }: Props) => {
           </thead>
           <tbody>
             {excelData.map((row, i) => (
-              <tr key={i} className="hover:bg-gray-50">
+              <tr key={i} className="hover:bg-accent">
                 {/* 4. Fix: Map over HEADERS, not values, to handle empty cells correctly */}
                 {excelHeaders.map((header, j) => (
                   <td key={`${i}-${j}`} className="border p-2 whitespace-nowrap">
@@ -128,7 +128,7 @@ export const FilePreview = ({ file }: Props) => {
   }
 
   return (
-    <div className="p-4 border rounded text-red-500 bg-red-50">
+    <div className="p-4 border rounded text-red-500 bg-accent">
       ❌ Unsupported file type: {file.name}
     </div>
   );

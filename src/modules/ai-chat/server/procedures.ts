@@ -8,10 +8,10 @@ import {
 } from "@/lib/ai-chat";
 import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
-import { getPutPreSignedURL } from "@/lib/file-upload";
+import { getGetPreSignedUrl, getPutPreSignedURL } from "@/lib/file-upload";
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
 import { pdfToText, xlsxToText } from "@/lib/helper";
-import { FileInfoSchema } from "../types";
+import { FileInfo, FileInfoSchema, MessageHistory } from "../types";
 
 export const chatRouter = createTRPCRouter({
   getConversations: protectedProcedure.query(async ({ ctx }) => {
@@ -27,19 +27,24 @@ export const chatRouter = createTRPCRouter({
   }),
 
   getChatHistory: protectedProcedure
-    .input(z.object({ conversationId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const chatHistory = await prisma.message.findMany({
-        where: {
-          conversationId: input.conversationId,
-          userId: ctx.auth.userId,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-      });
-      return chatHistory;
-    }),
+  .input(z.object({ conversationId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const messages = await prisma.message.findMany({
+      where: {
+        conversationId: input.conversationId,
+        userId: ctx.auth.userId,
+      },
+      orderBy: { createdAt: "asc" },
+      include: {
+        medias: true,
+      },
+    });
+
+    return messages.map(msg => ({
+      message: msg,
+      media: msg.medias
+    }));
+  }),
 
   // Step 1 - Create user message only
   createUserMessage: protectedProcedure
@@ -88,9 +93,9 @@ export const chatRouter = createTRPCRouter({
           },
         });
 
-        let fullPrompt = input.prompt; 
+        let fullPrompt = input.prompt;
         if (input.fileInfoList.length != 0) {
-          fullPrompt += "\r\n uploaded files content:\n"
+          fullPrompt += "\r\n uploaded files content:\n";
           for (const file of input.fileInfoList) {
             const media = await prisma.media.create({
               data: {
@@ -110,8 +115,8 @@ export const chatRouter = createTRPCRouter({
                 content: 
                   ${file.content}
 
-            `
-            fullPrompt += fileContext; 
+            `;
+            fullPrompt += fileContext;
             console.log("mediaaaaaa", media);
           }
         }
@@ -153,10 +158,7 @@ export const chatRouter = createTRPCRouter({
           thoughts = agentResult.thoughts;
         } else {
           // Use the direct LLM call for simple queries
-          const aiResponse = await createAIChatCompletion(
-            fullPrompt,
-            history
-          );
+          const aiResponse = await createAIChatCompletion(fullPrompt, history);
           aiResponseContent = aiResponse.content.toString();
         }
 
@@ -332,5 +334,35 @@ export const chatRouter = createTRPCRouter({
       return { content: content };
     }),
 
-  
+  createGetPreSignedUrl: protectedProcedure
+    .input(
+      z.object({
+        mediaId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const media = await prisma.media.findUnique({
+        where: {
+          id: input.mediaId,
+          userId: ctx.auth.userId,
+        },
+      });
+
+      if (!media) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No media found" });
+      }
+
+      const { s3Bucket, s3Key } = media;
+
+      const preSignedUrl = await getGetPreSignedUrl(s3Bucket, s3Key);
+
+      if (!preSignedUrl) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No pre-signed url generated",
+        });
+      }
+
+      return preSignedUrl;
+    }),
 });
