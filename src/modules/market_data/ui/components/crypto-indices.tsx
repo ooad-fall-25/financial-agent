@@ -88,31 +88,35 @@ const CryptoTableRow = ({ crypto, rank }: { crypto: CryptoData; rank: number }) 
     const fallbackIconSrc = '/icons/fallback-crypto.svg'; 
 
     return (
-        <tr key={crypto.symbol} className="border-b border-border last:border-b-0">
-            <td className="py-4 px-4 text-muted-foreground">{rank}</td>
-            <td className="py-4 px-4">
-                <div className="flex items-center gap-3">
-                    <Image 
-                        src={imgSrc} 
-                        alt={`${crypto.symbol} logo`}
-                        width={24} 
-                        height={24} 
-                        unoptimized // Recommended for external images you don't control
-                        onError={() => setImgSrc(fallbackIconSrc)} // Set fallback on error
-                    />
-                    <span className="font-bold">{crypto.symbol}</span>
-                </div>
-            </td>
-            <td className="py-4 px-4 text-right font-mono">${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</td>
-            <td className={`py-4 px-4 text-right font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? '+' : ''}{crypto.percentChange.toFixed(2)}%
-            </td>
-            <td className="py-4 px-4 text-right font-mono">{formatVolume(crypto.volume24h, crypto.price)}</td>
-            <td className="py-4 px-4">
+    <tr key={crypto.symbol} className="border-b border-border last:border-b-0">
+        <td className="py-4 px-4 text-muted-foreground">{rank}</td>
+        <td className="py-4 px-4">
+            <div className="flex items-center gap-3">
+                <Image 
+                    src={imgSrc} 
+                    alt={`${crypto.symbol} logo`}
+                    width={24} 
+                    height={24} 
+                    unoptimized 
+                    onError={() => setImgSrc(fallbackIconSrc)} 
+                />
+                <span className="font-bold">{crypto.symbol}</span>
+            </div>
+        </td>
+        <td className="py-4 px-4 text-right font-mono">${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</td>
+        <td className={`py-4 px-4 text-right font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+            {isPositive ? '+' : ''}{crypto.percentChange.toFixed(2)}%
+        </td>
+        <td className="py-4 px-4 text-right font-mono">{formatVolume(crypto.volume24h, crypto.price)}</td>
+        
+        {/* FIXED COLUMN BELOW: Added pl-8 and flex justify-end */}
+        <td className="py-4 px-4 pl-8">
+            <div className="flex justify-end">
                 <Sparkline data={crypto.sparklineData} color={chartColor} />
-            </td>
-        </tr>
-    );
+            </div>
+        </td>
+    </tr>
+  );
 };
 
 // ========================================================================
@@ -151,7 +155,8 @@ export const CryptoDashboard = () => {
               <th className="py-2 px-4 font-normal text-right">Price</th>
               <th className="py-2 px-4 font-normal text-right">24h %</th>
               <th className="py-2 px-4 font-normal text-right">24h Volume</th>
-              <th className="py-2 px-4 font-normal">Last 24 Hours</th>
+              {/* FIXED LINE BELOW: Added pl-8 and text-right */}
+              <th className="py-2 px-4 pl-8 font-normal text-right">Last 24 Hours</th>
             </tr>
           </thead>
           <tbody>

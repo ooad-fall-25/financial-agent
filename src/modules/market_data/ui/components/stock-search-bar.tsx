@@ -23,29 +23,22 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
   const [query, setQuery] = React.useState("");
   const [isFocused, setIsFocused] = React.useState(false);
   const debouncedQuery = useDebounce(query, 300);
-
   const trpc = useTRPC();
 
-  // The search query to the API remains the same, it's just for displaying results.
   const { data: searchResults, isLoading } = useQuery({
     ...trpc.AlpacaData.searchSymbols.queryOptions({ query: debouncedQuery }),
     enabled: debouncedQuery.length > 0,
   });
 
-  // --- 2. THE NEW, SIMPLIFIED LOGIC ---
-  // This function now uses the 'activeTab' prop to decide how to format the ticker.
   const processAndSelectTicker = (ticker: string) => {
     let finalTicker = ticker.toUpperCase();
-
+    
     if (activeTab === 'crypto') {
-      // If we are on the crypto tab, ALWAYS format as a crypto pair.
       if (!finalTicker.includes('/')) {
         finalTicker = `${finalTicker}/USD`;
       }
     }
-    // If activeTab is 'stocks', we do nothing and use the ticker as is (e.g., "OPEN").
-
-    // Pass the correctly formatted ticker to the parent.
+    
     onSelect(finalTicker);
     setQuery("");
     setIsFocused(false);
@@ -54,8 +47,30 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && query) {
       event.preventDefault();
-      // The logic is now simple: just process whatever the user typed.
-      processAndSelectTicker(query);
+      
+      // FIX: Check if what the user typed matches any results
+      const upperQuery = query.toUpperCase();
+      
+      // First check for exact symbol match
+      const exactMatch = searchResults?.result?.find(
+        (stock) => stock.symbol?.toUpperCase() === upperQuery
+      );
+      
+      if (exactMatch) {
+        processAndSelectTicker(exactMatch.symbol!);
+        return;
+      }
+      
+      // If no exact match, check if there's at least one result
+      // and use the first result (most relevant)
+      if (searchResults?.result && searchResults.result.length > 0) {
+        processAndSelectTicker(searchResults.result[0].symbol!);
+        return;
+      }
+      
+      // If no results at all, don't navigate
+      // Optionally show an error message to the user
+      console.log("No valid ticker found for:", query);
     }
   };
 
@@ -71,7 +86,7 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
         onBlur={() => setTimeout(() => setIsFocused(false), 150)}
         onKeyDown={handleKeyDown}
       />
-
+      
       {isDropdownOpen && (
         <div className="absolute top-full z-50 mt-2 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
           <CommandList>
@@ -85,26 +100,22 @@ export function StockSearchBar({ onSelect, activeTab }: StockSearchBarProps) {
                   <CommandItem
                     key={stock.symbol}
                     value={stock.symbol!}
-                    // When clicking an item, use the same simple logic.
                     onSelect={() => processAndSelectTicker(stock.symbol || "")}
                     className="cursor-pointer"
                   >
-                 <div className="flex items-center justify-between w-full">
-                  {/* Left side: Symbol and description */}
-                  <div className="flex items-center gap-4 overflow-hidden">
-                    <span className="font-semibold text-sm">{stock.symbol}</span>
-                    <span className="text-sm text-muted-foreground truncate">
-                      {stock.description}
-                    </span>
-                  </div>
-
-                  {/* Right side: The asset type as a tag */}
-                  {stock.type && (
-                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md">
-                      {stock.type.toUpperCase()}
-                    </span>
-                  )}
-                </div>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        <span className="font-semibold text-sm">{stock.symbol}</span>
+                        <span className="text-sm text-muted-foreground truncate">
+                          {stock.description}
+                        </span>
+                      </div>
+                      {stock.type && (
+                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                          {stock.type.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   </CommandItem>
                 ))}
               </CommandGroup>
