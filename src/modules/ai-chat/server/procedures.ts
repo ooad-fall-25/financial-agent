@@ -47,7 +47,7 @@ export const chatRouter = createTRPCRouter({
   }),
 
   // Step 1 - Create user message only
-  createUserMessage: protectedProcedure
+  createChatMessage: protectedProcedure
     .input(
       z.object({
         prompt: z.string(),
@@ -174,7 +174,7 @@ export const chatRouter = createTRPCRouter({
 
         await prisma.conversation.update({
           where: {
-            id: input.conversationId,
+            id: conversationId
           },
           data: {
             updatedAt: new Date(),
