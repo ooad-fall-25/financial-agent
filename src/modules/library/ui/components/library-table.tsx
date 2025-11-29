@@ -137,9 +137,9 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                             {data.length != 0 ? (
                                 <div className="h-full min-h-0 pb-20">
 
-                                    <div className="divide-y divide-border text-xs font-normal border-b border-border">
+                                    <div className="divide-y divide-border text-xs font-normal">
                                         {filteredNews.map((item) => (
-                                            <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-17 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
+                                            <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-17 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center border-b border-secondary">
                                                 <div className="col-span-10">
                                                     <div className="font-medium leading-tight truncate">
                                                         <p>{item.headline}</p>
@@ -163,7 +163,7 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                                                 <div className="col-span-1">
                                                     <div className="text-muted-foreground truncate">
                                                         <Button
-                                                            className="!hover:ring-0 !size-8"
+                                                            className="!hover:ring-0 !size-2"
                                                             variant="ghost"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
