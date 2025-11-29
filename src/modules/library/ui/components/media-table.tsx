@@ -9,35 +9,35 @@ import { FileAudio, SearchIcon, Trash2, FolderOpen, TablePropertiesIcon, FileIco
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-
-interface MediaItem {
-    id: string;
-    name: string;
-    url: string;
-    size: string;
-    createdAt: Date;
-}
+import { Media } from "@/generated/prisma";
 
 export const MediaTable = () => {
     const router = useRouter();
+    const trpc = useTRPC();
 
-    const data: MediaItem[] = []
 
     const [searchValue, setSearchValue] = useState("");
-    const [filteredNews, setFilteredNews] = useState<MediaItem[]>([]);
+    const [filteredMedia, setFilteredMedia] = useState<Media[]>([]);
+
+    const { data: media } = useQuery(trpc.library.getAllMedia.queryOptions());
 
     const handleSearchChange = (value: string) => {
         setSearchValue(value);
-        if (data) {
-            setFilteredNews(data)
+        if (media) {
+            setFilteredMedia(media)
             if (value.length === 0) {
-                setFilteredNews(data);
+                setFilteredMedia(media);
             } else {
-                const result = data?.filter(news => news.name.toLowerCase().includes(value.toLowerCase()));
-                setFilteredNews(result);
+                const result = media?.filter(news => news.fileName.toLowerCase().includes(value.toLowerCase()));
+                setFilteredMedia(result);
             }
         }
     }
+
+    useEffect(() => {
+        if (media) setFilteredMedia(media);
+    }, [media]);
+
     return (
         <div className=" h-full flex flex-col min-h-0">
             <div className="p-4 flex items-center justify-start gap-x-4">
@@ -56,7 +56,7 @@ export const MediaTable = () => {
 
                 <div>
                     <span className="text-xs">Result: </span>
-                    <span className="text-xs">{filteredNews.length || 0}</span>
+                    <span className="text-xs">{filteredMedia.length || 0}</span>
                 </div>
             </div>
 
@@ -72,15 +72,15 @@ export const MediaTable = () => {
 
 
                     <div>
-                        {data.length != 0 ? (
+                        {filteredMedia.length > 0 ? (
                             <div className="h-full min-h-0 pb-20">
 
                                 <div className="divide-y divide-border text-xs font-normal">
-                                    {filteredNews.map((item) => (
+                                    {filteredMedia.map((item) => (
                                         <div key={item.id} className="grid grid-cols-15 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center border-b border-secondary">
                                             <div className="col-span-13">
                                                 <div className="font-medium leading-tight truncate">
-                                                    <p>{item.name}</p>
+                                                    <p>{item.fileName}</p>
                                                 </div>
                                             </div>
 
