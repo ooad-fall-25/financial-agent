@@ -130,7 +130,7 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                                 </div>
 
                             ) : (
-                                <div className="flex-1 gap-y-4 items-center justify-center flex flex-col">
+                                <div className="flex-1 gap-y-4 items-center justify-center flex flex-col mt-20">
                                     <TablePropertiesIcon />
                                     <div className="gap-y-2 flex flex-col items-center">
                                         <span className="text-sm">The summary will be loaded here</span>
