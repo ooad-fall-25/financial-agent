@@ -27,6 +27,16 @@ export const MessagesContainer = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
+
+  // 1. Create a local state to track the ID. 
+  // This allows us to switch the UI to the new chat before the URL updates.
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(conversationId);
+
+  // 2. Sync local state when the prop changes (e.g. user navigates history)
+  useEffect(() => {
+    setActiveConversationId(conversationId);
+  }, [conversationId]);
 
   const queryClient = useQueryClient();
 
@@ -34,21 +44,18 @@ export const MessagesContainer = ({
     trpc.chat.getConversations.queryOptions()
   );
 
-  // Define the query options for fetching chat history
+  // 3. Use activeConversationId for the query instead of the prop
   const chatHistoryQueryOptions = trpc.chat.getChatHistory.queryOptions({
-    conversationId: conversationId!,
+    conversationId: activeConversationId!,
   });
-
-  // Extract the query key for direct cache manipulation
-  const chatHistoryQueryKey = chatHistoryQueryOptions.queryKey;
 
   const { data: chatHistory, isLoading: isLoadingHistory } = useQuery({
     ...chatHistoryQueryOptions,
-    enabled: !!conversationId,
+    enabled: !!activeConversationId, // Enable if we have a local ID
   });
 
   const currentConversation = conversations?.find(
-    (convo) => convo.id === conversationId
+    (convo) => convo.id === activeConversationId
   );
   const originalTitle = currentConversation?.title || "New Chat";
 
@@ -66,7 +73,7 @@ export const MessagesContainer = ({
   });
 
   const handleTitleDoubleClick = () => {
-    if (conversationId) {
+    if (activeConversationId) {
       setIsEditingTitle(true);
     }
   };
@@ -77,12 +84,12 @@ export const MessagesContainer = ({
 
   const saveTitle = () => {
     if (
-      conversationId &&
+      activeConversationId &&
       titleValue.trim() &&
       titleValue.trim() !== originalTitle
     ) {
       renameConversation.mutate({
-        conversationId,
+        conversationId: activeConversationId,
         newTitle: titleValue.trim(),
       });
     }
@@ -98,84 +105,86 @@ export const MessagesContainer = ({
     }
   };
 
-  const createMessage = useMutation({
-    ...trpc.chat.createChatMessage.mutationOptions(),
-    onMutate: async (newMessage) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: chatHistoryQueryKey });
-
-      // Snapshot the previous value
-      const previousChatHistory = queryClient.getQueryData(chatHistoryQueryKey);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(chatHistoryQueryKey, (oldData: unknown) => {
-        const optimisticUserMessage = {
-          id: `optimistic-user-${Date.now()}`,
-          role: "user",
-          content: newMessage.prompt,
-          createdAt: new Date(),
-          thoughts: null,
-        };
-        const optimisticAssistantMessage = {
-          id: `optimistic-assistant-${Date.now()}`,
-          role: "assistant",
-          content: "",
-          createdAt: new Date(),
-          isLoading: true, // This will trigger the spinner in MessageCard
-          thoughts: null,
-        };
-
-        const oldHistory = Array.isArray(oldData) ? oldData : [];
-        return [
-          ...oldHistory,
-          optimisticUserMessage,
-          optimisticAssistantMessage,
-        ];
-      });
-
-      // Return a context object with the snapshotted value
-      return { previousChatHistory };
+  const createUserMessage = useMutation({
+    ...trpc.chat.createUserMessage.mutationOptions(),
+    onError: (err) => {
+      toast.error("Failed to send message. Please try again.");
+      setIsGeneratingResponse(false);
     },
-    // If the mutation fails, use the context returned from onMutate to roll back
-    onError: (err, newMessage, context) => {
+  });
+
+  const createAIResponse = useMutation({
+    ...trpc.chat.createAIResponse.mutationOptions(),
+    onError: (err) => {
       toast.error("Failed to get AI response. Please try again.");
-      if (context?.previousChatHistory) {
-        queryClient.setQueryData(
-          chatHistoryQueryKey,
-          context.previousChatHistory
-        );
-      }
+      setIsGeneratingResponse(false);
     },
-    // Always refetch after error or success to ensure data consistency
-    onSettled: (data) => {
-      const finalConversationId = data?.conversationId || conversationId;
-      if (finalConversationId) {
-        const finalQueryOptions = trpc.chat.getChatHistory.queryOptions({
-          conversationId: finalConversationId,
-        });
-        queryClient.invalidateQueries({ queryKey: finalQueryOptions.queryKey });
-      }
-      queryClient.invalidateQueries(trpc.chat.getConversations.queryOptions());
-    },
-    onSuccess: (data) => {
-      if (!conversationId) {
-        router.push(`/agent/${data.conversationId}`);
-      }
+    onSettled: () => {
+      setIsGeneratingResponse(false);
     },
   });
 
   const handleSend = async (text: string, files?: File[]) => {
     if (text.trim()) {
-      setPrompt(""); // Clear the input field immediately
-      createMessage.mutate({
-        prompt: text,
-        conversationId: conversationId || undefined,
-      });
+      setPrompt(""); 
+      setIsGeneratingResponse(true);
+
+      try {
+        // Step 1: Create user message
+        const userMessageResult = await createUserMessage.mutateAsync({
+          prompt: text,
+          conversationId: activeConversationId || undefined, // Use activeId
+        });
+
+        const finalConversationId = userMessageResult.conversationId;
+
+        // 4. Update local ID immediately. 
+        // This triggers the useQuery to fetch the new message while keeping the component mounted.
+        setActiveConversationId(finalConversationId);
+
+        // Invalidate to show the user message immediately
+        await queryClient.invalidateQueries({
+          queryKey: trpc.chat.getChatHistory.queryOptions({
+            conversationId: finalConversationId,
+          }).queryKey,
+        });
+        await queryClient.invalidateQueries(
+          trpc.chat.getConversations.queryOptions()
+        );
+
+        // Step 2: Generate AI response
+        // Note: We have NOT called router.replace yet, so isGeneratingResponse stays true
+        await createAIResponse.mutateAsync({
+          prompt: text,
+          conversationId: finalConversationId,
+        });
+
+        // Invalidate to show the AI response
+        await queryClient.invalidateQueries({
+          queryKey: trpc.chat.getChatHistory.queryOptions({
+            conversationId: finalConversationId,
+          }).queryKey,
+        });
+        await queryClient.invalidateQueries(
+          trpc.chat.getConversations.queryOptions()
+        );
+
+        // 5. NOW we navigate. 
+        // The AI response is done, so it's safe to reload/remount the page.
+        if (!conversationId) {
+          router.replace(`/agent/${finalConversationId}`);
+        }
+
+      } catch (error) {
+        console.error("Error in handleSend:", error);
+      }
     }
   };
 
   const handleCreateNewChat = () => {
     router.push("/agent");
+    // Reset local state manually if navigating to same route base
+    setActiveConversationId(undefined); 
   };
 
   const handleSelectConversation = (id: string) => {
@@ -184,15 +193,18 @@ export const MessagesContainer = ({
   };
 
   const handleDeleteConversation = (deletedId: string) => {
-    if (deletedId === conversationId) {
+    if (deletedId === activeConversationId) {
       router.push("/agent");
+      setActiveConversationId(undefined);
     }
     setIsHistoryOpen(false);
   };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [chatHistory]);
+  }, [chatHistory, isGeneratingResponse]);
+
+  const isSending = createUserMessage.isPending || isGeneratingResponse;
 
   return (
     <div className="h-screen flex flex-col">
@@ -231,7 +243,7 @@ export const MessagesContainer = ({
                 conversations={conversations || []}
                 onSelectConversation={handleSelectConversation}
                 onDeleteConversation={handleDeleteConversation}
-                selectedConversationId={conversationId || null}
+                selectedConversationId={activeConversationId || null}
               />
             </Dialog>
           </div>
@@ -240,10 +252,11 @@ export const MessagesContainer = ({
 
       <div className="flex-1 overflow-y-auto px-4">
         <div className="max-w-3xl mx-auto space-y-2 pt-4 pb-28">
-          {isLoadingHistory && !createMessage.isPending && (
+          {isLoadingHistory && !isSending && (
             <Spinner className="mx-auto" />
           )}
-          {!conversationId && !isLoadingHistory && (
+          {/* Check activeConversationId instead of conversationId prop */}
+          {!activeConversationId && !isLoadingHistory && !isSending && (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground">
                 Select a conversation from history or start a new one.
@@ -256,11 +269,19 @@ export const MessagesContainer = ({
               content={message.content}
               role={message.role}
               aiModelId=""
-              createdAt={new Date(message.createdAt)} // Ensure createdAt is a Date object
-              isLoading={message.isLoading}
+              createdAt={new Date(message.createdAt)}
               thoughts={message.thoughts}
             />
           ))}
+          {isGeneratingResponse && (
+            <MessageCard
+              content=""
+              role="assistant"
+              aiModelId=""
+              createdAt={new Date()}
+              isLoading={true}
+            />
+          )}
           <div ref={bottomRef} />
         </div>
       </div>
@@ -271,7 +292,7 @@ export const MessagesContainer = ({
             prompt={prompt}
             setPrompt={setPrompt}
             onSend={handleSend}
-            isSending={createMessage.isPending}
+            isSending={isSending}
           />
         </div>
       </div>

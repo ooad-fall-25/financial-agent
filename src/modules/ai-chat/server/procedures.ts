@@ -37,7 +37,8 @@ export const chatRouter = createTRPCRouter({
       return chatHistory;
     }),
 
-  createChatMessage: protectedProcedure
+  // Step 1 - Create user message only
+  createUserMessage: protectedProcedure
     .input(
       z.object({
         prompt: z.string(),
@@ -73,63 +74,14 @@ export const chatRouter = createTRPCRouter({
           }
         }
 
-        const history = await prisma.message.findMany({
-          where: {
-            conversationId: conversationId,
+        // Create only the user message
+        const userMessage = await prisma.message.create({
+          data: {
             userId: ctx.auth.userId,
+            role: "user",
+            content: input.prompt,
+            conversationId: conversationId,
           },
-          orderBy: {
-            createdAt: "asc",
-          },
-          select: {
-            role: true,
-            content: true,
-          },
-          take: 10,
-        });
-
-        // 1. Get the routing decision, now with history
-        const routingDecision = await getRoutingDecision(input.prompt, history);
-
-        // 2. Log the decision to the terminal
-        console.log(
-          `Routing decision for prompt "${input.prompt}": ${routingDecision}`
-        );
-
-        let aiResponseContent: string;
-        let thoughts: string | null = null;
-
-        // 3. Route the request based on the decision
-        if (routingDecision === "ReAct") {
-          // Call the ReAct agent
-          const agentResult = await invokeReActAgent(input.prompt, history, ctx.auth.userId);
-          aiResponseContent = agentResult.finalResponse;
-          thoughts = agentResult.thoughts;
-        } else {
-          // Use the direct LLM call for simple queries
-          const aiResponse = await createAIChatCompletion(
-            input.prompt,
-            history
-          );
-          aiResponseContent = aiResponse.content.toString();
-        }
-
-        await prisma.message.createMany({
-          data: [
-            {
-              userId: ctx.auth.userId,
-              role: "user",
-              content: input.prompt,
-              conversationId: conversationId,
-            },
-            {
-              userId: ctx.auth.userId,
-              role: "assistant",
-              content: aiResponseContent,
-              thoughts: thoughts,
-              conversationId: conversationId,
-            },
-          ],
         });
 
         await prisma.conversation.update({
@@ -142,15 +94,95 @@ export const chatRouter = createTRPCRouter({
         });
 
         return {
-          user: input.prompt,
-          assistant: aiResponseContent,
           conversationId: conversationId,
+          userMessage: userMessage,
         };
       } catch (error) {
-        console.error("Failed to get AI response:", error);
+        console.error("Failed to create user message:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to get AI response",
+          message: "Failed to create user message",
+        });
+      }
+    }),
+
+  // Step 2 - Generate and store AI response
+  createAIResponse: protectedProcedure
+    .input(
+      z.object({
+        prompt: z.string(),
+        conversationId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const history = await prisma.message.findMany({
+          where: {
+            conversationId: input.conversationId,
+            userId: ctx.auth.userId,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          select: {
+            role: true,
+            content: true,
+          },
+          take: 10,
+        });
+
+        // Get the routing decision
+        const routingDecision = await getRoutingDecision(input.prompt, history);
+
+        console.log(
+          `Routing decision for prompt "${input.prompt}": ${routingDecision}`
+        );
+
+        let aiResponseContent: string;
+        let thoughts: string | null = null;
+
+        // Route the request based on the decision
+        if (routingDecision === "ReAct") {
+          const agentResult = await invokeReActAgent(
+            input.prompt,
+            history,
+            ctx.auth.userId
+          );
+          aiResponseContent = agentResult.finalResponse;
+          thoughts = agentResult.thoughts;
+        } else {
+          const aiResponse = await createAIChatCompletion(input.prompt, history);
+          aiResponseContent = aiResponse.content.toString();
+        }
+
+        // Create the assistant message
+        const assistantMessage = await prisma.message.create({
+          data: {
+            userId: ctx.auth.userId,
+            role: "assistant",
+            content: aiResponseContent,
+            thoughts: thoughts,
+            conversationId: input.conversationId,
+          },
+        });
+
+        await prisma.conversation.update({
+          where: {
+            id: input.conversationId,
+          },
+          data: {
+            updatedAt: new Date(),
+          },
+        });
+
+        return {
+          assistantMessage: assistantMessage,
+        };
+      } catch (error) {
+        console.error("Failed to create AI response:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create AI response",
         });
       }
     }),
