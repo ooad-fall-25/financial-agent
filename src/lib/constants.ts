@@ -24,6 +24,9 @@
        
 //         `;
 
+export const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
+export const ACCEPTED_FILE_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+
 export const IMPROVED_SUMMARIZE_NEWS_BY_CATEGORY = `
 You are a professional financial summarization assistant. Your task is to generate a **structured, report-style financial news summary** based on market context and fetched news data. You always write clean, concise, and well-formatted markdown that can be exported to PDF.
 

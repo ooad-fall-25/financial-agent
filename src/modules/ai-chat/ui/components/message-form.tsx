@@ -1,150 +1,178 @@
 import { z } from "zod";
-import { ChangeEvent, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutoSize from "react-textarea-autosize";
-
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
-import { ArrowUpIcon, Loader2Icon, XIcon } from "lucide-react";
+import { ArrowUpIcon, Paperclip, XIcon, FileText } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { Spinner } from "@/components/ui/spinner";
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FilePreview } from "./file-preview";
 
 interface Props {
-    prompt: string;
-    setPrompt: (prompt: string) => void;
-    onSend: (text: string, files?: File[]) => void;
-    isSending: boolean;
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  onSend: (text: string, files?: File[]) => void;
+  isSending: boolean;
 }
 
 const formSchema = z.object({
-    text: z
-        .string()
-        .min(1, { message: "Value is required" })
-        .max(10000, { message: "Value is too long" }),
-    files: z
-        .array(
-            z.instanceof(File, { message: "Must be a valid file" })
-        )
-        .max(10, { message: "You can upload up to 10 files" })
-        .optional()
-})
-
+  text: z.string().max(10000),
+  files: z.array(z.instanceof(File)).optional(),
+});
 
 export const MessageForm = ({ onSend, isSending }: Props) => {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: { text: "", files: [] },
-    });
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
-    const [isFocused, setIsFocused] = useState(false);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { text: "", files: [] },
+  });
 
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        form.reset({ text: "", files: [] });
-        await onSend(values.text, values.files);
-    };
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!values.text.trim() && (!values.files || values.files.length === 0)) return;
+    const text = values.text;
+    const files = values.files;
+    form.reset({ text: "", files: [] });
+    await onSend(text, files);
+  };
 
-    const onDrop = useCallback(
-        (acceptedFiles: File[]) => {
-            form.setValue("files", [...(form.getValues("files") ?? []), ...acceptedFiles]);
-        },
-        [form]
-    );
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const current = form.getValues("files") ?? [];
+      if (current.length + acceptedFiles.length > 10) {
+        toast.error("Max 10 files allowed");
+        return;
+      }
+      const valid = acceptedFiles.filter(
+        (file) => file.size <= MAX_FILE_SIZE_BYTES && ACCEPTED_FILE_TYPES.includes(file.type)
+      );
+      if (valid.length !== acceptedFiles.length) {
+        toast.error("Invalid files (Max 1MB, PDF/Excel only)");
+      }
+      form.setValue("files", [...current, ...valid], { shouldValidate: true });
+    },
+    [form]
+  );
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        multiple: true,
-        noClick: true,
-        noKeyboard: true,
-    });
+  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+    onDrop,
+    multiple: true,
+    noClick: true,
+    noKeyboard: true,
+    accept: ACCEPTED_FILE_TYPES.reduce((acc, type) => { acc[type] = []; return acc; }, {} as Record<string, string[]>),
+  });
 
-    return (
-        <Form {...form}>
-            {/* File preview */}
-            <div className="mt-3 flex flex-col gap-x-2">
-                {(form.watch("files") ?? []).map((file, i) => (
-                    <div
-                        key={i}
-                        className="rounded-t-xl flex justify-between items-center bg-background border-t border-secondary px-3"
-                    >
-                        <div className="flex w-full justify-between items-center pr-4">
-                            <p className="text-xs font-medium truncate">{file.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {(file.size / 1024).toFixed(1)} KB
-                            </p>
-                        </div>
+  const files = form.watch("files") ?? [];
 
-                        <Button
-                            type="button"
-                            size="sm"
-                            className="ml-auto bg-transparent hover:bg-transparent text-primary hover:text-destructive"
-                            onClick={() => {
-                                const files = [...(form.getValues("files") ?? [])];
-                                files.splice(i, 1);
-                                form.setValue("files", files, { shouldValidate: true });
-                            }}
-                        >
-                            <XIcon />
-                        </Button>
-                    </div>
-                ))}
-            </div>
+  return (
+    <>
+      <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
+        <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="text-sm font-medium truncate">{previewFile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto bg-gray-50/50 p-4">
+            {previewFile && <FilePreview file={previewFile} />}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-            <form
-                {...getRootProps()}
-                onSubmit={form.handleSubmit(onSubmit)}
-                className={cn(
-                    "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
-                    isFocused && "shadow-xs",
-                    isDragActive && "border-dashed border-primary"
-                )}
-            >
-                {/* Invisible dropzone input */}
-                <input {...getInputProps()} />
+      <Form {...form}>
+        <form
+          {...getRootProps()}
+          onSubmit={form.handleSubmit(onSubmit)}
+          className={cn(
+            "relative border p-4 pt-3 rounded-xl bg-sidebar dark:bg-sidebar transition-all flex flex-col gap-2",
+            isFocused && "shadow-sm ring-1 ring-border",
+            isDragActive && "border-dashed border-primary"
+          )}
+        >
+          <input {...getInputProps()} />
 
-                <FormField
-                    control={form.control}
-                    name="text"
-                    render={({ field }) => (
-                        <TextareaAutoSize
-                            {...field}
-                            disabled={isSending}
-                            onFocus={() => setIsFocused(true)}
-                            onBlur={() => setIsFocused(false)}
-                            minRows={2}
-                            maxRows={8}
-                            className="pt-4 resize-none border-none w-full outline-none bg-transparent"
-                            placeholder="What would you like to ask?"
-                            onKeyDown={(e) => {
-                                // Ctrl/Cmd + Enter sends the message
-                                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                                    e.preventDefault();
-                                    form.handleSubmit(onSubmit)(); // no arguments!
-                                }
-                            }}
-                        />
-                    )}
-                />
-
-                <div className="flex gap-2 items-end justify-between pt-2">
-                    <div className="text-[10px] text-muted-foreground font-mono">
-                        <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                            Ctrl + Enter
-                        </kbd>
-                        &nbsp;to submit
-                    </div>
-
-                    <Button
-                        type="submit" // important to trigger form submit
-                        disabled={isSending}
-                        className={cn("size-8 rounded-full", isSending && "bg-muted-foreground border")}
-                    >
-                        {isSending ? <Spinner className="size-4" /> : <ArrowUpIcon />}
-                    </Button>
+          {/* Compact File Chips */}
+          {files.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-1">
+              {files.map((file, i) => (
+                <div
+                  key={i}
+                  className="group flex items-center gap-2 rounded-md border bg-background/50 px-2 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+                >
+                  <div 
+                    onClick={() => setPreviewFile(file)}
+                    className="flex items-center gap-2 cursor-pointer hover:underline decoration-muted-foreground/50 underline-offset-2"
+                  >
+                    <FileText className="size-3.5 text-muted-foreground" />
+                    <span className="truncate max-w-[120px]">{file.name}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newFiles = [...files];
+                      newFiles.splice(i, 1);
+                      form.setValue("files", newFiles);
+                    }}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
                 </div>
-            </form>
-        </Form>
-    );
+              ))}
+            </div>
+          )}
+
+          <FormField
+            control={form.control}
+            name="text"
+            render={({ field }) => (
+              <TextareaAutoSize
+                {...field}
+                disabled={isSending}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                minRows={2}
+                maxRows={8}
+                className="resize-none border-none w-full outline-none bg-transparent text-sm placeholder:text-muted-foreground/70"
+                placeholder="Message..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    form.handleSubmit(onSubmit)();
+                  }
+                }}
+              />
+            )}
+          />
+
+          <div className="flex gap-2 items-center justify-between mt-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              onClick={open}
+              disabled={isSending}
+            >
+              <Paperclip className="size-4" />
+            </Button>
+
+            <Button
+              type="submit"
+              disabled={isSending || (!form.watch("text") && files.length === 0)}
+              className={cn("size-8 rounded-lg p-0 transition-all", isSending && "bg-muted-foreground")}
+            >
+              {isSending ? <Spinner className="size-4" /> : <ArrowUpIcon className="size-4" />}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
+  );
 };
