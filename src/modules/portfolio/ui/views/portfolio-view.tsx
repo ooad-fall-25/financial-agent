@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HoldingsSection } from "../components/holdings-section";
 import { WatchlistSection } from "../components/watchlist-section";
 
-export default function PortfolioView() {
+export function PortfolioView() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">

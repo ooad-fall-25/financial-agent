@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getMarketDataForTickers } from "@/lib/alpaca";
+import { getMarketDataForTickers, getCompanyNames } from "@/lib/alpaca";
 
 // --- Types ---
 export interface HoldingInput {
@@ -19,20 +19,25 @@ export const getUserHoldings = async (userId: string) => {
 
   if (dbHoldings.length === 0) return [];
 
-  // 2. Get Real-time Data from Alpaca
+  // 2. Get Real-time Data AND Company Names (Parallel)
   const symbols = dbHoldings.map((h) => h.symbol);
-  const marketData = await getMarketDataForTickers(symbols);
+  
+  const [marketData, assetDetails] = await Promise.all([
+    getMarketDataForTickers(symbols),
+    getCompanyNames(symbols)
+  ]);
 
   // 3. Merge Data
   return dbHoldings.map((holding) => {
     const data = marketData.find((m) => m.symbol === holding.symbol);
+    const asset = assetDetails.find((a) => a.symbol === holding.symbol);
 
-    // Fallback values if API fails for specific ticker
     const currentPrice = data?.latestTrade?.p ?? data?.dailyBar?.c ?? 0;
     const prevClose = data?.prevDailyBar?.c ?? 0;
 
     return {
       ...holding,
+      name: asset?.name || holding.symbol,
       marketData: {
         price: currentPrice,
         open: data?.dailyBar?.o ?? 0,
@@ -47,33 +52,6 @@ export const getUserHoldings = async (userId: string) => {
   });
 };
 
-export const upsertHolding = async (userId: string, input: HoldingInput) => {
-  return await prisma.holding.upsert({
-    where: {
-      userId_symbol: { userId, symbol: input.symbol },
-    },
-    update: {
-      quantity: input.quantity,
-      avgCost: input.avgCost,
-    },
-    create: {
-      userId,
-      symbol: input.symbol,
-      quantity: input.quantity,
-      avgCost: input.avgCost,
-    },
-  });
-};
-
-export const deleteUserHolding = async (userId: string, holdingId: string) => {
-  return await prisma.holding.deleteMany({
-    where: {
-      id: holdingId,
-      userId: userId, // Ensure users can only delete their own holdings
-    },
-  });
-};
-
 export const getUserWatchlist = async (userId: string) => {
   const watchlistItems = await prisma.watchlistItem.findMany({
     where: { userId },
@@ -83,14 +61,22 @@ export const getUserWatchlist = async (userId: string) => {
   if (watchlistItems.length === 0) return [];
 
   const symbols = watchlistItems.map((w) => w.symbol);
-  const marketData = await getMarketDataForTickers(symbols);
+
+  // Parallel fetch
+  const [marketData, assetDetails] = await Promise.all([
+    getMarketDataForTickers(symbols),
+    getCompanyNames(symbols)
+  ]);
 
   return watchlistItems.map((item) => {
     const data = marketData.find((m) => m.symbol === item.symbol);
+    const asset = assetDetails.find((a) => a.symbol === item.symbol);
+    
     const currentPrice = data?.latestTrade?.p ?? data?.dailyBar?.c ?? 0;
 
     return {
       ...item,
+      name: asset?.name || item.symbol,
       marketData: {
         price: currentPrice,
         open: data?.dailyBar?.o ?? 0,
@@ -105,15 +91,23 @@ export const getUserWatchlist = async (userId: string) => {
   });
 };
 
+export const upsertHolding = async (userId: string, input: HoldingInput) => {
+  return await prisma.holding.upsert({
+    where: { userId_symbol: { userId, symbol: input.symbol } },
+    update: { quantity: input.quantity, avgCost: input.avgCost },
+    create: { userId, symbol: input.symbol, quantity: input.quantity, avgCost: input.avgCost },
+  });
+};
+
+export const deleteUserHolding = async (userId: string, holdingId: string) => {
+  return await prisma.holding.deleteMany({ where: { id: holdingId, userId } });
+};
+
 export const addToUserWatchlist = async (userId: string, symbol: string) => {
-  // Check if already exists
   const exists = await prisma.watchlistItem.findUnique({
     where: { userId_symbol: { userId, symbol } },
   });
-
-  if (exists) {
-    throw new Error("Already in watchlist"); // Throw generic error, handle in router
-  }
+  if (exists) throw new Error("Already in watchlist");
 
   return await prisma.watchlistItem.create({
     data: { userId, symbol },
@@ -121,10 +115,5 @@ export const addToUserWatchlist = async (userId: string, symbol: string) => {
 };
 
 export const removeFromUserWatchlist = async (userId: string, itemId: string) => {
-  return await prisma.watchlistItem.deleteMany({
-    where: {
-      id: itemId,
-      userId, // Ensure ownership
-    },
-  });
+  return await prisma.watchlistItem.deleteMany({ where: { id: itemId, userId } });
 };

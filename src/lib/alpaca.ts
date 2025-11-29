@@ -427,3 +427,24 @@ export const getCryptoListData = async (): Promise<CryptoData[]> => {
         };
     });
 };
+
+export const getCompanyNames = async (symbols: string[]) => {
+  // Remove duplicates to save API calls
+  const uniqueSymbols = [...new Set(symbols)];
+  
+  // Fetch asset details in parallel
+  const assets = await Promise.all(
+    uniqueSymbols.map(async (symbol) => {
+      try {
+        // We use the 'alpaca' instance you defined on line 59
+        const asset = await alpaca.getAsset(symbol);
+        return { symbol, name: asset.name };
+      } catch (error) {
+        console.warn(`Could not fetch name for ${symbol}`);
+        return { symbol, name: symbol }; // Fallback to symbol if name fails
+      }
+    })
+  );
+
+  return assets;
+};

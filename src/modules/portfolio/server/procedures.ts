@@ -1,8 +1,14 @@
 import { z } from "zod";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-// Import your new service functions
-import * as portfolioService from "@/lib/portfolio-service";
+import { 
+  getUserHoldings, 
+  upsertHolding, 
+  deleteUserHolding,
+  getUserWatchlist,
+  addToUserWatchlist,
+  removeFromUserWatchlist
+} from "@/lib/portfolio-service";
 
 // Schema
 const holdingInputSchema = z.object({
@@ -11,13 +17,12 @@ const holdingInputSchema = z.object({
   avgCost: z.number().min(0),
 });
 
-// Helper to standardise error handling (like your friend's example)
+// Helper to standardise error handling
 const handleServiceCall = async <T>(fn: () => Promise<T>) => {
   try {
     return await fn();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    // If our service throws "Already in watchlist", we can map it to CONFLICT
     if (message.includes("Already in watchlist")) {
       throw new TRPCError({ code: "CONFLICT", message });
     }
@@ -31,9 +36,10 @@ export const portfolioRouter = createTRPCRouter({
 
   getHoldings: baseProcedure.query(async ({ ctx }) => {
     const { userId } = ctx.auth;
-    if (!userId) return []; // Or throw UNAUTHORIZED based on preference
+    if (!userId) return []; 
     
-    return handleServiceCall(() => portfolioService.getUserHoldings(userId));
+    // Clean call to the imported function
+    return handleServiceCall(() => getUserHoldings(userId));
   }),
 
   addHolding: baseProcedure
@@ -42,7 +48,7 @@ export const portfolioRouter = createTRPCRouter({
       const { userId } = ctx.auth;
       if (!userId) throw new TRPCError({ code: "UNAUTHORIZED" });
 
-      return handleServiceCall(() => portfolioService.upsertHolding(userId, input));
+      return handleServiceCall(() => upsertHolding(userId, input));
     }),
 
   deleteHolding: baseProcedure
@@ -51,7 +57,7 @@ export const portfolioRouter = createTRPCRouter({
       const { userId } = ctx.auth;
       if (!userId) throw new TRPCError({ code: "UNAUTHORIZED" });
 
-      return handleServiceCall(() => portfolioService.deleteUserHolding(userId, input.id));
+      return handleServiceCall(() => deleteUserHolding(userId, input.id));
     }),
 
   // --- WATCHLIST ---
@@ -60,7 +66,7 @@ export const portfolioRouter = createTRPCRouter({
     const { userId } = ctx.auth;
     if (!userId) return [];
 
-    return handleServiceCall(() => portfolioService.getUserWatchlist(userId));
+    return handleServiceCall(() => getUserWatchlist(userId));
   }),
 
   addToWatchlist: baseProcedure
@@ -69,8 +75,13 @@ export const portfolioRouter = createTRPCRouter({
       const { userId } = ctx.auth;
       if (!userId) throw new TRPCError({ code: "UNAUTHORIZED" });
 
-      return handleServiceCall(() => portfolioService.addToUserWatchlist(userId, input.symbol));
-    }),
+      // We can use handleServiceCall here too for consistency
+      return handleServiceCall(async () => {
+         const data = await addToUserWatchlist(userId, input.symbol);
+         if (!data) throw new Error("Failed to add to watchlist");
+         return data;
+      });
+    }), 
 
   removeFromWatchlist: baseProcedure
     .input(z.object({ id: z.string() }))
@@ -78,6 +89,6 @@ export const portfolioRouter = createTRPCRouter({
       const { userId } = ctx.auth;
       if (!userId) throw new TRPCError({ code: "UNAUTHORIZED" });
 
-      return handleServiceCall(() => portfolioService.removeFromUserWatchlist(userId, input.id));
+      return handleServiceCall(() => removeFromUserWatchlist(userId, input.id));
     }),
 });
