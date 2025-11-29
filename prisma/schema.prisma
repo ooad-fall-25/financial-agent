@@ -25,6 +25,7 @@ model NewsSummary {
   url        String?
 
   isByCategory Boolean @default(false)
+  isLiked      Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -50,10 +51,8 @@ model Message {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  medias         Media[]
+  medias Media[]
 }
-
-
 
 model Media {
   id        String @id @default(uuid())
@@ -75,13 +74,13 @@ model Media {
 }
 
 model PinnedNews {
-  id     String @id @default(uuid())
-  userId String
-  title  String
-  source String
-  url    String
-  publishedAt  DateTime
-  summary String
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  source      String
+  url         String
+  publishedAt DateTime
+  summary     String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,12 +93,12 @@ model Holding {
   userId    String
   symbol    String
   quantity  Float
-  avgCost   Float    // User's average purchase price
+  avgCost   Float // User's average purchase price
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // distinct identifier to prevent duplicate rows for the same stock per user
-  @@unique([userId, symbol]) 
+  @@unique([userId, symbol])
 }
 
 model WatchlistItem {

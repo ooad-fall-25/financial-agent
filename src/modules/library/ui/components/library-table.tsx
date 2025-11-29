@@ -4,11 +4,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { NewsSummary } from "@/generated/prisma";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { SearchIcon, TablePropertiesIcon } from "lucide-react";
+import { Heart, HeartCrack, SearchIcon, TablePropertiesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 interface Props {
     selectedTab: string;
 }
@@ -18,15 +19,16 @@ export const LibraryTable = ({ selectedTab }: Props) => {
     // TODO: consider using useInfiniteQuery
     const { data: newsByCategory, isLoading: isCategoryLoading } = useQuery(trpc.library.getAllSummaryByCategory.queryOptions());
     const { data: newsByIndividual, isLoading: isIndividualLoading } = useQuery(trpc.library.getAllSummaryByIndividualLink.queryOptions());
+    const { data: newsByLinked, isLoading: isLikedLoading } = useQuery(trpc.library.getAllSummaryByLiked.queryOptions());
 
     if (selectedTab === "category") {
         return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} type={selectedTab} />
     } else if (selectedTab === "individual") {
         return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} type={selectedTab} />
     } else if (selectedTab === "liked") {
-        return <SummaryByTable data = { []} isLoading = { false } type = { selectedTab } />
+        return <SummaryByTable data={newsByLinked || []} isLoading={isLikedLoading} type={selectedTab} />
     } else {
-        return; 
+        return;
     }
 }
 
@@ -38,9 +40,34 @@ interface TableProps {
 
 const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
     const router = useRouter();
+    const trpc = useTRPC();
+    const queryClient = useQueryClient();
+    const [likedId, setLikedId] = useState<string>("");
+
 
     const [searchValue, setSearchValue] = useState("");
     const [filteredNews, setFilteredNews] = useState<NewsSummary[]>([]);
+
+    const updateLike = useMutation(trpc.library.updateLike.mutationOptions({
+        onMutate: async ({ summaryId, isLiked }) => {
+            await queryClient.cancelQueries();
+
+            const updateList = (queryKey: any) => {
+                const prev = queryClient.getQueryData<NewsSummary[]>(queryKey);
+                if (!prev) return;
+                queryClient.setQueryData(queryKey, prev.map(n =>
+                    n.id === summaryId ? { ...n, isLiked } : n
+                ));
+            };
+
+            updateList(trpc.library.getAllSummaryByCategory.queryKey());
+            updateList(trpc.library.getAllSummaryByIndividualLink.queryKey());
+            updateList(trpc.library.getAllSummaryByLiked.queryKey());
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries();
+        }
+    }));
 
     const handleSearchChange = (value: string) => {
         setSearchValue(value);
@@ -53,6 +80,13 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                 setFilteredNews(result);
             }
         }
+    }
+
+    const handleUpdateLike = async (summaryId: string, isLiked: boolean) => {
+        const data = await updateLike.mutateAsync({
+            summaryId: summaryId,
+            isLiked: isLiked,
+        });
     }
 
     useEffect(() => {
@@ -81,11 +115,13 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                 </div>
             </div>
 
-            <div className="flex-shrink-0 sticky top-0 z-10 grid grid-cols-16 gap-4 px-4 py-1 bg-sidebar border-none font-normal text-xs text-muted-foreground">
+            <div className="flex-shrink-0 sticky top-0 z-10 grid grid-cols-17 gap-4 px-4 py-1 bg-sidebar border-none font-normal text-xs text-muted-foreground">
+
                 <div className="col-span-10">Headline</div>
                 <div className="col-span-2">Category</div>
                 <div className="col-span-2">Language</div>
                 <div className="col-span-2">Date</div>
+                <div className="col-span-1">Like</div>
             </div>
 
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -101,9 +137,9 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                             {data.length != 0 ? (
                                 <div className="h-full min-h-0 pb-20">
 
-                                    <div className="divide-y divide-border text-xs font-normal border-b border-border">
+                                    <div className="divide-y divide-border text-xs font-normal">
                                         {filteredNews.map((item) => (
-                                            <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-16 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center">
+                                            <div key={item.id} onClick={() => router.push(`/library/${item.id}?type=${type}`)} className="grid grid-cols-17 gap-4 px-4 py-2.5 hover:bg-sidebar hover:cursor-pointer transition-colors items-center border-b border-secondary">
                                                 <div className="col-span-10">
                                                     <div className="font-medium leading-tight truncate">
                                                         <p>{item.headline}</p>
@@ -124,13 +160,30 @@ const SummaryByTable = ({ data, isLoading, type }: TableProps) => {
                                                         {format(item.createdAt, "HH:mm 'on' MMM dd, yyyy")}
                                                     </div>
                                                 </div>
+                                                <div className="col-span-1">
+                                                    <div className="text-muted-foreground truncate">
+                                                        <Button
+                                                            className="!hover:ring-0 !size-2"
+                                                            variant="ghost"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setLikedId(item.id)
+                                                                handleUpdateLike(item.id, !item.isLiked);
+                                                            }}
+                                                        >
+                                                            {item.isLiked ?
+                                                                <Heart fill="pink" color="black" /> : <HeartCrack />
+                                                            }
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
                             ) : (
-                                <div className="flex-1 gap-y-4 items-center justify-center flex flex-col">
+                                <div className="flex-1 gap-y-4 items-center justify-center flex flex-col mt-20">
                                     <TablePropertiesIcon />
                                     <div className="gap-y-2 flex flex-col items-center">
                                         <span className="text-sm">The summary will be loaded here</span>

@@ -128,4 +128,42 @@ export const libraryRouter = createTRPCRouter({
       }
       return translatedContent.content.toString();
     }),
+
+  getAllSummaryByLiked: protectedProcedure.query(async ({ ctx }) => {
+    const data = await prisma.newsSummary.findMany({
+      where: {
+        userId: ctx.auth.userId,
+        isLiked: true,
+      },
+    });
+
+    if (!data) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+    }
+    return data;
+  }),
+
+  updateLike: protectedProcedure
+    .input(
+      z.object({
+        summaryId: z.string(),
+        isLiked: z.boolean(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const data = await prisma.newsSummary.update({
+        where: {
+          id: input.summaryId,
+          userId: ctx.auth.userId, 
+        },
+        data: {
+          isLiked: input.isLiked,
+        },
+      });
+
+      if (!data) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+      }
+      return data;
+    }),
 });
