@@ -18,15 +18,16 @@ export const LibraryTable = ({ selectedTab }: Props) => {
     // TODO: consider using useInfiniteQuery
     const { data: newsByCategory, isLoading: isCategoryLoading } = useQuery(trpc.library.getAllSummaryByCategory.queryOptions());
     const { data: newsByIndividual, isLoading: isIndividualLoading } = useQuery(trpc.library.getAllSummaryByIndividualLink.queryOptions());
+    const { data: newsByLinked, isLoading: isLikedLoading } = useQuery(trpc.library.getAllSummaryByLiked.queryOptions());
 
     if (selectedTab === "category") {
         return <SummaryByTable data={newsByCategory || []} isLoading={isCategoryLoading} type={selectedTab} />
     } else if (selectedTab === "individual") {
         return <SummaryByTable data={newsByIndividual || []} isLoading={isIndividualLoading} type={selectedTab} />
     } else if (selectedTab === "liked") {
-        return <SummaryByTable data = { []} isLoading = { false } type = { selectedTab } />
+        return <SummaryByTable data={newsByLinked || []} isLoading={isLikedLoading} type={selectedTab} />
     } else {
-        return; 
+        return;
     }
 }
 
