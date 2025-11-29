@@ -11,10 +11,10 @@ const s3 = new S3Client({
 });
 
 
-export const getPreSignedURL = async (fileName: string, fileType: string, fileSize: number, userId: string, checkSum: string) => {
+export const getPutPreSignedURL = async (fileName: string, fileType: string, fileSize: number, userId: string, checkSum: string) => {
   const putObjectCommand = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName + "-" + generateFileName(),
+    Key: fileName + "-" + generateRandomName(),
     ContentType: fileType, 
     ContentLength: fileSize,
     ChecksumSHA256: checkSum, 
@@ -27,4 +27,4 @@ export const getPreSignedURL = async (fileName: string, fileType: string, fileSi
   return signedURL; 
 };
 
-const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex"); 
+const generateRandomName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex"); 

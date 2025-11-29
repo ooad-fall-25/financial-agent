@@ -8,7 +8,7 @@ import {
 } from "@/lib/ai-chat";
 import { prisma } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
-import { getPreSignedURL } from "@/lib/file-upload";
+import { getPutPreSignedURL } from "@/lib/file-upload";
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
 import { pdfToText, xlsxToText } from "@/lib/helper";
 import { FileInfoSchema } from "../types";
@@ -263,7 +263,7 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  createPreSignedUrl: protectedProcedure
+  createPutPreSignedUrl: protectedProcedure
     .input(
       z.object({
         fileName: z.string(),
@@ -291,7 +291,7 @@ export const chatRouter = createTRPCRouter({
         });
       }
 
-      const preSignedUrl = await getPreSignedURL(
+      const preSignedUrl = await getPutPreSignedURL(
         input.fileName,
         input.fileType,
         input.fileSize,
@@ -331,4 +331,6 @@ export const chatRouter = createTRPCRouter({
 
       return { content: content };
     }),
+
+  
 });
