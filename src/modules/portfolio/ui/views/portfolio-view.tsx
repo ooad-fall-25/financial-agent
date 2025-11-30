@@ -3,6 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HoldingsSection } from "../components/holdings-section";
 import { WatchlistSection } from "../components/watchlist-section";
+import { PerformanceSection } from "../components/performance-section"; // Import the new component
 
 export function PortfolioView() {
   return (
@@ -16,6 +17,7 @@ export function PortfolioView() {
           <TabsList>
             <TabsTrigger value="holdings">Holdings</TabsTrigger>
             <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+            <TabsTrigger value="performance">Statistics</TabsTrigger> {/* New Trigger */}
           </TabsList>
         </div>
 
@@ -25,6 +27,11 @@ export function PortfolioView() {
 
         <TabsContent value="watchlist" className="space-y-4">
           <WatchlistSection />
+        </TabsContent>
+
+        {/* New Content */}
+        <TabsContent value="performance" className="space-y-4">
+          <PerformanceSection />
         </TabsContent>
       </Tabs>
     </div>

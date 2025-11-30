@@ -1,4 +1,4 @@
-import { type AppRouter } from "@/trpc/routers/_app"; // Adjust path to your appRouter
+import { type AppRouter } from "@/trpc/routers/_app"; 
 import { inferRouterOutputs } from "@trpc/server";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
@@ -6,15 +6,12 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type HoldingItem = RouterOutputs["portfolio"]["getHoldings"][number];
 export type WatchlistItem = RouterOutputs["portfolio"]["getWatchlist"][number];
 
-// Definition for our Generic Table Columns
 export interface TableColumn<T> {
   header: string;
-  // Function to render the cell content
   cell: (item: T) => React.ReactNode; 
-  className?: string; // For alignment (text-right, etc)
+  className?: string;
 }
 
-// Definition for our Generic Dialog Fields
 export interface DialogField {
   name: string;
   label: string;
@@ -22,4 +19,36 @@ export interface DialogField {
   placeholder?: string;
   step?: string;
   required?: boolean;
+}
+
+// Performance Statistics Types
+export interface AllocationItem {
+  name: string;
+  value: number;
+  symbol: string;
+}
+
+export interface MoverItem {
+  symbol: string;
+  changePct: number;
+  price: number;
+}
+
+export interface PerformerItem {
+  symbol: string;
+  returnPct: number;
+  totalPL: number;
+}
+
+export interface PortfolioStats {
+  totalValue: number;
+  totalCost: number;
+  totalUnrealizedPL: number;
+  totalReturnPct: number;
+  dailyValueChange: number;
+  dailyReturnPct: number;
+  allocation: AllocationItem[];
+  topGainers: MoverItem[];
+  topLosers: MoverItem[];
+  topPerformers: PerformerItem[];
 }

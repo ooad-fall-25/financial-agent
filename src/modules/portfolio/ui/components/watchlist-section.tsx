@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button";
 
 // --- CONFIG ---
-const MAX_WATCHLIST = 50;
+const MAX_WATCHLIST = 20;
 
 // Helper to render value or error message
 const renderFinancialValue = (

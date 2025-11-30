@@ -11,7 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 // --- CONFIG ---
-const MAX_HOLDINGS = 50;
+const MAX_HOLDINGS = 20;
 
 export const HoldingsSection = () => {
   const trpc = useTRPC();
