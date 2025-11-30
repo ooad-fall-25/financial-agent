@@ -1,34 +1,59 @@
 "use client";
 
+import { useState } from "react";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Added CardDescription
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { calculatePortfolioStats } from "@/lib/portfolio-math";
 import { AllocationChart, MoversList, TopPerformersList } from "./performance-cards";
-import { DollarSign, TrendingUp, TrendingDown, Percent, RefreshCw, Wallet } from "lucide-react"; // Added Wallet icon
+import { DollarSign, TrendingUp, TrendingDown, Percent, RefreshCw, Wallet, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const PerformanceSection = () => {
   const trpc = useTRPC();
+  const [isManualRefresh, setIsManualRefresh] = useState(false);
   
   const { data: holdingsData, isLoading, refetch, isRefetching } = useQuery({
     ...trpc.portfolio.getHoldings.queryOptions(),
     refetchInterval: 60000,
   });
 
+  const handleRefresh = async () => {
+    setIsManualRefresh(true);
+    
+    // 1. Force a minimum loading time (e.g., 500ms) so the user sees the spinner
+    const minLoadTime = new Promise((resolve) => setTimeout(resolve, 500));
+    const dataFetch = refetch();
+
+    await Promise.all([minLoadTime, dataFetch]);
+    
+    setIsManualRefresh(false);
+  };
+
+  // 2. Determine if we should show the "Whole Tab" loader
+  // We show it on Initial Load OR when the user manually refreshes.
+  // We do NOT show it on background (60s) refetches.
+  const showLoader = isLoading || isManualRefresh;
+
+  if (showLoader) {
+    return (
+      <div className="flex h-[50vh] w-full items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary/50" />
+      </div>
+    );
+  }
+
+  // --- DATA PROCESSING ---
   const safeHoldings = holdingsData ?? [];
   const stats = safeHoldings.length > 0 ? calculatePortfolioStats(safeHoldings) : null;
-
-  if (isLoading) {
-    return <PerformanceSkeleton />;
-  }
 
   if (!stats || safeHoldings.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
             <p className="text-muted-foreground mb-4">No holdings data available to calculate performance.</p>
-            <Button onClick={() => refetch()}>Refresh Data</Button>
+            <Button onClick={handleRefresh} disabled={isRefetching}>
+              Refresh Data
+            </Button>
         </div>
     )
   }
@@ -44,16 +69,16 @@ export const PerformanceSection = () => {
         <Button 
             variant="ghost" 
             size="sm" 
-            className="text-muted-foreground"
-            onClick={() => refetch()}
-            disabled={isRefetching}
+            className="text-muted-foreground pl-0 hover:pl-2 transition-all"
+            onClick={handleRefresh}
+            disabled={isRefetching || isManualRefresh}
         >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
             Refresh Data
         </Button>
       </div>
 
-      {/* TOP ROW: KPI CARDS (Now 5 Columns on Large Screens) */}
+      {/* TOP ROW: KPI CARDS */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
         <StatsCard 
           title="Total Value" 
@@ -62,7 +87,6 @@ export const PerformanceSection = () => {
           subValue="Real-time Value"
         />
 
-        {/* NEW CARD: Cost Basis */}
         <StatsCard 
           title="Cost Basis" 
           icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
@@ -98,19 +122,16 @@ export const PerformanceSection = () => {
       {/* MIDDLE ROW: CHARTS & MOVERS */}
       <div className="grid gap-4 md:grid-cols-7">
         
-        {/* PIE CHART (4/7 width) */}
         <Card className="md:col-span-4">
           <CardHeader>
             <CardTitle>Portfolio Allocation</CardTitle>
-            {/* ADDED DESCRIPTION */}
-            <p className="text-sm text-muted-foreground">Market value percentages of your holdings.</p>
+            <CardDescription>Market value percentages of your holdings.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             <AllocationChart data={stats.allocation} />
           </CardContent>
         </Card>
 
-        {/* DAILY MOVERS (3/7 width) */}
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>Daily Movers</CardTitle>
@@ -156,18 +177,4 @@ function StatsCard({ title, icon, value, subValue, valueColor }: { title: string
       </CardContent>
     </Card>
   );
-}
-
-function PerformanceSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
-         {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
-      </div>
-      <div className="grid gap-4 md:grid-cols-7">
-         <Skeleton className="md:col-span-4 h-[350px] rounded-xl" />
-         <Skeleton className="md:col-span-3 h-[350px] rounded-xl" />
-      </div>
-    </div>
-  )
 }
