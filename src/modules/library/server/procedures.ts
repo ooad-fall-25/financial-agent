@@ -154,7 +154,7 @@ export const libraryRouter = createTRPCRouter({
       const data = await prisma.newsSummary.update({
         where: {
           id: input.summaryId,
-          userId: ctx.auth.userId, 
+          userId: ctx.auth.userId,
         },
         data: {
           isLiked: input.isLiked,
@@ -166,4 +166,17 @@ export const libraryRouter = createTRPCRouter({
       }
       return data;
     }),
+
+  getAllMedia: protectedProcedure.query(async ({ ctx }) => {
+    const data = await prisma.media.findMany({
+      where: {
+        userId: ctx.auth.userId,
+      },
+    });
+
+    if (data.length === 0) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+    }
+    return data;
+  }),
 });
