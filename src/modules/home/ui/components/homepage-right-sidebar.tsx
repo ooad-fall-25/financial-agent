@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import React, { useState, useEffect } from 'react';
 import { useTRPC } from "@/trpc/client";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { usePrevious } from '@/lib/use-previous';
 import Link from 'next/link'; 
 
@@ -18,9 +18,10 @@ interface TickerData {
     percentChange: number;
 }
 
-interface CleanCompanyInfo {
-    ticker: string;
-    name: string;
+interface AlpacaSnapshot {
+  latestTrade: { p: number; t: string };
+  dailyBar: { o: number; h: number; l: number; c: number; v: number };
+  prevDailyBar: { o: number; h: number; l: number; c: number; v: number };
 }
 
 const AnimatedTickerItem = ({ item }: { item: TickerData }) => {
@@ -64,84 +65,95 @@ const AnimatedTickerItem = ({ item }: { item: TickerData }) => {
 
 export function RightSidebar() {
     const trpc = useTRPC();
+
     const { 
         data: trendingSymbols, 
-        isLoading: isSymbolsLoading, 
-        isError: isSymbolsError 
+        isLoading: isTrendingLoading, 
     } = useQuery({
         ...trpc.HomeData.fetchYahooTrendingTicker.queryOptions({}),
-        refetchInterval: 60000,
+        refetchInterval: 15000,
     });
     
-    const symbols: string[] = trendingSymbols?.body ?? [];
-    const alpacaCompatibleTickers = symbols.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^'));
-    const symbolsFinal = alpacaCompatibleTickers.slice(0, 10) 
+    const { 
+        data: userWatchlist, 
+        isLoading: isWatchlistLoading,
+    } = useQuery({
+        ...trpc.HomeData.getUserWatchlist.queryOptions(),
+        refetchOnWindowFocus: false,
+    });
 
+    const trendingSymbolsRaw: string[] = trendingSymbols?.body ?? [];
+    const trendingSymbolsFinal = trendingSymbolsRaw.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^')).slice(0, 5);
+    
+    const watchlistSymbols = userWatchlist?.map(item => item.symbol) ?? [];
+    const watchlistSymbolsFinal = watchlistSymbols.filter(ticker => !ticker.includes('.') && !ticker.includes('-') && !ticker.includes('=') && !ticker.includes('^'));
+
+    // Combine into a single list of unique symbols to make one API call
+    const allUniqueSymbols = Array.from(new Set([...trendingSymbolsFinal, ...watchlistSymbolsFinal]));
 
     const { 
-        data: snapshotQueries, 
+        data: snapshotData, 
         isLoading: isSnapshotLoading, 
         isError: isSnapshotError 
     } = useQuery({
-        ...trpc.HomeData.fetchMarketDataByTickers.queryOptions({tickers: symbolsFinal}),
+        ...trpc.HomeData.fetchMarketDataByTickers.queryOptions({tickers: allUniqueSymbols}),
+        enabled: allUniqueSymbols.length > 0, 
         refetchOnReconnect: false,
     });
-
-    const snapshotQueriesFinal = snapshotQueries ?? [];
-
 
     const {
         data: companyNameData,
         isLoading: isNameLoading,
         isError: isNameError,
     } = useQuery({
-        ...trpc.HomeData.fetchCompanyNames.queryOptions({tickers: symbolsFinal}),
+        ...trpc.HomeData.fetchCompanyNames.queryOptions({tickers: allUniqueSymbols}),
+        enabled: allUniqueSymbols.length > 0, 
         refetchOnReconnect: false,
     });
-
-    const companyNameDataFinal = companyNameData ?? []
-
-        const cleanCompanyData: CleanCompanyInfo[] = companyNameDataFinal.map(company => {
-        const companyName = typeof company.name === 'string'
-            ? company.name 
-            : company.name.companyName;
-
-        return {
-            ticker: company.ticker,
-            name: companyName
-        };
+    
+    const companyNameMap = new Map<string, string>();
+    companyNameData?.forEach(company => {
+        const name = typeof company.name === 'string' ? company.name : company.name.companyName;
+        companyNameMap.set(company.ticker, name);
     });
 
+    const snapshotMap = new Map<string, AlpacaSnapshot>();
+    snapshotData?.forEach((snapshot, index) => {
+        const symbol = allUniqueSymbols[index];
+        if (symbol) {
+            snapshotMap.set(symbol, snapshot);
+        }
+    });
+    
+    const buildTickerData = (symbol: string): TickerData | null => {
+        const companyName = companyNameMap.get(symbol);
+        const snapshot = snapshotMap.get(symbol);
 
-    const activesData: TickerData[] = cleanCompanyData.map((company, index) => {
-
-        const snapshot = snapshotQueriesFinal[index];
+        if (!companyName || !snapshot || !snapshot.dailyBar || !snapshot.prevDailyBar) {
+            return null; 
+        }
+        
         const currentPrice = snapshot.dailyBar.c;
         const previousClose = snapshot.prevDailyBar.c;
         const change = currentPrice - previousClose;
         const percentChange = previousClose !== 0 ? (change / previousClose) * 100 : 0;
         
-        
-        const combinedObject: TickerData = {
-            symbol: company.ticker,
-            companyName: company.name,
+        return {
+            symbol: symbol,
+            companyName: companyName,
             price: currentPrice,
             change: change,
             percentChange: percentChange,
         };
-    
-    return combinedObject;
-});
+    };
 
+    const activesData: TickerData[] = trendingSymbolsFinal.map(buildTickerData).filter((item): item is TickerData => item !== null);
+    const portfolioData: TickerData[] = watchlistSymbolsFinal.map(buildTickerData).filter((item): item is TickerData => item !== null);
 
-    const portfolioData: TickerData[] = [
-        { symbol: 'GOOGL', companyName: 'Alphabet Inc.', price: 179.22, change: 1.88, percentChange: 1.06 },
-        { symbol: 'MSFT', companyName: 'Microsoft Corporation', price: 447.67, change: -2.11, percentChange: -0.47 },
-        { symbol: 'KEVIN', companyName: 'Kevin Borgar Shop', price: 420.69, change: -9.11, percentChange: -0.47 },
-        { symbol: 'BOB', companyName: 'Bobbington', price: 420.69, change: -9.11, percentChange: -0.47 },
-    ];
+    const isLoading = isTrendingLoading || isWatchlistLoading || (allUniqueSymbols.length > 0 && (isSnapshotLoading || isNameLoading));
+    const isError = isSnapshotError || isNameError;
 
-    if (isNameLoading || isSnapshotLoading || isSymbolsLoading) {
+    if (isLoading) {
         return (
             <div className="space-y-4">
                 {[...Array(10)].map((_, i) => (
@@ -151,47 +163,47 @@ export function RightSidebar() {
         );
     }
 
-    if (isNameError || isSnapshotError || isSymbolsError) {
+    if (isError) {
         return (
             <div className="p-6 text-center text-red-500 bg-card rounded-lg border">
-                <p>Failed to load ticker data.</p>
-            </div>
-        );
-    }
-  
-    if (!activesData || activesData.length === 0) {
-        return (
-            <div className="p-6 text-center text-muted-foreground bg-card rounded-lg border">
-                <p>No trending data available.</p>
+                <p>Failed to load market data.</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-16">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center">Trending Tickers</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-2">
-                        {activesData.map((item) => (
-                            <AnimatedTickerItem key={item.symbol} item={item} />
-                        ))}
-                    </div>
+                    {activesData.length > 0 ? (
+                        <div className="space-y-2">
+                            {activesData.map((item) => (
+                                <AnimatedTickerItem key={item.symbol} item={item} />
+                            ))}
+                        </div>
+                    ) : (
+                         <p className="text-center text-muted-foreground">No trending data available.</p>
+                    )}
                 </CardContent>
             </Card>
       
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl font-bold text-center">My Portfolio</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-center">My Watchlist</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-2">
-                        {portfolioData.map((item) => (
-                            <AnimatedTickerItem key={item.symbol} item={item} />
-                        ))}
-                    </div>
+                    {portfolioData.length > 0 ? (
+                        <div className="space-y-2">
+                            {portfolioData.map((item) => (
+                                <AnimatedTickerItem key={item.symbol} item={item} />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-muted-foreground">Your watchlist is empty.</p>
+                    )}
                 </CardContent>
             </Card>
         </div>

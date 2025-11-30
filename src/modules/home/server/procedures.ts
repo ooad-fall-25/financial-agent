@@ -1,20 +1,14 @@
 import z from "zod";
-import https from 'https';
 
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import axios from "axios"; 
 import { prisma } from "@/lib/db";
-import {
-    getCompanyNameFromFinnhub, 
-    getFinnhubClient
-} from "@/lib/finnhub";
+import { getCompanyNameFromFinnhub } from "@/lib/finnhub";
 import { 
     alpacaApiV2, 
     alpacaApiV1
 } from "@/lib/alpaca"; 
-import AlphaVantageAPI from "@/lib/alphavantage"
-import { isAxiosError } from "axios";
 import { parseRelativeTime } from "@/lib/time";
 
 interface ScreenerStock {
@@ -23,19 +17,6 @@ interface ScreenerStock {
   price: number;
   change: number;
   percentChange: number;
-}
-
-interface AlpacaNewsArticle {
-  id: number;
-  headline: string;
-  summary: string;
-  author: string;
-  created_at: string;
-  updated_at: string;
-  source: string;
-  url: string;
-  symbols: string[];
-  images: { size: "thumb" | "small" | "large"; url: string }[];
 }
 
 interface MarketMovers {
@@ -64,101 +45,21 @@ interface YahooTrendingTickerResponse {
 }
 
 export const HomeDataRouter = createTRPCRouter({
-  // fetchCompanyName: protectedProcedure
-  //   .input(
-  //     z.object({
-  //       ticker: z.string(),
-  //     })
-  //   )
-  //   .query(async ({ input }) => {
-  //     const companyData = await getCompanyNameFromFinnhub(input.ticker);
 
-  //     if (!companyData) {
-  //       throw new TRPCError({
-  //         code: "NOT_FOUND",
-  //         message: `Company name not found for ticker: ${input.ticker}`,
-  //       });
-  //     }
-
-  //     return companyData;
-  //   }),
-
-  // fetchStockNews: protectedProcedure
-  //   .input(
-  //     z.object({
-  //       limit: z.number().optional().default(20),
-  //     })
-  //   )
-  //   .query(async ({ input }): Promise<AlpacaNewsArticle[]> => {
-  //     const { limit } = input;
-  //     try {
-  //       const response = await alpacaApiV1.get("/news", {
-  //         params: {
-  //           sort: "desc", 
-  //           limit: limit, 
-  //           include_content: false, 
-  //         },
-  //       });
-
-  //       return response.data.news || [];
-  //     } catch (error) {
-  //       console.error(`Error fetching Alpaca news for :`, error);
-  //       throw new TRPCError({
-  //         code: "INTERNAL_SERVER_ERROR",
-  //         message: `Failed to fetch news`,
-  //       });
-  //     }
-  //   }),
-
-  // fetchStockSnapshot: protectedProcedure
-  //   .input(z.object({ 
-  //     ticker: z.string()
-  //   }))
-  //   .query(async ({ input }): Promise<AlpacaSnapshot> => {
-  //     const { ticker } = input;
-
-  //     const requestParams = {
-  //       symbols: ticker,
-  //       feed: "delayed_sip",
-  //     };
-
-  //     try {
-  //       const response = await alpacaApiV2.get("/stocks/snapshots", {
-  //         params: requestParams,
-  //       });
-    
-  //       const snapshotData = response.data[ticker];
-
-  //       if (!snapshotData || !snapshotData.prevDailyBar) {
-  //         throw new TRPCError({
-  //           code: "NOT_FOUND",
-  //           message: `Snapshot data not found or incomplete for ${ticker}.`,
-  //         });
-  //       }
-
-  //       return snapshotData;
-  //     } catch (error) {
-
-  //       if (isAxiosError(error)) {
-  //         console.error("[TRPC CRITICAL ERROR] Axios error details:", {
-  //           status: error.response?.status,
-  //           data: error.response?.data,
-  //           config: error.config, 
-  //         });
-  //         throw new TRPCError({
-  //           code: "INTERNAL_SERVER_ERROR",
-  //           message: `Failed to fetch snapshot for ${ticker}.`,
-  //           cause: error.response?.data,
-  //         });
-  //       }
-
-  //       throw new TRPCError({
-  //         code: "INTERNAL_SERVER_ERROR",
-  //         message: "An unknown error occurred while fetching snapshot.",
-  //       });
-  //     }
-  //   }),
-
+  getUserWatchlist: protectedProcedure.query(async ({ ctx }) => {
+    const data = await prisma.watchlistItem.findMany({
+    where: {
+      userId: ctx.auth.userId,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    });
+    if (!data) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "No summary found" });
+    }
+    return data;
+  }),
   
   getAllPinnedNews: protectedProcedure.query(async ({ ctx }) => {
     const data = await prisma.pinnedNews.findMany({
@@ -226,7 +127,6 @@ export const HomeDataRouter = createTRPCRouter({
 
       return { success: true };
     }),
-
 
   fetchCompanyNames: protectedProcedure
     .input(z.object({ tickers: z.array(z.string()) }))
@@ -302,7 +202,7 @@ export const HomeDataRouter = createTRPCRouter({
     )
     .query(async ({ input }): Promise<YahooTrendingTickerResponse> => {
       const rapidApiKey = process.env.RAPIDAPI_KEY;
-      const limit = 10
+      const limit = 25
 
       if (!rapidApiKey) {
         throw new TRPCError({
@@ -335,36 +235,36 @@ export const HomeDataRouter = createTRPCRouter({
       }
     }),
 
-   fetchMarketDataByTickers: protectedProcedure
-     .input(z.object({ 
+  fetchMarketDataByTickers: protectedProcedure
+    .input(z.object({ 
       tickers: z.array(z.string()) 
     }))
-     .query(async ({ input }): Promise<AlpacaSnapshot[]> => {
-       const { tickers } = input;
-       if (tickers.length === 0) 
-        return [];
- 
-       try {
-        console.log(tickers)
-         const snapshotsResponse = await alpacaApiV2.get("/stocks/snapshots", {
-           params: { symbols: tickers.join(","), feed: "delayed_sip" },
-         });
-         const snapshots = snapshotsResponse.data;
- 
-         return tickers.map((ticker) => snapshots[ticker]).filter(Boolean);
-       } catch (error) {
-         console.error(
-           `Error fetching batch snapshots for ${tickers.join(",")}:`,
-           error
-         );
-         throw new TRPCError({
-           code: "INTERNAL_SERVER_ERROR",
-           message: "Failed to fetch market data from Alpaca.",
-         });
-       }
-     }),
+    .query(async ({ input }): Promise<AlpacaSnapshot[]> => {
+      const { tickers } = input;
+      if (tickers.length === 0) 
+      return [];
 
-fetchMarketScreener: protectedProcedure
+      try {
+      console.log(tickers)
+        const snapshotsResponse = await alpacaApiV2.get("/stocks/snapshots", {
+          params: { symbols: tickers.join(","), feed: "delayed_sip" },
+        });
+        const snapshots = snapshotsResponse.data;
+
+        return tickers.map((ticker) => snapshots[ticker]).filter(Boolean);
+      } catch (error) {
+        console.error(
+          `Error fetching batch snapshots for ${tickers.join(",")}:`,
+          error
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch market data from Alpaca.",
+        });
+      }
+    }),
+
+  fetchMarketScreener: protectedProcedure
     .input(
       z.object({
         screenerType: z.literal("most_actives"),
@@ -426,7 +326,7 @@ fetchMarketScreener: protectedProcedure
       }
     }),
 
-fetchMarketMovers: protectedProcedure.query(
+  fetchMarketMovers: protectedProcedure.query(
     async (): Promise<MarketMovers> => {
       try {
         const response = await alpacaApiV1.get("/screener/stocks/movers", {
