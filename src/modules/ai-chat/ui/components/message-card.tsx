@@ -87,7 +87,7 @@ export const UserMessage = ({ content, media }: UserMessageProps) => {
     <>
       <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
         <DialogContent className="max-w-5xl w-full h-[85vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="p-2 border-b">
+          <DialogHeader className="pt-3 pl-3">
             <DialogTitle className="text-sm font-medium truncate">{previewFile?.name}</DialogTitle>
           </DialogHeader>
 
