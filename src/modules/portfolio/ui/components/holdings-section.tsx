@@ -7,10 +7,16 @@ import { PortfolioTable } from "./portfolio-table";
 import { AddAssetDialog } from "./add-asset-dialog";
 import { HoldingItem, TableColumn } from "@/lib/portfolio-types";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
+
+// --- CONFIG ---
+const MAX_HOLDINGS = 20;
 
 export const HoldingsSection = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const [editingItem, setEditingItem] = useState<HoldingItem | null>(null);
 
   const { 
     data: holdingsData, 
@@ -28,7 +34,12 @@ export const HoldingsSection = () => {
       queryClient.invalidateQueries({
         queryKey: trpc.portfolio.getHoldings.queryOptions().queryKey,
       });
+      setEditingItem(null); 
+      toast.success("Holding saved successfully");
     },
+    onError: (error) => {
+      toast.error(error.message);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -37,19 +48,35 @@ export const HoldingsSection = () => {
       queryClient.invalidateQueries({
         queryKey: trpc.portfolio.getHoldings.queryOptions().queryKey,
       });
+      toast.success("Holding deleted");
     },
   });
+
+  // Calculate limit
+  const currentCount = holdingsData?.length ?? 0;
+  const isLimitReached = currentCount >= MAX_HOLDINGS;
 
   const columns: TableColumn<HoldingItem>[] = [
     {
       header: "Ticker",
       cell: (item) => <span className="font-medium">{item.symbol}</span>,
     },
-    // --- NEW: Company Name Column ---
     {
       header: "Name",
       className: "hidden md:table-cell text-muted-foreground text-sm",
-      cell: (item) => <span className="truncate max-w-[150px] block" title={item.name}>{item.name}</span>,
+      cell: (item) => (
+        item.name ? (
+            <div 
+            className="truncate font-medium max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]" 
+            title={item.name}
+            >
+            {item.name}
+            </div>
+        ) : (
+            // UPDATED MESSAGE HERE
+            <span className="text-xs italic text-muted-foreground opacity-50">Couldn't fetch name</span>
+        )
+      ),
     },
     {
       header: "Price",
@@ -59,7 +86,17 @@ export const HoldingsSection = () => {
     {
       header: "Last Trade",
       className: "text-right text-xs text-muted-foreground",
-      cell: (item) => new Date(item.marketData.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short'}),
+      cell: (item) => {
+        if (!item.marketData.lastUpdated) {
+             return <span className="italic opacity-50">Date not found</span>;
+        }
+        return new Date(item.marketData.lastUpdated).toLocaleString([], { 
+            month: 'numeric',
+            day: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit'
+        });
+      },
     },
     {
       header: "Quantity",
@@ -130,28 +167,36 @@ export const HoldingsSection = () => {
           </Button>
         </div>
 
-        <AddAssetDialog
-          title="Add New Holding"
-          triggerLabel="Add Holding"
-          isPending={addMutation.isPending}
-          fields={[
-            { name: "symbol", label: "Ticker Symbol", type: "text", placeholder: "AAPL", required: true },
-            { name: "quantity", label: "Quantity", type: "number", step: "any", required: true },
-            { name: "avgCost", label: "Avg Cost per Share", type: "number", step: "any", required: true },
-          ]}
-          onSubmit={(values) => {
-            addMutation.mutate({
-              symbol: values.symbol,
-              quantity: Number(values.quantity),
-              avgCost: Number(values.avgCost),
-            });
-          }}
-        />
+        {/* LIMIT CHECK HERE */}
+        {!isLimitReached ? (
+            <AddAssetDialog
+            title="Add New Holding"
+            triggerLabel="Add Holding"
+            isPending={addMutation.isPending}
+            fields={[
+                { name: "symbol", label: "Ticker Symbol", type: "text", placeholder: "AAPL", required: true },
+                { name: "quantity", label: "Quantity", type: "number", step: "any", required: true },
+                { name: "avgCost", label: "Avg Cost per Share", type: "number", step: "any", required: true },
+            ]}
+            onSubmit={(values) => {
+                addMutation.mutate({
+                symbol: values.symbol,
+                quantity: Number(values.quantity),
+                avgCost: Number(values.avgCost),
+                });
+            }}
+            />
+        ) : (
+            <Button disabled variant="outline" className="opacity-75 cursor-not-allowed">
+                Limit Reached ({MAX_HOLDINGS})
+            </Button>
+        )}
       </div>
 
       <PortfolioTable
         data={(holdingsData as HoldingItem[]) ?? []}
         columns={columns}
+        onEdit={(item) => setEditingItem(item)}
         onDelete={(id) => deleteMutation.mutate({ id })}
         emptyMessage="No holdings found. Add one to get started."
         getTooltipContent={(item) => (
@@ -162,6 +207,31 @@ export const HoldingsSection = () => {
           </div>
         )}
       />
+
+      {/* Edit dialog */}
+      <AddAssetDialog
+        title="Edit Holding"
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        isPending={addMutation.isPending}
+        defaultValues={editingItem ? {
+            symbol: editingItem.symbol,
+            quantity: editingItem.quantity,
+            avgCost: editingItem.avgCost
+        } : undefined}
+        fields={[
+          { name: "symbol", label: "Ticker", type: "text", required: true },
+          { name: "quantity", label: "Quantity", type: "number", step: "any", required: true },
+          { name: "avgCost", label: "Avg Cost", type: "number", step: "any", required: true },
+        ]}
+        onSubmit={(values) => {
+          addMutation.mutate({
+            symbol: values.symbol,
+            quantity: Number(values.quantity),
+            avgCost: Number(values.avgCost),
+          });
+        }}
+      />  
     </div>
   );
 };
