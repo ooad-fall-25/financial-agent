@@ -9,6 +9,28 @@ import { WatchlistItem, TableColumn } from "@/lib/portfolio-types";
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button";
 
+// --- CONFIG ---
+const MAX_WATCHLIST = 50;
+
+// Helper to render value or error message
+const renderFinancialValue = (
+  value: number | null | undefined, 
+  prefix = "$", 
+  isVolume = false
+) => {
+  if (value === null || value === undefined) {
+    return <span className="text-xs italic text-muted-foreground opacity-70">Data Unavailable</span>;
+  }
+  
+  if (isVolume) {
+    // Force 'en-US' to ensure commas (37,355,402)
+    // maximumFractionDigits: 0 ensures no decimals (.00)
+    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+  
+  return `${prefix}${value.toFixed(2)}`;
+};
+
 export const WatchlistSection = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -32,8 +54,7 @@ export const WatchlistSection = () => {
       toast.success("Added to watchlist");
     },
     onError: (error) => {
-      console.error("Failed to add:", error);
-      toast.error(`Error: ${error.message}`); 
+      toast.error(error.message); 
     }
   });
 
@@ -43,19 +64,35 @@ export const WatchlistSection = () => {
       queryClient.invalidateQueries({
         queryKey: trpc.portfolio.getWatchlist.queryOptions().queryKey,
       });
+      toast.success("Removed from watchlist");
     },
   });
+
+  // Calculate limit
+  const currentCount = watchlistData?.length ?? 0;
+  const isLimitReached = currentCount >= MAX_WATCHLIST;
 
   const columns: TableColumn<WatchlistItem>[] = [
     {
       header: "Ticker",
       cell: (item) => <span className="font-medium">{item.symbol}</span>,
     },
-    // --- REPLACED CURRENCY WITH NAME ---
     {
-      header: "Name",
-      className: "hidden md:table-cell text-muted-foreground text-sm",
-      cell: (item) => <span className="truncate max-w-[150px] block" title={item.name}>{item.name}</span>,
+        header: "Name",
+        className: "hidden md:table-cell text-muted-foreground text-sm",
+        cell: (item) => (
+          item.name ? (
+            <div 
+                className="truncate font-medium max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]" 
+                title={item.name}
+            >
+                {item.name}
+            </div>
+          ) : (
+            // UPDATED MESSAGE HERE
+            <span className="text-xs italic text-muted-foreground opacity-50">Couldn't fetch name</span>
+          )
+        ),
     },
     {
       header: "Price",
@@ -65,32 +102,42 @@ export const WatchlistSection = () => {
     {
       header: "Last Trade",
       className: "text-right text-xs text-muted-foreground",
-      cell: (item) => new Date(item.marketData.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short'}),
+      cell: (item) => {
+        if (!item.marketData.lastUpdated) {
+            return <span className="italic opacity-50">Time Unavailable</span>;
+        }
+        return new Date(item.marketData.lastUpdated).toLocaleString([], {
+             month: 'numeric',
+             day: 'numeric',
+             hour: '2-digit', 
+             minute: '2-digit',
+        });
+      }
     },
     {
       header: "Open",
       className: "text-right",
-      cell: (item) => `$${item.marketData.open.toFixed(2)}`,
+      cell: (item) => renderFinancialValue(item.marketData.open),
     },
     {
       header: "High",
       className: "text-right",
-      cell: (item) => `$${item.marketData.high.toFixed(2)}`,
+      cell: (item) => renderFinancialValue(item.marketData.high),
     },
     {
       header: "Low",
       className: "text-right",
-      cell: (item) => `$${item.marketData.low.toFixed(2)}`,
+      cell: (item) => renderFinancialValue(item.marketData.low),
     },
     {
       header: "Prev Close",
       className: "text-right",
-      cell: (item) => `$${item.marketData.prevClose.toFixed(2)}`,
+      cell: (item) => renderFinancialValue(item.marketData.prevClose),
     },
     {
       header: "Volume",
       className: "text-right",
-      cell: (item) => item.marketData.volume.toLocaleString(),
+      cell: (item) => renderFinancialValue(item.marketData.volume, "", true),
     },
   ];
 
@@ -124,18 +171,25 @@ export const WatchlistSection = () => {
           </Button>
         </div>
 
-        <AddAssetDialog
-            title="Add to Watchlist"
-            triggerLabel="Add to Watchlist"
-            isPending={addMutation.isPending}
-            fields={[
-              { name: "symbol", label: "Ticker Symbol", type: "text", placeholder: "TSLA", required: true },
-            ]}
-            onSubmit={(values) => {
-              if(!values.symbol) return;
-              addMutation.mutate({ symbol: values.symbol });
-            }}
-          />
+        {/* LIMIT CHECK HERE */}
+        {!isLimitReached ? (
+            <AddAssetDialog
+                title="Add to Watchlist"
+                triggerLabel="Add to Watchlist"
+                isPending={addMutation.isPending}
+                fields={[
+                { name: "symbol", label: "Ticker Symbol", type: "text", placeholder: "TSLA", required: true },
+                ]}
+                onSubmit={(values) => {
+                if(!values.symbol) return;
+                addMutation.mutate({ symbol: values.symbol });
+                }}
+            />
+        ) : (
+            <Button disabled variant="outline" className="opacity-75 cursor-not-allowed">
+                Limit Reached ({MAX_WATCHLIST})
+            </Button>
+        )}
       </div>
 
       <PortfolioTable

@@ -23,9 +23,15 @@ const handleServiceCall = async <T>(fn: () => Promise<T>) => {
     return await fn();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    
     if (message.includes("Already in watchlist")) {
       throw new TRPCError({ code: "CONFLICT", message });
     }
+    
+    if (message.includes("Invalid Ticker")) {
+      throw new TRPCError({ code: "BAD_REQUEST", message });
+    }
+
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
   }
 };
