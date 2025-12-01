@@ -62,7 +62,7 @@ export function PortfolioView() {
           <TabsList>
             <TabsTrigger value="holdings">Holdings</TabsTrigger>
             <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="performance">Performance Statistics</TabsTrigger>
           </TabsList>
         </div>
 
