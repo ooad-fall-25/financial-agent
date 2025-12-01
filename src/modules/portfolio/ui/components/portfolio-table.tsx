@@ -10,16 +10,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2, Pencil } from "lucide-react"; 
+import { Trash2, Pencil, ArrowUp, ArrowDown } from "lucide-react"; 
 import { TableColumn } from "@/lib/portfolio-types";
+import { cn } from "@/lib/utils";
+
+// Export this type so parents can use it
+export type SortConfig = {
+  key: string;
+  direction: "asc" | "desc";
+};
 
 interface PortfolioTableProps<T> {
-  data: T[];
+  data: T[]; 
   columns: TableColumn<T>[];
   onDelete: (id: string) => void;
   onEdit?: (item: T) => void; 
   emptyMessage?: string;
   getTooltipContent?: (item: T) => React.ReactNode;
+  
+  // Sorting props (used for visual feedback only now)
+  sortConfig?: SortConfig | null;
+  onSort?: (key: string) => void;
 }
 
 export function PortfolioTable<T extends { id: string }>({
@@ -29,11 +40,13 @@ export function PortfolioTable<T extends { id: string }>({
   onEdit, 
   emptyMessage = "No data available.",
   getTooltipContent,
+  sortConfig,
+  // onSort is no longer needed for headers, but kept in interface if you ever want to revert
 }: PortfolioTableProps<T>) {
   const [hoveredItem, setHoveredItem] = useState<T | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Performance Optimization: Direct DOM manipulation prevents re-renders on mouse move
+  // Performance Optimization: Direct DOM manipulation
   const handleMouseMove = (e: React.MouseEvent) => {
     if (tooltipRef.current) {
       const x = e.clientX;
@@ -52,17 +65,35 @@ export function PortfolioTable<T extends { id: string }>({
   }
 
   return (
-    // REMOVED: max-h-[600px], overflow-y-auto.
-    // The table will now extend the full length of the page.
     <div className="rounded-md border relative bg-background">
       <Table>
         <TableHeader>
           <TableRow>
-            {columns.map((col, index) => (
-              <TableHead key={index} className={col.className}>
-                {col.header}
-              </TableHead>
-            ))}
+            {columns.map((col, index) => {
+              const isSorted = sortConfig?.key === col.header;
+
+              return (
+                <TableHead key={index} className={col.className}>
+                  {/* 
+                    We render a simple flex container to keep text and arrow aligned.
+                    We check if the column is right-aligned (usually for numbers) to adjust flex direction.
+                  */}
+                  <div className={cn(
+                    "flex items-center gap-1",
+                    col.className?.includes("text-right") ? "justify-end" : "justify-start"
+                  )}>
+                    {col.header}
+                    
+                    {/* Only show visual indicator if this column is sorted */}
+                    {isSorted && (
+                      sortConfig?.direction === "asc" 
+                        ? <ArrowUp className="h-3 w-3 text-muted-foreground" /> 
+                        : <ArrowDown className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
+                </TableHead>
+              );
+            })}
             {/* Actions Column */}
             <TableHead className="w-[100px]"></TableHead>
           </TableRow>
@@ -83,7 +114,6 @@ export function PortfolioTable<T extends { id: string }>({
               ))}
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  {/* EDIT BUTTON */}
                   {onEdit && (
                       <Button
                       variant="ghost"
@@ -97,8 +127,6 @@ export function PortfolioTable<T extends { id: string }>({
                       <Pencil className="h-4 w-4" />
                       </Button>
                   )}
-
-                  {/* DELETE BUTTON */}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -117,7 +145,7 @@ export function PortfolioTable<T extends { id: string }>({
         </TableBody>
       </Table>
 
-      {/* Optimized Tooltip */}
+      {/* Tooltip */}
       {hoveredItem && getTooltipContent && (
         <div
           ref={tooltipRef}
