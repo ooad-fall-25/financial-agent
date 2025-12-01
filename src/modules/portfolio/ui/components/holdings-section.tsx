@@ -9,14 +9,33 @@ import { HoldingItem, TableColumn } from "@/lib/portfolio-types";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // --- CONFIG ---
 const MAX_HOLDINGS = 20;
+
+interface MergeState {
+    symbol: string;
+    existing: { quantity: number; avgCost: number };
+    incoming: { quantity: number; avgCost: number };
+    result: { quantity: number; avgCost: number };
+}
 
 export const HoldingsSection = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [editingItem, setEditingItem] = useState<HoldingItem | null>(null);
+  
+  const [mergeConfirmation, setMergeConfirmation] = useState<MergeState | null>(null);
 
   const { 
     data: holdingsData, 
@@ -35,6 +54,7 @@ export const HoldingsSection = () => {
         queryKey: trpc.portfolio.getHoldings.queryOptions().queryKey,
       });
       setEditingItem(null); 
+      setMergeConfirmation(null); 
       toast.success("Holding saved successfully");
     },
     onError: (error) => {
@@ -55,6 +75,36 @@ export const HoldingsSection = () => {
   // Calculate limit
   const currentCount = holdingsData?.length ?? 0;
   const isLimitReached = currentCount >= MAX_HOLDINGS;
+
+ const handleAddSubmit = (values: Record<string, string>) => {
+    const symbol = values["symbol"].toUpperCase();
+    const newQty = Number(values["quantity"]);
+    const newCost = Number(values["avgCost"]);
+
+    // Check if holding exists
+    const existingHolding = holdingsData?.find((h) => h.symbol === symbol);
+
+    if (existingHolding) {
+        const oldQty = existingHolding.quantity;
+        const oldCost = existingHolding.avgCost;
+        
+        const totalQty = oldQty + newQty;
+        const weightedAvgCost = ((oldQty * oldCost) + (newQty * newCost)) / totalQty;
+
+        setMergeConfirmation({
+            symbol: symbol,
+            existing: { quantity: oldQty, avgCost: oldCost },
+            incoming: { quantity: newQty, avgCost: newCost },
+            result: { quantity: totalQty, avgCost: weightedAvgCost }
+        });
+    } else {
+        addMutation.mutate({
+            symbol: symbol,
+            quantity: newQty,
+            avgCost: newCost,
+        });
+    }
+  };
 
   const columns: TableColumn<HoldingItem>[] = [
     {
@@ -178,13 +228,7 @@ export const HoldingsSection = () => {
                 { name: "quantity", label: "Quantity", type: "number", step: "any", required: true },
                 { name: "avgCost", label: "Avg Cost per Share", type: "number", step: "any", required: true },
             ]}
-            onSubmit={(values) => {
-                addMutation.mutate({
-                symbol: values.symbol,
-                quantity: Number(values.quantity),
-                avgCost: Number(values.avgCost),
-                });
-            }}
+            onSubmit={handleAddSubmit}
             />
         ) : (
             <Button disabled variant="outline" className="opacity-75 cursor-not-allowed">
@@ -231,7 +275,53 @@ export const HoldingsSection = () => {
             avgCost: Number(values.avgCost),
           });
         }}
-      />  
+      />
+
+      {/* Merge Confirmation Dialog */}
+      <AlertDialog open={!!mergeConfirmation} onOpenChange={(open) => !open && setMergeConfirmation(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Merge Holding: {mergeConfirmation?.symbol}</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                    <div className="space-y-3 pt-2 text-sm">
+                        <p>This ticker already exists in your portfolio. Would you like to merge the new shares and update the average cost?</p>
+                        
+                        <div className="grid grid-cols-3 gap-2 bg-muted/50 p-3 rounded-md text-center">
+                            <div className="space-y-1">
+                                <div className="text-xs text-muted-foreground uppercase">Current</div>
+                                <div className="font-semibold">{mergeConfirmation?.existing.quantity} shares</div>
+                                <div className="text-xs text-muted-foreground">@ ${mergeConfirmation?.existing.avgCost.toFixed(2)}</div>
+                            </div>
+                            <div className="space-y-1 border-l border-r border-border/50">
+                                <div className="text-xs text-blue-500 uppercase font-bold">+ Adding</div>
+                                <div className="font-semibold text-blue-600">{mergeConfirmation?.incoming.quantity} shares</div>
+                                <div className="text-xs text-muted-foreground">@ ${mergeConfirmation?.incoming.avgCost.toFixed(2)}</div>
+                            </div>
+                            <div className="space-y-1">
+                                <div className="text-xs text-green-600 uppercase font-bold">= Result</div>
+                                <div className="font-semibold text-green-600">{mergeConfirmation?.result.quantity} shares</div>
+                                <div className="text-xs text-muted-foreground">@ ${mergeConfirmation?.result.avgCost.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                    if (mergeConfirmation) {
+                        addMutation.mutate({
+                            symbol: mergeConfirmation.symbol,
+                            quantity: mergeConfirmation.result.quantity,
+                            avgCost: mergeConfirmation.result.avgCost,
+                        });
+                    }
+                }}>
+                    Confirm Merge
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
