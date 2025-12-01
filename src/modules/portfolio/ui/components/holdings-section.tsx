@@ -156,12 +156,13 @@ export const HoldingsSection = () => {
             month: 'numeric',
             day: 'numeric',
             hour: '2-digit', 
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZoneName: 'short'
         });
       },
     },
     {
-      header: "Quantity",
+      header: "Shares Qty",
       className: "text-right",
       sortValue: (item) => item.quantity,
       cell: (item) => item.quantity.toString(),
