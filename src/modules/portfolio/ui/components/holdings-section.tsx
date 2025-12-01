@@ -2,12 +2,12 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, RefreshCw } from "lucide-react";
-import { PortfolioTable } from "./portfolio-table";
+import { Loader2, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { PortfolioTable, SortConfig } from "./portfolio-table"; // Import SortConfig
 import { AddAssetDialog } from "./add-asset-dialog";
 import { HoldingItem, TableColumn } from "@/lib/portfolio-types";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -19,6 +19,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+// IMPORT DROPDOWN
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 // --- CONFIG ---
 const MAX_HOLDINGS = 20;
@@ -34,8 +44,10 @@ export const HoldingsSection = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [editingItem, setEditingItem] = useState<HoldingItem | null>(null);
-  
   const [mergeConfirmation, setMergeConfirmation] = useState<MergeState | null>(null);
+
+  // --- SORT STATE ---
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
   const { 
     data: holdingsData, 
@@ -72,22 +84,20 @@ export const HoldingsSection = () => {
     },
   });
 
-  // Calculate limit
   const currentCount = holdingsData?.length ?? 0;
   const isLimitReached = currentCount >= MAX_HOLDINGS;
 
- const handleAddSubmit = (values: Record<string, string>) => {
+  const handleAddSubmit = (values: Record<string, string>) => {
+    // ... (Your existing logic) ...
     const symbol = values["symbol"].toUpperCase();
     const newQty = Number(values["quantity"]);
     const newCost = Number(values["avgCost"]);
 
-    // Check if holding exists
     const existingHolding = holdingsData?.find((h) => h.symbol === symbol);
 
     if (existingHolding) {
         const oldQty = existingHolding.quantity;
         const oldCost = existingHolding.avgCost;
-        
         const totalQty = oldQty + newQty;
         const weightedAvgCost = ((oldQty * oldCost) + (newQty * newCost)) / totalQty;
 
@@ -109,11 +119,13 @@ export const HoldingsSection = () => {
   const columns: TableColumn<HoldingItem>[] = [
     {
       header: "Ticker",
+      sortValue: (item) => item.symbol,
       cell: (item) => <span className="font-medium">{item.symbol}</span>,
     },
     {
       header: "Name",
       className: "hidden md:table-cell text-muted-foreground text-sm",
+      sortValue: (item) => item.name || "",
       cell: (item) => (
         item.name ? (
             <div 
@@ -123,7 +135,6 @@ export const HoldingsSection = () => {
             {item.name}
             </div>
         ) : (
-            // UPDATED MESSAGE HERE
             <span className="text-xs italic text-muted-foreground opacity-50">Couldn't fetch name</span>
         )
       ),
@@ -131,6 +142,7 @@ export const HoldingsSection = () => {
     {
       header: "Price",
       className: "text-right",
+      sortValue: (item) => item.marketData.price,
       cell: (item) => `$${item.marketData.price.toFixed(2)}`,
     },
     {
@@ -151,27 +163,32 @@ export const HoldingsSection = () => {
     {
       header: "Quantity",
       className: "text-right",
+      sortValue: (item) => item.quantity,
       cell: (item) => item.quantity.toString(),
     },
     {
       header: "Avg Cost",
       className: "text-right",
+      sortValue: (item) => item.avgCost,
       cell: (item) => `$${item.avgCost.toFixed(2)}`,
     },
     {
       header: "Cost Basis",
       className: "text-right",
+      sortValue: (item) => item.quantity * item.avgCost,
       cell: (item) => `$${(item.quantity * item.avgCost).toFixed(2)}`,
     },
     {
       header: "Market Value",
       className: "text-right",
+      sortValue: (item) => item.quantity * item.marketData.price,
       cell: (item) =>
         `$${(item.quantity * item.marketData.price).toFixed(2)}`,
     },
     {
       header: "Total P/L",
       className: "text-right",
+      sortValue: (item) => (item.quantity * item.marketData.price) - (item.quantity * item.avgCost),
       cell: (item) => {
         const costBasis = item.quantity * item.avgCost;
         const marketValue = item.quantity * item.marketData.price;
@@ -186,6 +203,38 @@ export const HoldingsSection = () => {
       },
     },
   ];
+
+  // --- SORTING LOGIC ---
+  const sortedData = useMemo(() => {
+    const data = (holdingsData as HoldingItem[]) ?? [];
+    if (!sortConfig) return data;
+
+    const column = columns.find((c) => c.header === sortConfig.key);
+    if (!column || !column.sortValue) return data;
+
+    return [...data].sort((a, b) => {
+      const valA = column.sortValue!(a);
+      const valB = column.sortValue!(b);
+
+      if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [holdingsData, sortConfig, columns]);
+
+  const handleSort = (header: string) => {
+    setSortConfig((current) => {
+      if (current?.key === header) {
+        return {
+          key: header,
+          direction: current.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key: header, direction: "asc" };
+    });
+  };
+
+  const sortableColumns = columns.filter(col => !!col.sortValue);
 
   if (isLoading) {
     return (
@@ -217,31 +266,91 @@ export const HoldingsSection = () => {
           </Button>
         </div>
 
-        {/* LIMIT CHECK HERE */}
-        {!isLimitReached ? (
-            <AddAssetDialog
-            title="Add New Holding"
-            triggerLabel="Add Holding"
-            isPending={addMutation.isPending}
-            fields={[
-                { name: "symbol", label: "Ticker Symbol", type: "text", placeholder: "AAPL", required: true },
-                { name: "quantity", label: "Quantity", type: "number", step: "any", required: true },
-                { name: "avgCost", label: "Avg Cost per Share", type: "number", step: "any", required: true },
-            ]}
-            onSubmit={handleAddSubmit}
-            />
-        ) : (
-            <Button disabled variant="outline" className="opacity-75 cursor-not-allowed">
-                Limit Reached ({MAX_HOLDINGS})
-            </Button>
-        )}
+        {/* --- RIGHT SIDE ACTIONS (Sort + Add) --- */}
+        <div className="flex items-center gap-2">
+            {/* SORT BUTTON */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-9 border-dashed text-xs md:text-sm">
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  {sortConfig ? (
+                    <span className="hidden md:inline">
+                      Sorted by {sortConfig.key} 
+                    </span>
+                  ) : (
+                    "Sort"
+                  )}
+                  {sortConfig && (
+                     <span className="ml-1 md:hidden">
+                        {sortConfig.key.substring(0,3)}
+                     </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {sortableColumns.map((col) => {
+                  const isActive = sortConfig?.key === col.header;
+                  return (
+                    <DropdownMenuItem 
+                      key={col.header} 
+                      onClick={() => handleSort(col.header)}
+                      className="cursor-pointer"
+                    >
+                      <span className={cn("flex-1", isActive && "font-bold")}>
+                        {col.header}
+                      </span>
+                      {isActive && (
+                        sortConfig?.direction === "asc" 
+                          ? <ArrowUp className="ml-2 h-4 w-4 text-muted-foreground" /> 
+                          : <ArrowDown className="ml-2 h-4 w-4 text-muted-foreground" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+                {sortConfig && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setSortConfig(null)}
+                      className="justify-center text-muted-foreground"
+                    >
+                      Clear Sort
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* ADD BUTTON */}
+            {!isLimitReached ? (
+                <AddAssetDialog
+                title="Add New Holding"
+                triggerLabel="Add Holding"
+                isPending={addMutation.isPending}
+                fields={[
+                    { name: "symbol", label: "Ticker Symbol", type: "text", placeholder: "AAPL", required: true },
+                    { name: "quantity", label: "Quantity", type: "number", step: "any", required: true },
+                    { name: "avgCost", label: "Avg Cost per Share", type: "number", step: "any", required: true },
+                ]}
+                onSubmit={handleAddSubmit}
+                />
+            ) : (
+                <Button disabled variant="outline" className="opacity-75 cursor-not-allowed">
+                    Limit Reached ({MAX_HOLDINGS})
+                </Button>
+            )}
+        </div>
       </div>
 
       <PortfolioTable
-        data={(holdingsData as HoldingItem[]) ?? []}
+        data={sortedData} // Pass Sorted Data
         columns={columns}
         onEdit={(item) => setEditingItem(item)}
         onDelete={(id) => deleteMutation.mutate({ id })}
+        sortConfig={sortConfig} // Pass Config so headers show arrows
+        onSort={handleSort} // Pass handler so clicking headers works
         emptyMessage="No holdings found. Add one to get started."
         getTooltipContent={(item) => (
           <div className="space-y-1">
@@ -251,9 +360,9 @@ export const HoldingsSection = () => {
           </div>
         )}
       />
-
-      {/* Edit dialog */}
-      <AddAssetDialog
+      
+      {/* ... (Keep your Edit Dialog and Merge Dialog code here) ... */}
+       <AddAssetDialog
         title="Edit Holding"
         open={!!editingItem}
         onOpenChange={(open) => !open && setEditingItem(null)}
@@ -277,7 +386,6 @@ export const HoldingsSection = () => {
         }}
       />
 
-      {/* Merge Confirmation Dialog */}
       <AlertDialog open={!!mergeConfirmation} onOpenChange={(open) => !open && setMergeConfirmation(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>

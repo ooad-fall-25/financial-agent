@@ -10,6 +10,7 @@ export interface TableColumn<T> {
   header: string;
   cell: (item: T) => React.ReactNode; 
   className?: string;
+  sortValue?: (item: T) => string | number; 
 }
 
 export interface DialogField {
