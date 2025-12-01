@@ -12,6 +12,7 @@ import { z } from "zod";
 import { getAccumulatedNews } from "./helper";
 import { getStockBars, getCryptoBars } from "./alpaca";
 import { prisma } from "./db";
+import { calculatePortfolioStats } from "./portfolio-math";
 
 const deepseekClient = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -283,6 +284,90 @@ const createHoldingsTool = (userId: string) => {
   });
 };
 
+const createPortfolioStatsTool = (userId: string) => {
+  return new DynamicStructuredTool({
+    name: "get_portfolio_stats",
+    description:
+      "Calculates detailed portfolio statistics including total value, unrealized P/L, daily change, allocation percentages, and top movers/performers. " +
+      "Use this when the user asks for a performance summary, 'how is my portfolio doing?', 'what are my top gainers?', or 'analyze my portfolio performance'. " +
+      "This tool automatically fetches current market data to perform the calculations.",
+    schema: z.object({}),
+    func: async () => {
+      console.log("AI is using 'get_portfolio_stats' tool for userId:", userId);
+
+      try {
+        // 1. Fetch raw holdings from DB
+        const holdings = await prisma.holding.findMany({
+          where: { userId: userId },
+        });
+
+        if (holdings.length === 0) {
+          return "Your portfolio is currently empty. Cannot calculate statistics.";
+        }
+
+        // 2. Fetch Market Data (Price & PrevClose) for each holding
+        // We use a Promise.all to fetch data for all symbols in parallel
+        const holdingsWithData = await Promise.all(
+          holdings.map(async (h) => {
+            let bars: any[] = [];
+            try {
+              // Try fetching as stock first (5 days to ensure we get prev close)
+              bars = await getStockBars(h.symbol, "5d", "1D");
+              
+              // If no stock data, try crypto
+              if (!bars || bars.length === 0) {
+                bars = await getCryptoBars(h.symbol, "5d", "1D");
+              }
+            } catch (error) {
+              console.error(`Error fetching data for ${h.symbol}:`, error);
+            }
+
+            // Extract Price and PrevClose
+            let price = 0;
+            let prevClose = 0;
+
+            if (bars && bars.length > 0) {
+              // Assuming bars are sorted by date ascending. 
+              // 'c' is usually close price in Alpaca/Polygon responses.
+              // Adjust property access based on your specific getStockBars return type.
+              const latestBar = bars[bars.length - 1];
+              price = latestBar.c ?? latestBar.close ?? 0;
+
+              if (bars.length > 1) {
+                const prevBar = bars[bars.length - 2];
+                prevClose = prevBar.c ?? prevBar.close ?? 0;
+              } else {
+                // If only one bar exists (e.g. new listing), assume no change
+                prevClose = price;
+              }
+            }
+
+            // Return the shape expected by calculatePortfolioStats
+            // We map the DB holding + marketData
+            return {
+              ...h,
+              marketData: {
+                price,
+                prevClose,
+              },
+            };
+          })
+        );
+
+        // 3. Calculate Statistics
+        // We cast to 'any' here because calculatePortfolioStats expects the full TRPC type,
+        // but it only functionally relies on quantity, avgCost, symbol, and marketData.
+        const stats = calculatePortfolioStats(holdingsWithData as any);
+
+        return JSON.stringify(stats, null, 2);
+      } catch (error) {
+        console.error("Error executing getPortfolioStatsTool:", error);
+        return "An error occurred while calculating portfolio statistics.";
+      }
+    },
+  });
+};
+
 const createPinnedNewsTool = (userId: string) => {
   return new DynamicStructuredTool({
     name: "get_pinned_news",
@@ -355,13 +440,16 @@ export const invokeReActAgent = async (
   const getPinnedNewsTool = createPinnedNewsTool(userId);
   const getWatchlistTool = createWatchlistTool(userId);
   const getHoldingsTool = createHoldingsTool(userId);
+  const getPortfolioStatsTool = createPortfolioStatsTool(userId);
+  
   const tools = [
     financialNewsTool, 
     getStockBarsTool, 
     getCryptoBarsTool, 
     getPinnedNewsTool, 
     getWatchlistTool,
-    getHoldingsTool
+    getHoldingsTool,
+    getPortfolioStatsTool
   ];
 
   const agentExecutor = createReactAgent({
@@ -384,6 +472,7 @@ export const invokeReActAgent = async (
         "When users ask about their 'pinned news', 'saved articles', or want to analyze their saved content, use the get_pinned_news tool." +
         "When users ask about their 'watchlist' or 'stocks they're tracking', use the get_watchlist tool." +
         "When users ask about their 'portfolio', 'holdings', or 'stocks they own', use the get_holdings tool." +
+        "When users ask about portfolio performance, top gainers/losers, allocation, or 'how my portfolio is doing', use the get_portfolio_stats tool. This tool provides calculated metrics like Unrealized P/L and Daily Change." +
         "Carefully analyze the user's request to determine which tool, if any, is suitable for the task." +
         "Pay close attention to the conversation history. If the user's latest message is a follow-up, consider the context to see if a tool is needed again." +
         "If you do not have a tool that can fulfill the user's request, or if a tool returns no information, you MUST inform the user that you do not have the capability to provide that specific data. Do not, under any circumstances, invent or hallucinate information." +
